@@ -15,7 +15,7 @@ from dlg.dropmake.lg import load_lg
 from dlg.dropmake.pg_generator import unroll, partition
 from dlg.restutils import RestClientException
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 ALGO_PARAMS = [
     ("min_goal", int),
@@ -84,7 +84,7 @@ def prepare_lgt(filename, rmode: str):
 
 def filter_dict_to_algo_params(input_dict: dict):
     algo_params = {}
-    for name, typ in ALGO_PARAMS:
+    for name, _ in ALGO_PARAMS:
         if name in input_dict:
             algo_params[name] = input_dict.get(name)
     return algo_params

@@ -169,6 +169,8 @@ def lg_block_fields(
         data["dropclass"] = FieldOps.STORE
     elif category_type == "PythonApp":
         data["dropclass"] = FieldOps.STORE
+    elif category_type == "DALiuGEApp":
+        data["dropclass"] = FieldOps.STORE
     elif category_type == "Component":
         data["dropclass"] = FieldOps.STORE
     elif category_type == "BashShellApp":

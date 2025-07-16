@@ -25,20 +25,15 @@ the profiling information and turns it into the partitioned physical graph,
 which will then be deployed and monitored by the Physical Graph Manager
 """
 
-if __name__ == "__main__":
-    __package__ = "dlg.dropmake"
-
 import json
 import logging
 import string
-import time
 
-from dlg.constants import ISLAND_DEFAULT_REST_PORT
 from dlg.dropmake.lg import LG, GraphException
 from dlg.dropmake.pgt import PGT
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class _LGTemplate(string.Template):
@@ -71,7 +66,6 @@ def fill(lg, params):
 
 def unroll(lg, oid_prefix=None, zerorun=False, app=None):
     """Unrolls a logical graph"""
-    start = time.time()
     lg = LG(lg, ssid=oid_prefix)
     drop_list = lg.unroll_to_tpl()
     if zerorun:
@@ -239,7 +233,8 @@ def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     """Maps a Physical Graph Template `pgt` to `nodes`"""
 
     logger.info(
-        f"Resource mapping called with nodes: {nodes}, islands: {num_islands} and co_host_dim: {co_host_dim}"
+        "Resource mapping called with nodes: %s, islands: %s and co_host_dim: %s",
+        nodes, num_islands, co_host_dim
     )
     if not nodes:
         err_info = "Empty node_list, cannot map the PG template"

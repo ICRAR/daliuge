@@ -35,7 +35,7 @@ edge list that becomes input for gephi vis tool.
 import filecmp
 import json
 import logging
-import optparse
+import optparse # pylint: disable=deprecated-module
 import os
 import sqlite3 as dbdrv
 import sys
@@ -48,7 +48,7 @@ import networkx as nx
 import numpy as np
 import pygraphviz as pgv
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 ORIGINAL_COLOR = (87, 87, 87)
 YELLOW_COLOR = (255, 255, 0)
@@ -148,11 +148,9 @@ class GraphPlayer(object):
             gexf_list = gf.readlines()
         logger.info("Gexf file '%s' loaded", gexf_file)
         with open(self.status_path) as f:
-            for i, line in enumerate(f):
+            for _, line in enumerate(f):
                 colour_dict = dict()
-                colour_dict[
-                    "{}"
-                ] = '<viz:color r="%d" g="%d" b="%d"></viz:color>\n' % (
+                colour_dict["{}"] = '<viz:color r="%d" g="%d" b="%d"></viz:color>\n' % (
                     ORIGINAL_COLOR[0],
                     ORIGINAL_COLOR[1],
                     ORIGINAL_COLOR[2],
@@ -180,9 +178,7 @@ class GraphPlayer(object):
                             if gexf_line.find("<node id=") > -1:
                                 # <node id="38345" label="38345">
                                 # 38345
-                                node_id = gexf_line.split()[1].split("=")[1][
-                                    1:-1
-                                ]
+                                node_id = gexf_line.split()[1].split("=")[1][1:-1]
                             output_lines.append(gexf_line)
                 # each line generate a new file
                 new_gexf = "{0}/{1}.gexf".format(out_dir, ts)
@@ -206,7 +202,7 @@ class GraphPlayer(object):
                 if remove_gexf:
                     try:
                         os.remove(new_gexf)
-                    except:
+                    except OSError:
                         pass
 
     def get_downstream_drop_ids(self, dropspec):
@@ -233,7 +229,7 @@ class GraphPlayer(object):
         logger.info("All nodes added")
 
         for ip, droplist in self.node_graph_dict.iteritems():
-            for gnid, dropids in droplist:
+            for _, dropids in droplist:
                 for did in dropids:
                     tip = self.gnid_ip_dict[self.oid_gnid_dict[did]]
                     k = "{0}_{1}".format(ip, tip)
@@ -245,9 +241,7 @@ class GraphPlayer(object):
 
         return G
 
-    def get_state_changes(
-        self, gexf_file, grep_log_file, steps=400, out_dir=None
-    ):
+    def get_state_changes(self, gexf_file, grep_log_file, steps=400, out_dir=None):
         """
         grep -R "changed to state" --include=*.log . > statelog.txt
         the simulation time will be evenly divided up by "steps"
@@ -265,17 +259,11 @@ class GraphPlayer(object):
                 alllines = f.readlines()
             with open(csv_file, "w") as fo:
                 for line in alllines:
-                    ts = (
-                        line.split("[DEBUG]")[0].split("dlgNM.log:")[1].strip()
-                    )
-                    ts = int(
-                        dt.strptime(ts, "%Y-%m-%d %H:%M:%S,%f").strftime("%s")
-                    )
+                    ts = line.split("[DEBUG]")[0].split("dlgNM.log:")[1].strip()
+                    ts = int(dt.strptime(ts, "%Y-%m-%d %H:%M:%S,%f").strftime("%s"))
                     oid = line.split("oid=")[1].split()[0]
                     state = line.split()[-1]
-                    fo.write(
-                        "{0},{1},{2},{3}".format(ts, oid, state, os.linesep)
-                    )
+                    fo.write("{0},{1},{2},{3}".format(ts, oid, state, os.linesep))
         else:
             logger.info("csv file already exists: %s", csv_file)
 
@@ -379,9 +367,7 @@ class GraphPlayer(object):
         else:
             G = nx.Graph()
             do_subgraph = False
-        subgraph_dict = defaultdict(
-            list
-        )  # k - node-ip, v - a list of graph nodes
+        subgraph_dict = defaultdict(list)  # k - node-ip, v - a list of graph nodes
         oid_gnid_dict = dict()
 
         for i, oid in enumerate(self.pg_spec.keys()):
@@ -431,19 +417,18 @@ class GraphPlayer(object):
 
 
 if __name__ == "__main__":
-    """
-    1. create edge list from 'monitor_g.log'
-    2. run gephi manully to (1) finalise the layout, and
-                            (2) store the layout in the gexf file
-    3. alternatively, one can use existing gexf file from previous runs
+    # 1. create edge list from 'monitor_g.log'
+    # 2. run gephi manully to (1) finalise the layout, and
+    #                         (2) store the layout in the gexf file
+    # 3. alternatively, one can use existing gexf file from previous runs
+    #
+    # e.g. python monitor_replayer.py -x /Users/Chen/Documents/FromWeb/Galaxy/2016-06-30/galaxy.gexf
+    # -r /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/logs/2016-07-15_11-59-21/statelog.txt
+    # -u /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/gen -o rrr -d eee
+    # -l /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/vis.log
+    # -g /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/logs/2016-07-15_11-59-21/0/monitor_g.log
+    # -t /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/logs/2016-07-15_11-59-21/0/monitor_g.log
 
-    e.g. python monitor_replayer.py -x /Users/Chen/Documents/FromWeb/Galaxy/2016-06-30/galaxy.gexf
-    -r /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/logs/2016-07-15_11-59-21/statelog.txt
-    -u /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/gen -o rrr -d eee
-    -l /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/vis.log
-    -g /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/logs/2016-07-15_11-59-21/0/monitor_g.log
-    -t /Users/Chen/Documents/FromWeb/Galaxy/2016-07-15/logs/2016-07-15_11-59-21/0/monitor_g.log
-    """
     parser = optparse.OptionParser()
     parser.add_option(
         "-g",
@@ -542,15 +527,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
-    logging.basicConfig(
-        filename=options.log_file, level=logging.DEBUG, format=FORMAT
-    )
+    logging.basicConfig(filename=options.log_file, level=logging.DEBUG, format=FORMAT)
 
     if options.edgelist and options.dot_file is not None:
         logger.info("Loading networx graph from file %s", options.graph_path)
         gp = GraphPlayer(options.graph_path, options.status_path)
-        g = gp.build_drop_fullgraphs(graph_lib="networkx")
-        nx.write_edgelist(g, options.dot_file)
+        g_full = gp.build_drop_fullgraphs(graph_lib="networkx")
+        nx.write_edgelist(g_full, options.dot_file)
         sys.exit(0)
 
     if None == options.output_file or None == options.dot_file:
@@ -558,21 +541,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     gp = GraphPlayer(options.graph_path, options.status_path)
-    # gp.parse_status(options.gexf_file, out_dir=options.gexf_output_dir)
     gp.get_state_changes(
         options.gexf_file,
         options.grep_log_file,
         out_dir=options.gexf_output_dir,
     )
-    """
-    g = gp.build_node_graph()
-    #g = gp.build_drop_fullgraphs(options.graph_path, do_subgraph=options.subgraph)
-    g.write(options.dot_file)
-    logger.info("Graph viz obj created")
-    g.layout(prog='sfdp', args='-Goverlap=prism -Gsize=67!')
-    #g.layout(prog='sfdp')
-    #g.layout(prog='dot')
-    logger.info("Graph viz layout computed")
-    g.draw(options.output_file)
-    logger.info("Graph viz file drawn to: {0}".format(options.output_file))
-    """

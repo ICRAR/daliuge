@@ -36,8 +36,6 @@ import socket
 from dlg.common.reproducibility.reproducibility import init_runtime_repro_data
 from dlg.utils import createDirIfMissing
 
-from dlg import constants
-# from .. import constants
 from dlg import droputils
 from dlg import graph_loader
 from dlg import rpc
@@ -60,7 +58,7 @@ from dlg.exceptions import (
 )
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class SessionStates:
@@ -82,10 +80,11 @@ class LeavesCompletionListener(object):
         # TODO: be thread-safe
         self._completed += 1
         logger.debug(
-            "%d/%d leaf drops completed on session %s",
+            "%d/%d leaf drops completed on session %s during event %s",
             self._completed,
             self._nexpected,
             self._session.sessionId,
+            evt
         )
         if self._completed == self._nexpected:
             self._session.finish()
@@ -109,14 +108,14 @@ class ReproFinishedListener(object):
             if not self._session.reprostatus:
                 logger.debug("Building Reproducibility BlockDAG")
                 new_reprodata = init_runtime_repro_data(
-                    self._session._graph, self._session._graphreprodata
+                    self._session.graph, self._session.graphreprodata
                 ).get("reprodata", {})
                 logger.debug(
                     "Reprodata for %s is %s",
                     self._session.sessionId,
                     json.dumps(new_reprodata),
                 )
-                self._session._graphreprodata = new_reprodata
+                self._session.graphreprodata = new_reprodata
                 self._session.reprostatus = True
                 self._session.write_reprodata()
 
@@ -130,6 +129,7 @@ class EndListener(object):
         self._session = session
 
     def handleEvent(self, evt):
+        logger.info("Handling event %s", evt)
         self._session.end()
 
 
@@ -160,7 +160,7 @@ class Session(object):
     graph has finished the session is moved to FINISHED.
     """
 
-    def __init__(self, sessionId, nm=None):
+    def __init__(self, sessionId, nm: "NodeManager"=None):
         self._sessionId = sessionId
         self._graph = {}  # key: oid, value: dropSpec dictionary
         self._drops = {}  # key: oid, value: actual drop object
@@ -185,7 +185,7 @@ class Session(object):
         os.environ.update({"DLG_SESSION_ID": sessionId})
 
         class SessionFilter(logging.Filter):
-            def __init__(self, sessionId):
+            def __init__(self, sessionId): #pylint: disable=super-init-not-called
                 self.sessionId = sessionId
 
             def filter(self, record):
@@ -195,11 +195,11 @@ class Session(object):
         fmt += "[%(drop_uid)10.10s] "
         fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
         fmt = logging.Formatter(fmt)
-        fmt.converter = time.gmtime
+        if self._nm:
+            fmt.converter = time.localtime if self._nm.use_local_time else time.gmtime
+        else:
+            fmt.converter = time.gmtime
 
-        # logdir = utils.getDlgLogsDir()
-        # if self._nm is not None:
-        #     logdir = self._nm.logdir
         logfile = generateLogFileName(self._sessionDir, self.sessionId)
         try:
             self.file_handler = logging.FileHandler(logfile)
@@ -236,10 +236,6 @@ class Session(object):
     @property
     def drops(self):
         return self._drops
-
-    @property
-    def reprodata(self):
-        return self._graphreprodata
 
     @property
     def reprostatus(self):
@@ -293,8 +289,11 @@ class Session(object):
 
         # This will check the consistency of each dropSpec
         logger.debug("Trying to add graphSpec:")
-        for x in graphSpec:
-            logger.debug("%s: %s", x, x.keys())
+        logger.debug("Number of drops: %s", len(graphSpec))
+
+        # This is very excessive and should not be done in production
+        # for x in graphSpec:
+        #     logger.debug("%s: %s", x, x.keys())
         try:
             graphSpecDict, self._graphreprodata = graph_loader.loadDropSpecs(graphSpec)
             # Check for duplicates
@@ -390,7 +389,7 @@ class Session(object):
 
         try:
             self._roots = graph_loader.createGraphFromDropSpecList(
-                self._graph.values(), session=self
+                list(self._graph.values()), session=self
             )
 
         except KeyError as e:
@@ -414,7 +413,7 @@ class Session(object):
             # This information is usually not necessary, but there are cases in
             # which we actually need it (like in the DynlibProcApp)
             if self._nm:
-                drop._rpc_endpoint = self._nm.rpc_endpoint
+                drop.rpc_endpoint = self._nm.rpc_endpoint
 
             # Register them with the error handler
             if event_listeners:
@@ -531,9 +530,7 @@ class Session(object):
             droprels = [DROPRel(*x) for x in droprels]
 
             # Sanitize the host/rpc_port info if needed
-            rpc_port = host.rpc_port #constants.NODE_DEFAULT_RPC_PORT
-            # if type(host) is tuple:
-            #     host, _, rpc_port = host
+            rpc_port = host.rpc_port
 
             # Store which drops should receive events from which remote drops
             dropsubs = collections.defaultdict(set)
@@ -641,6 +638,21 @@ class Session(object):
 
         return statusDict
 
+    def getDropLogs(self, drop_oid: str):
+        """
+        Retrieve the logs stored in the given DROP
+        :param drop_oid: drop_oid
+
+        :return:
+        """
+        return {"session": self.sessionId,
+                "status": self.status,
+                "oid": drop_oid,
+                "logs": self._drops[drop_oid].getLogs()}
+                # "stderr": self._drops[drop_oid].getStdError(),
+                # "stdout": self._drops[drop_oid].getStdOut()}
+
+
     @track_current_session
     def cancel(self):
         status = self.status
@@ -663,6 +675,18 @@ class Session(object):
 
     def getGraph(self):
         return dict(self._graph)
+
+    @property
+    def graph(self):
+        return self._graph
+
+    @property
+    def graphreprodata(self):
+        return self._graphreprodata
+
+    @graphreprodata.setter
+    def graphreprodata(self, data):
+        self._graphreprodata = data
 
     def destroy(self):
         try:
@@ -688,8 +712,9 @@ class Session(object):
         try:
             drop = self._drops[uid]
             return getattr(drop, prop_name)
-        except AttributeError:
-            raise DaliugeException("%r has no property called %s" % (drop, prop_name))
+        except AttributeError as e:
+            raise DaliugeException(
+                "%r has no property called %s" % (drop, prop_name)) from e
 
     def call_drop(self, uid, method, *args):
         if uid not in self._drops:
@@ -697,8 +722,9 @@ class Session(object):
         try:
             drop = self._drops[uid]
             m = getattr(drop, method)
-        except AttributeError:
-            raise DaliugeException("%r has no method called %s" % (drop, method))
+        except AttributeError as e:
+            raise DaliugeException(
+                "%r has no method called %s" % (drop, method)) from e
         return m(*args)
 
     # Support for the 'with' keyword

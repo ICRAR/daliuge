@@ -144,7 +144,7 @@
                     <a type="button" class="close material-icons" data-dismiss="modal">close</a>
                 </div>
                 <div class="modal-body">
-                    <form action="/gen_pg" method="get" target="blank" name="deploy_target" id="pg_form" >
+                    <form action="/gen_pg" method="get" target="deploy_target" name="deploy_target" id="pg_form" >
                         <div id="neccessaryHiddenItems">
                             <input id="managerUrlInput" type="text" name="dlg_mgr_url" value="http://localhost:8001" size="40" style="font-size:16px;">
                             <input type="checkbox" id="dlg_mgr_deploy" name="dlg_mgr_deploy" value="deploy" checked>
@@ -152,7 +152,7 @@
                         </div>
                         
                     </form>
-                    <form action="/gen_pg_helm" method="get" id="pg_helm_form" target="_blank" name="deploy_helm_target">
+                    <form action="/gen_pg_helm" method="get" id="pg_helm_form" target="deploy_target" name="deploy_helm_target">
                         <input type="checkbox" id="dlg_helm_deploy" style="visibility:hidden;" name="dlg_helm_deploy" value="helm_deploy" checked>
                         <input type="hidden" name="pgt_id" value="{{pgt_view_json_name}}">
                     </form>

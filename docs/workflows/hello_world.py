@@ -1,6 +1,6 @@
 #
 #    ICRAR - International Centre for Radio Astronomy Research
-#    (c) UWA - The University of Western Australia, 2015
+#    (c) UWA - The University of Western Australia
 #    Copyright by UWA (in the framework of the ICRAR)
 #    All rights reserved
 #
@@ -20,30 +20,27 @@
 #    MA 02111-1307  USA
 #
 
-try:
-    from importlib.resources import files, as_file
-except ModuleNotFoundError:
-    from importlib_resources import files
+"""
+Basic Hello World script for the basic.rst tutorial.
 
-import daliuge_tests.dropmake as test_graphs
+Designed to mimic the functionality of dlg.apps.simple.HelloWorld, which takes
+a 'greet' parameter as input and returns "Hello " + greet.
+"""
+import argparse
 
-
-def get_lg_fpath(test_type, f_name):
+def hello_world(greet: str):
     """
-    Get the test data file path based on the logical graph name and type of file we want
-    :param type: str, type of test data (logical_graph, pickle, pg_spec) we are comparing
-    :param f_name: name of the original logical graph created in Eagle
-    :return: str, full path of the file
+     Designed to mimic the functionality of dlg.apps.simple.HelloWorld, which takes
+    a 'greet' parameter as input and returns "Hello " + greet.
+
+    :param greet: The 'item' we are greeting.
+    :return: str
     """
-    f_dir = f"{files(test_graphs)}/"
+    return f"Hello, {greet}"
 
-    if test_type == "pickle":
-        f_name = f_name.split(".")[0] + ".pkl"
-        f_dir += test_type
-    elif test_type == "pg_spec":
-        f_name = f_name.split(".")[0] + ".json"
-        f_dir += test_type
-    else:
-        f_dir += "logical_graphs"
-
-    return f"{f_dir}/{f_name}"
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--greet", type=str, default="World",
+                        help="The greeting we want to apply")
+    args = parser.parse_args() 
+    print(hello_world(args.greet))

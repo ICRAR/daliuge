@@ -133,7 +133,7 @@ from ..ddap_protocol import DROPStates, DROPPhases, AppDROPStates
 from ..drop import AbstractDROP
 from ..data.drops.container import ContainerDROP
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class DataLifecycleManagerBackgroundTask(threading.Thread):
@@ -149,7 +149,7 @@ class DataLifecycleManagerBackgroundTask(threading.Thread):
         logger.info("Starting %s running every %.3f [s]", name, self._period)
 
     def run(self):
-        ev = self._dlm._finishedEvent
+        ev = self._dlm.finishedEvent
         dlm = self._dlm
         p = self._period
         while True:
@@ -212,9 +212,8 @@ class DataLifecycleManager:
     An object that deals with automatic data drop replication and deletion.
     """
 
-    def __init__(
-        self, check_period=0, cleanup_period=0, enable_drop_replication=False
-    ):
+    def __init__(self, check_period=0, cleanup_period=0, enable_drop_replication=False):
+        self.finishedEvent = threading.Event()
         self._reg = registry.InMemoryRegistry()
         self._listener = DropEventListener(self)
         self._enable_drop_replication = enable_drop_replication
@@ -233,14 +232,11 @@ class DataLifecycleManager:
         self._cleanup_period = cleanup_period
         self._drop_checker = None
         self._drop_garbage_collector = None
-        self._finishedEvent = threading.Event()
 
     def startup(self):
         # Spawn the background threads
         if self._check_period:
-            self._drop_checker = DROPChecker(
-                "DropChecker", self, self._check_period
-            )
+            self._drop_checker = DROPChecker("DropChecker", self, self._check_period)
             self._drop_checker.start()
         if self._cleanup_period:
             self._drop_garbage_collector = DROPGarbageCollector(
@@ -252,7 +248,7 @@ class DataLifecycleManager:
         logger.info("Cleaning up the DLM")
 
         # Join the background threads
-        self._finishedEvent.set()
+        self.finishedEvent.set()
         if self._drop_checker:
             self._drop_checker.join()
         if self._drop_garbage_collector:
@@ -293,8 +289,7 @@ class DataLifecycleManager:
             # are finished using this DROP
             if not drop.persist and drop.expireAfterUse:
                 allDone = all(
-                    c.execStatus
-                    in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
+                    c.execStatus in [AppDROPStates.FINISHED, AppDROPStates.ERROR]
                     for c in drop.consumers
                 )
                 if not allDone:
@@ -467,9 +462,7 @@ class DataLifecycleManager:
         Remove drops from DLM's monitoring
         """
         self._drops = {
-            oid: drop
-            for oid, drop in self._drops.items()
-            if oid not in drop_oids
+            oid: drop for oid, drop in self._drops.items() if oid not in drop_oids
         }
 
     def handleOpenedDrop(self, oid, uid):
@@ -489,12 +482,10 @@ class DataLifecycleManager:
 
         drop = self._drops[uid]
         if drop.persist and self.isReplicable(drop):
-            logger.debug(
-                "Replicating %r because it's marked to be persisted", drop
-            )
+            logger.debug("Replicating %r because it's marked to be persisted", drop)
             try:
                 self.replicateDrop(drop)
-            except:
+            except RuntimeError:
                 logger.exception("Problem while replicating %r", drop)
 
     def isReplicable(self, drop):
@@ -507,7 +498,7 @@ class DataLifecycleManager:
 
         # Check that the DROP is complete already
         if drop.status != DROPStates.COMPLETED:
-            raise Exception("%r not in COMPLETED state" % (drop,))
+            raise RuntimeError("%r not in COMPLETED state" % (drop,))
 
         # Get the size of the DROP. This cannot currently be done in some of them,
         # like in the AbstractDROP
@@ -520,9 +511,7 @@ class DataLifecycleManager:
         availableSpace = store.getAvailableSpace()
 
         if size > availableSpace:
-            raise Exception(
-                "Cannot replicate DROP to store %s: not enough space left"
-            )
+            raise RuntimeError("Cannot replicate DROP to store %s: not enough space left")
 
         # Create new DROP and write the contents of the original into it
         # TODO: In a real world application this will probably happen in a separate
@@ -547,9 +536,7 @@ class DataLifecycleManager:
         # Dummy, but safe, new UID
         newUid = "uid:" + "".join(
             [
-                random.SystemRandom().choice(
-                    string.ascii_letters + string.digits
-                )
+                random.SystemRandom().choice(string.ascii_letters + string.digits)
                 for _ in range(10)
             ]
         )

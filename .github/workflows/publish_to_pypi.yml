@@ -1,0 +1,163 @@
+name: Publish Python distribution to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-common:
+    name: Build distribution 📦
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install pypa/build
+      run: >-
+        python3 -m
+        pip install
+        build
+        --user
+    - name: Build a binary wheel and a source tarball
+      run: | 
+        cd daliuge-common
+        python3 -m build --sdist && python -m build --wheel
+    - name: Store the distribution packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: daliuge-common-dist
+        path: daliuge-common/dist/
+
+  build-engine:
+    name: Build daluge-engine
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install pypa/build
+      run: >-
+        python3 -m
+        pip install
+        build
+        --user
+    - name: Build a binary wheel and a source tarball
+      run: | 
+        cd daliuge-engine
+        python3 -m build --sdist && python -m build --wheel
+    - name: Store the distribution packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: daliuge-engine-dist
+        path: daliuge-engine/dist/
+
+  build-translator:
+    name: Build daluge-translator
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install pypa/build
+      run: >-
+        python3 -m
+        pip install
+        build
+        --user
+    - name: Build a binary wheel and a source tarball
+      run: | 
+        cd daliuge-translator
+        python3 -m build --sdist && python -m build --wheel
+    - name: Store the distribution packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: daliuge-translator-dist
+        path: daliuge-translator/dist/
+
+  publish-common:
+    name: Publish daliuge-common
+    needs:
+    - build-common
+    runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/daliuge-common
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: daliuge-common-dist
+        path: dist/
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+
+  publish-engine:
+    name: Publish daliuge-engine
+    needs:
+    - build-engine
+    runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/daliuge-engine
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: daliuge-engine-dist
+        path: dist/
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+
+  publish-translator:
+    name: Publish daliuge-translator
+    needs:
+    - build-translator
+    runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/daliuge-translator
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: daliuge-translator-dist
+        path: dist/
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+

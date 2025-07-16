@@ -19,13 +19,11 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 import random
 import os
 import logging
 from typing import Union
-
-from dlg.ddap_protocol import DROPStates
 
 from dlg.drop import AbstractDROP, track_current_drop
 from dlg.data.io import (
@@ -45,12 +43,12 @@ try:
     from crc32c import crc32c  # @UnusedImport
 
     _checksumType = ChecksumTypes.CRC_32C
-except:
-    from binascii import crc32  # @Reimport
+except ImportError:
+    from binascii import crc32 # pylint: disable=unused-import
 
     _checksumType = ChecksumTypes.CRC_32
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 ##
@@ -65,7 +63,7 @@ logger = logging.getLogger(__name__)
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
 # @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @par EAGLE_END
 class DataDROP(AbstractDROP):
     """
@@ -153,7 +151,7 @@ class DataDROP(AbstractDROP):
         if self._wio:
             try:
                 self._wio.close()
-            except:
+            except IOError:
                 pass  # this will make sure that a previous issue does not cause the graph to hang!
                 # raise Exception("Problem closing file!")
             self._wio = None
@@ -187,7 +185,7 @@ class DataDROP(AbstractDROP):
             return self._refCount > 0
 
     @track_current_drop
-    def write(self, data: Union[bytes, memoryview], **kwargs):
+    def write(self, data: Union[bytes, memoryview]):
         """
         Writes the given `data` into this DROP. This method is only meant
         to be called while the DROP is in INITIALIZED or WRITING state;
@@ -208,9 +206,9 @@ class DataDROP(AbstractDROP):
             self._wio = self.getIO()
             try:
                 self._wio.open(OpenMode.OPEN_WRITE)
-            except:
+            except IOError as e:
                 self.status = DROPStates.ERROR
-                raise Exception("Problem opening drop for write!")
+                raise IOError("Problem opening drop for write!") from e
         nbytes = self._wio.write(data)
         nbytes = 0 if nbytes is None else nbytes
 
@@ -265,6 +263,8 @@ class DataDROP(AbstractDROP):
         if self._checksum is None:
             self._checksum = 0
             self._checksumType = _checksumType
+        if isinstance(chunk, str):
+            chunk = bytes(chunk, encoding="utf8")
         self._checksum = crc32c(chunk, self._checksum)
 
     @property
@@ -284,6 +284,8 @@ class DataDROP(AbstractDROP):
             io = self.getIO()
             io.open(OpenMode.OPEN_READ)
             data = io.read(65536)
+            if isinstance(data, str):
+                data = bytes(data, encoding="utf8")
             while data is not None and len(data) > 0:
                 self._updateChecksum(data)
                 data = io.read(65536)
@@ -353,7 +355,7 @@ class DataDROP(AbstractDROP):
         """
 
         try:
-            dropInputPorts = self.parameters['producers']
+            dropInputPorts = self.parameters["producers"]
         except KeyError:
             logging.debug("No producers available for drop: %s", self.uid)
             return
@@ -362,7 +364,9 @@ class DataDROP(AbstractDROP):
         finalDropPortMap = {}  # Final mapping of named port to value stored in producer
 
         for p in self.producers:
-            params = p.parameters['outputs']
+            producerUid = p.uid
+            producerPortValueMap[producerUid] = {}
+            params = p.parameters["outputs"]
             for param in params:
                 try:
                     key = list(param.keys())[0]
@@ -371,35 +375,28 @@ class DataDROP(AbstractDROP):
                     continue
                 portName = param[key]
                 portValue = ""
-                producerUid = p.uid
                 if portName in p.parameters:
                     portValue = p.parameters[param[key]]
-                # TODO This currently only allows 1 UID -> Portname/Value
-                # Investigate UID -> [Portname1:Value1, Portnam2:value2,..,]
-                producerPortValueMap[producerUid] = {"portname": portName,
-                                                     "value": portValue}
+                producerPortValueMap[producerUid][portName] = portValue
 
         for port in dropInputPorts:
             try:
                 port.items()
             except AttributeError:
-                logging.debug("Producer %s does not have named ports", p.uid)
+                logging.debug("Producer %s does not have named ports", port.uid)
                 continue
-            for uid, portname in port.items():
+            for uid, input_port_name in port.items():
                 try:
-                    print(uid, portname)
-                    tmp = producerPortValueMap[uid]
-                    if tmp['portname'] == portname:
-                        finalDropPortMap[portname] = tmp['value']
+                    ouput_port_name = self.parameters["port_map"][input_port_name]
+                    if ouput_port_name in producerPortValueMap[uid]:
+                        finalDropPortMap[input_port_name] = producerPortValueMap[uid][
+                            ouput_port_name]
                 except KeyError:
-                    print("Not available")
+                    logging.warning("%s not available.", input_port_name)
 
         for portname in finalDropPortMap:
             if portname in self.parameters:
                 self.parameters[portname] = finalDropPortMap[portname]
-
-        self._updatedPorts = True
-
 
     @abstractmethod
     def getIO(self) -> DataIO:
@@ -421,7 +418,8 @@ class DataDROP(AbstractDROP):
         """
         return self.getIO().exists()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def dataURL(self) -> str:
         """
         A URL that points to the data referenced by this DROP. Different
@@ -478,7 +476,9 @@ class PathBasedDrop(object):
 # @param base_name data_base/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param persist True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
+# @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @par EAGLE_END
 class NullDROP(DataDROP):
     """

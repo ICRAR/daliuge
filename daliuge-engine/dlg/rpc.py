@@ -37,9 +37,9 @@ import zerorpc
 
 from dlg.manager.manager_data import Node
 
-from . import utils
+from dlg import utils
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class RPCObject(object):
@@ -189,7 +189,7 @@ class ZeroRPCClient(RPCClientBase):
 
     def run_zrpcclient(self, host, port, req_queue):
         if isinstance(host, Node):
-            host = host.host # split(":")[0]
+            host = host.host  # split(":")[0]
         client = zerorpc.Client("tcp://%s:%d" % (host, port), context=self._context)
 
         forwarder = gevent.spawn(self.forward_requests, req_queue, client)
@@ -209,9 +209,9 @@ class ZeroRPCClient(RPCClientBase):
     def process_response(self, req, async_response):
         try:
             x = ZeroRPCClient.response(async_response.get_nowait(), False)
-        except Exception as e:
-            if isinstance(e, gevent.Timeout):
-                raise RuntimeError("Timed out on AsyncResult.get_nowait")
+        except gevent.Timeout as e:
+            raise RuntimeError("Timed out on AsyncResult.get_nowait") from e
+        except RuntimeError as e:
             x = ZeroRPCClient.response(e, True)
         req.queue.put(x)
 
@@ -301,15 +301,15 @@ class ProxyInfo:
     @classmethod
     def from_data_drop(cls, drop):
         if isinstance(drop, DropProxy):
-            return drop._proxy_info
+            return drop.proxy_info
 
         # TODO: we can't use the RPC endpoint's host directly here, as that
         #       indicates the address the different servers *bind* to
         #       (and, for example, can be 0.0.0.0)
-        assert drop._rpc_endpoint
-        rpc_host, rpc_port = drop._rpc_endpoint
+        assert drop.rpc_endpoint
+        rpc_host, rpc_port = drop.rpc_endpoint
         rpc_host = utils.to_externally_contactable_host(rpc_host, prefer_local=True)
-        return cls(rpc_host, rpc_port, drop._dlg_session_id, drop.uid)
+        return cls(rpc_host, rpc_port, drop.dlg_session_id, drop.uid)
 
     def __repr__(self):
         return (
@@ -348,3 +348,11 @@ class DropProxy(object):
 
     def __repr__(self):
         return f"<DropProxy with {self._proxy_info}"
+
+    @property
+    def proxy_info(self) -> ProxyInfo:
+        """
+        Get ProxyInfo
+        :return:  the proxy info associated with the object
+        """
+        return self._proxy_info

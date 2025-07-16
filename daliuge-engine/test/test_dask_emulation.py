@@ -42,20 +42,28 @@ try:
 except ImportError:
     dask_delayed = None
 
+def none_func(a):
+    return None
 
 def add(x, y):
     return x + y
 
-
-def add_list(numbers):
-    return functools.reduce(add, numbers)
-
-
-def subtract(x, y):
+def subtract(x: float, y: float):
     return x - y
 
 
-def subtract_list(numbers):
+def add_list(numbers):
+    import functools
+    def add(x, y):
+        return x + y
+
+    return functools.reduce(add, numbers)
+
+
+def subtract_list(numbers: list):
+    def subtract(x: float, y: float):
+        return x - y
+    import functools
     return functools.reduce(subtract, numbers)
 
 
@@ -102,7 +110,6 @@ try:
 except:
     pass
 
-
 def sum_with_user_defined_default(a, b=MyType(10)):
     return a + b.x
 
@@ -129,7 +136,7 @@ class _TestDelayed(object):
         """
         delayed = self.delayed
         compute = self.compute
-
+        
         the_sum = delayed(add)(1.0, 2.0)
         the_sub = delayed(subtract)(4.0, 3.0)
         division = delayed(divide)(the_sum, the_sub)
@@ -143,17 +150,12 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        one, two, three, four = (
-            delayed(1.0),
-            delayed(2.0),
-            delayed(3.0),
-            delayed(4.0),
-        )
-        the_sum = delayed(add_list)([one, two])
-        the_sub = delayed(subtract_list)([four, three])
+        the_sum = delayed(add_list)([1.0, 2.0])
+        the_sub = delayed(subtract_list)([4.0, 3.0])
         division = delayed(divide)(the_sum, the_sub)
         parts = delayed(partition, nout=2)(division)
-        result = compute(delayed(add)(*parts))
+        x, y = parts
+        result = compute(delayed(add)(x,y))
         self.assertEqual(3.0, result)
 
     def test_compute_with_lists(self):
@@ -161,13 +163,10 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
-        one, two, three, four = (
-            delayed(1.0),
-            delayed(2.0),
-            delayed(3.0),
-            delayed(4.0),
-        )
-        doubles = [delayed(lambda i: i * 2)(x) for x in (one, two, three, four)]
+        def double(x):
+            return x*2
+
+        doubles = [delayed(double)(x) for x in (1.0, 2.0, 3.0, 4.0)]
         result = compute(doubles)
         self.assertEqual([2.0, 4.0, 6.0, 8.0], result)
 
@@ -175,7 +174,7 @@ class _TestDelayed(object):
         """Test that calling delayed(f)(None) works"""
         delayed = self.delayed
         compute = self.compute
-        self.assertEqual(compute(delayed(lambda _: None)(None)), None)
+        self.assertEqual(compute(delayed(none_func)(None)), None)
 
     def test_with_args(self):
         """Tests that delayed() works correctly with positional args"""
@@ -207,9 +206,13 @@ class _TestDelayed(object):
         delayed = self.delayed
         compute = self.compute
 
+        def sum_with_user_defined_default(a, b=MyType(10)):
+            return a + b.x
+
         self.assertEqual(compute(delayed(sum_with_user_defined_default)(1)), 11)
+        arg = MyType(20)
         self.assertEqual(
-            compute(delayed(sum_with_user_defined_default)(1, MyType(20))), 21
+            compute(delayed(sum_with_user_defined_default)(1, arg)), 21
         )
 
     def test_with_noniterable_nout_1(self):
@@ -232,8 +235,9 @@ class _TestDelayed(object):
         # Like last test above, but result is actually iterable
         delayed = self.delayed
         compute = self.compute
+        def listify(x):
+            return [x]
 
-        listify = lambda _x: [_x]
         for x in delayed(listify, nout=1)(1):
             results = compute(delayed(add)(x, 2))
         self.assertEqual(results, 3)

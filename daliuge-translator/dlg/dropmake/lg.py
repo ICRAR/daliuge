@@ -26,9 +26,6 @@ which will then be deployed and monitored by the Physical Graph Manager
 """
 import copy
 
-if __name__ == "__main__":
-    __package__ = "dlg.dropmake"
-
 import collections
 import datetime
 import logging
@@ -36,15 +33,13 @@ import time
 from itertools import product
 import numpy as np
 
-from dlg.common import CategoryType
-from dlg.common import dropdict
+from dlg.common import CategoryType, dropdict
+
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
-    getNodesKeyDict,
     get_lg_ver_type,
     convert_construct,
     convert_fields,
-    convert_mkn,
     convert_subgraphs,
     LG_VER_EAGLE,
     LG_VER_EAGLE_CONVERTED,
@@ -57,7 +52,7 @@ from dlg.dropmake.definition_classes import Categories
 from dlg.dropmake.lg_node import LGNode
 from dlg.dropmake.graph_config import apply_active_configuration
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class LG:
@@ -92,7 +87,6 @@ class LG:
             lg = apply_active_configuration(lg)
 
         if LG_VER_EAGLE == lgver:
-            lg = convert_mkn(lg)
             lg = convert_fields(lg)
             lg = convert_construct(lg)
             lg = convert_subgraphs(lg)
@@ -115,20 +109,20 @@ class LG:
         for jd in lg["nodeDataArray"]:
             lgn = LGNode(jd, self._group_q, self._done_dict, ssid)
             self._lgn_list.append(lgn)
-            node_ouput_ports = jd.get("outputPorts", [])
-            node_ouput_ports += jd.get("outputLocalPorts", [])
+            node_ouput_ports = jd.get("outputPorts", {})
+            node_ouput_ports.update(jd.get("outputLocalPorts", {}))
             # check all the outports of this node, and store "stream" output
             if len(node_ouput_ports) > 0:
-                for out_port in node_ouput_ports:
-                    if out_port.get("name", "").lower().endswith("stream"):
+                for name, out_port in node_ouput_ports.items():
+                    if name.lower().endswith("stream"):
                         stream_output_ports[out_port["Id"]] = jd["id"]
         # Need to go through the list again, since done_dict is recursive
         for lgn in self._lgn_list:
-            if lgn.is_start and lgn.jd["category"] not in [
+            if lgn.is_start and lgn.category not in [
                 Categories.COMMENT,
                 Categories.DESCRIPTION,
             ]:
-                if lgn.jd["category"] == Categories.VARIABLES:
+                if lgn.category == Categories.VARIABLES:
                     self._g_var.append(lgn)
                 else:
                     self._start_list.append(lgn)
@@ -137,10 +131,12 @@ class LG:
 
         for lk in self._lg_links:
             src = self._done_dict[lk["from"]]
+            srcPort = lk.get("fromPort", None)
             tgt = self._done_dict[lk["to"]]
+            tgtPort = lk.get("toPort", None)
             self.validate_link(src, tgt)
-            src.add_output(tgt)
-            tgt.add_input(src)
+            src.add_output(tgt, srcPort)
+            tgt.add_input(src, tgtPort)
             # check stream links
             from_port = lk.get("fromPort", "__None__")
             if stream_output_ports.get(from_port, None) == lk["from"]:
@@ -256,7 +252,7 @@ class LG:
             if lpcxt is None:
                 return "{0}".format(idx)
             else:
-                return "{0}/{1}".format(lpcxt, idx)
+                return "{0}-{1}".format(lpcxt, idx)
         else:
             return None
 
@@ -290,22 +286,24 @@ class LG:
                 if lgn.is_loop:
                     if len(grp_starts) == 0 or len(grp_ends) == 0:
                         raise GInvalidNode(
-                            "Loop '{0}' should have at least one Start "
-                            + "Component and one End Data".format(lgn.name)
+                            f"Loop {lgn.name} should have at least one Start "
+                            "Component and one End Data"
                         )
                     for ge in grp_ends:
                         for gs in grp_starts:  # make an artificial circle
                             lk = {}
-                            if gs not in ge._outputs:
+                            if gs not in ge.outputs:
                                 ge.add_output(gs)
-                            if ge not in gs._inputs:
+                            if ge not in gs.inputs:
                                 gs.add_input(ge)
                             lk["from"] = ge.id
                             lk["to"] = gs.id
                             self._lg_links.append(lk)
-                            logger.debug("Loop constructed: %s", gs._inputs)
+                            logger.debug("Loop constructed: %s", gs.inputs)
                 else:
-                    for gs in (
+                    for (
+                        gs
+                    ) in (
                         gs_list
                     ):  # add artificial logical links to the "first" children
                         lgn.add_input(gs)
@@ -320,15 +318,14 @@ class LG:
             shape = []
             if lgk is not None and len(lgk) > 1:
                 multikey_grpby = True
-                scatters = lgn.group_by_scatter_layers[
-                    2
-                ]  # inner most scatter to outer most scatter
-                shape = [
-                    x.dop for x in scatters
-                ]  # inner most is also the slowest running index
+                # inner most scatter to outer most scatter
+                scatters = lgn.group_by_scatter_layers[2]
+                # inner most is also the slowest running index
+                shape = [x.dop for x in scatters]
 
             for i in range(lgn.dop):
-                miid = "{0}/{1}".format(iid, i)
+                # todo - create iid(?)
+                miid = f"{iid}-{i}"
                 if multikey_grpby:
                     # set up more refined hierarchical context for group by with multiple keys
                     # recover multl-dimension indexes from i
@@ -347,10 +344,12 @@ class LG:
                         # self._drop_dict['new_added'].append(src_drop['gather-data_drop'])
                 if recursive:
                     for child in lgn.children:
-                        self.lgn_to_pgn(child, miid, self.get_child_lp_ctx(lgn, lpcxt, i))
+                        self.lgn_to_pgn(
+                            child, miid, self.get_child_lp_ctx(lgn, lpcxt, i)
+                        )
                 else:
                     for child in lgn.children:
-                    # Approach next 'set' of children
+                        # Approach next 'set' of children
                         c_copy = copy.deepcopy(child)
                         c_copy.happy = True
                         c_copy.loop_ctx = self.get_child_lp_ctx(lgn, lpcxt, i)
@@ -361,7 +360,7 @@ class LG:
                 if lgn.loop_ctx:
                     lpcxt = lgn.loop_ctx
                     iid = lgn.iid
-                miid = "{0}/{1}".format(iid, i)
+                miid = "{0}-{1}".format(iid, i)
                 src_drop = lgn.make_single_drop(miid, loop_ctx=lpcxt, proc_index=i)
                 self._drop_dict[lgn.id].append(src_drop)
         elif lgn.is_service:
@@ -369,7 +368,6 @@ class LG:
             pass
         elif lgn.is_subgraph and lgn.jd["isSubGraphApp"]:
             if lgn.loop_ctx:
-                lpcxt = lpcxt
                 iid = lgn.iid
             src_drop = lgn.make_single_drop(iid, loop_ctx=lpcxt)
             if lgn.subgraph:
@@ -424,14 +422,23 @@ class LG:
             Categories.DYNLIB_APP,
             Categories.DYNLIB_PROC_APP,
             Categories.PYTHON_APP,
+            Categories.DALIUGE_APP
         ] and t_type in [
             Categories.COMPONENT,
             Categories.DYNLIB_APP,
             Categories.DYNLIB_PROC_APP,
             Categories.PYTHON_APP,
+            Categories.DALIUGE_APP
         ]
 
-    def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink):
+    def _link_drops(
+        self,
+        slgn: LGNode,
+        tlgn: LGNode,
+        src_drop: dropdict,
+        tgt_drop: dropdict,
+        llink: dict,
+    ):
         """ """
         sdrop = None
         if slgn.is_gather:
@@ -458,11 +465,9 @@ class LG:
         t_type = tlgn.jd["categoryType"]
 
         if self._is_stream_link(s_type, t_type):
-            """
-            1. create a null_drop in the middle
-            2. link sdrop to null_drop
-            3. link tdrop to null_drop as a streamingConsumer
-            """
+            # 1. create a null_drop in the middle
+            # 2. link sdrop to null_drop
+            # 3. link tdrop to null_drop as a streamingConsumer
 
             dropSpec_null = dropdict(
                 {
@@ -482,11 +487,26 @@ class LG:
             tdrop.addStreamingInput(dropSpec_null, name="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
         elif s_type in ["Application", "Control"]:
-            sname = slgn._getPortName("outputPorts")
-            tname = tlgn._getPortName("inputPorts")
-            # logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
-            sdrop.addOutput(tdrop, name=sname)
-            tdrop.addProducer(sdrop, name=tname)
+            logger.debug("Getting source and traget port names and IDs of %s and %s", slgn.name, tlgn.name)
+            sname = slgn.getPortName("outputPorts", index=-1)
+            tname = tlgn.getPortName("inputPorts", index=-1)
+
+            sout_ids = []
+            # sname is dictionary of all output ports on the sDROP.
+            output_port = sname[llink["fromPort"]]
+            input_port = tname[llink["toPort"]]
+            # sdrop.addOutput(tdrop, name=output_port)
+            # tdrop.addProducer(sdrop, name=input_port)
+            if "port_map" not in tdrop:
+                tdrop["port_map"] = {input_port:output_port}
+            else:
+                tdrop["port_map"][input_port] = output_port
+
+            for output_port in sname.keys():
+                if tdrop["oid"] not in sout_ids:
+                    sdrop.addOutput(tdrop, name=output_port)
+                    tdrop.addProducer(sdrop, name=output_port)
+                    sout_ids = [list(o.keys())[0] for o in sdrop["outputs"]]
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])
@@ -499,11 +519,12 @@ class LG:
                 self._gather_cache[gather_oid][2].append(tgt_drop)
             else:  # sdrop is a data drop
                 # there should be only one port, get the name
+                # ^ TODO This comment is no longer true, need to address
                 portId = llink["fromPort"] if "fromPort" in llink else None
-                sname = slgn._getPortName("outputPorts", portId=portId)
+                sname = slgn.getPortName("outputPorts", portId=portId)
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
-                tname = tlgn._getPortName("inputPorts", portId=portId)
+                tname = tlgn.getPortName("inputPorts", portId=portId)
                 # logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
                 # logger.debug(
                 #     ">>> link from %s to %s (%s) (%s)",
@@ -521,11 +542,6 @@ class LG:
                     sdrop.addStreamingConsumer(tdrop, name=sname)
                     tdrop.addStreamingInput(sdrop, name=sname)
                 else:
-                    # logger.debug(
-                    #     ">>> adding consumer %s to %s",
-                    #     tdrop["categoryType"],
-                    #     sdrop["categoryType"],
-                    # )
                     sdrop.addConsumer(tdrop, name=sname)
                     tdrop.addInput(sdrop, name=tname)
             if Categories.BASH_SHELL_APP == t_type:
@@ -582,18 +598,13 @@ class LG:
                         ):
                             # TODO merge this code into the function
                             # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                            tname = tlgn._getPortName(port="inputPorts")
+                            tname = tlgn.getPortName(port="inputPorts")
                             # Go through gather cache list
                             for gddrop in self._gather_cache[ga_drop["oid"]][1]:
                                 gddrop.addConsumer(tdrops[j], name=tname)
                                 tdrops[j].addInput(gddrop, name=tname)
                                 j += 1
 
-                            # if 'gather-data_drop' in ga_drop:
-                            #     gddrop = ga_drop['gather-data_drop'] # this is the "true" target (not source!) drop
-                            #     gddrop.addConsumer(tdrops[j])
-                            #     tdrops[j].addInput(gddrop)
-                            #     j += 1
                 elif slgn.is_subgraph or tlgn.is_subgraph:
                     pass
                 else:
@@ -628,9 +639,6 @@ class LG:
                             )
                         )
                     # first add the outer construct (scatter, gather, group-by) boundary
-                    # oc = slgn.group.group
-                    # if (oc is not None and (not oc.is_loop())):
-                    #     pass
                     loop_chunk_size = slgn.group.dop
                     for i, chunk in enumerate(
                         self._split_list(sdrops, loop_chunk_size)
@@ -644,10 +652,6 @@ class LG:
                                     tdrops[i * loop_chunk_size + j + 1],
                                     lk,
                                 )
-
-                    # for i, sdrop in enumerate(sdrops):
-                    #     if (i < lsd - 1):
-                    #         self._link_drops(slgn, tlgn, sdrop, tdrops[i + 1])
                 elif (
                     slgn.group is not None
                     and slgn.group.is_loop
@@ -701,7 +705,7 @@ class LG:
                     grpby_dict = collections.defaultdict(list)
                     layer_index = tlgn.group_by_scatter_layers[1]
                     for gdd in sdrops:
-                        src_ctx = gdd["iid"].split("/")
+                        src_ctx = gdd["iid"].split("-")
                         if tlgn.group_keys is None:
                             # the last bit of iid (current h id) is the local GrougBy key, i.e. inner most loop context id
                             gby = src_ctx[-1]
@@ -709,25 +713,25 @@ class LG:
                                 slgn.h_level - 2 == tlgn.h_level and tlgn.h_level > 0
                             ):  # groupby itself is nested inside a scatter
                                 # group key consists of group context id + inner most loop context id
-                                gctx = "/".join(src_ctx[0:-2])
-                                gby = gctx + "/" + gby
+                                gctx = "-".join(src_ctx[0:-2])
+                                gby = f"{gctx}-{gby}"
                         else:
                             # find the "group by" scatter level
                             gbylist = []
                             if slgn.group.is_groupby:  # a chain of group bys
                                 try:
                                     src_ctx = gdd["iid"].split("$")[1].split("-")
-                                except IndexError:
+                                except IndexError as e:
                                     raise GraphException(
                                         "The group by hiearchy in the multi-key group by '{0}' is not specified for node '{1}'".format(
                                             slgn.group.name, slgn.name
                                         )
-                                    )
+                                    ) from e
                             else:
                                 src_ctx.reverse()
                             for lid in layer_index:
                                 gbylist.append(src_ctx[lid])
-                            gby = "/".join(gbylist)
+                            gby = "-".join(gbylist)
                         grpby_dict[gby].append(gdd)
                     grp_keys = grpby_dict.keys()
                     if len(grp_keys) != len(tdrops):
@@ -743,10 +747,8 @@ class LG:
                         drop_list = grpby_dict[gk]
                         for drp in drop_list:
                             self._link_drops(slgn, tlgn, drp, grpby_drop, lk)
-                            """
-                            drp.addOutput(grpby_drop)
-                            grpby_drop.addInput(drp)
-                            """
+                            # drp.addOutput(grpby_drop)
+                            # grpby_drop.addInput(drp)
                 elif tlgn.is_gather:
                     self._unroll_gather_as_output(
                         slgn, tlgn, sdrops, tdrops, chunk_size, lk
@@ -756,7 +758,7 @@ class LG:
                     # to the physical graph as a node of type SERVICE_APP instead of APP
                     # per compute instance
                     tlgn["categoryType"] = "Application"
-                    tlgn["category"] = "PythonApp"
+                    tlgn["category"] = "DALiuGEApp"
                 elif tlgn.is_subgraph:
                     pass
                 else:
@@ -768,13 +770,13 @@ class LG:
             input_list = v[1]
             try:
                 output_drop = v[2][0]  # "peek" the first element of the output list
-            except:
+            except IndexError:
                 continue  # the gather hasn't got output drops, just move on
             llink = v[-1]
             for data_drop in input_list:
                 # TODO merge this code into the function
                 # def _link_drops(self, slgn, tlgn, src_drop, tgt_drop, llink)
-                sname = slgn._getPortName(ports="outputPorts")
+                sname = slgn.getPortName(ports="outputPorts")
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
@@ -786,7 +788,6 @@ class LG:
                 else:
                     data_drop.addConsumer(output_drop, name=sname)
                     output_drop.addInput(data_drop, name=sname)
-                # print(data_drop['nm'], data_drop['oid'], '-->', output_drop['nm'], output_drop['oid'])
 
         logger.info(
             "Unroll progress - %d links done for session %s",
@@ -807,16 +808,11 @@ class LG:
                     if "grp-data_drop" in sl_drop:
                         del sl_drop["grp-data_drop"]
             elif lgn.is_gather:
-                # lid_sub = "{0}-gather-data".format(lid)
                 del self._drop_dict[lid]
-                # for sl_drop in self._drop_dict[lid]:
-                #     if 'gather-data_drop' in sl_drop:
-                #         del sl_drop['gather-data_drop']
             elif lgn.is_subgraph:
                 # Remove the SubGraph construct drop
                 if lgn.jd["isSubGraphConstruct"]:
                     del self._drop_dict[lid]
-
                 else:
                     pass
 

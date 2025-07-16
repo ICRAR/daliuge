@@ -4,7 +4,7 @@
 .. _data_index:
 
 
-|daliuge| *Data* Component Developers Guide
+Data Component Developers Guide
 ###########################################
 
 This chapter describes what developers need to do to write a new data component that can be used as a Data Drop during the execution of a |daliuge| graph.

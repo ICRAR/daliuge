@@ -41,10 +41,9 @@ from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from dlg.drop import AbstractDROP
-    from dlg.apps.app_base import AppDROP
     from dlg.data.drops.data_base import DataDROP
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 # Used to check whether a command specifies via UID reference the path or
 # data URL of an input or output
@@ -88,7 +87,9 @@ class DROPWaiterCtx(object):
          a.setCompleted()
     """
 
-    def __init__(self, test, drops, timeout=1, expected_states:list[DROPStates] = None):
+    def __init__(
+        self, test, drops, timeout=1, expected_states: list[DROPStates] = None
+    ):
         self._drops = listify(drops)
         self._expected_states = expected_states or (
             DROPStates.COMPLETED,
@@ -127,6 +128,8 @@ def allDropContents(drop, bufsize=65536) -> bytes:
     Returns all the data contained in a given DROP
     """
     buf = io.BytesIO()
+    if hasattr(drop,"buf") and isinstance(drop.buf, io.StringIO):
+        buf = io.StringIO()
     desc = drop.open()
 
     while True:
@@ -233,7 +236,7 @@ def getLeafNodes(drops):
     ]
 
 
-def depthFirstTraverse(node: "AbstractDROP", visited: list[AbstractDROP]=None):
+def depthFirstTraverse(node: "AbstractDROP", visited: list[AbstractDROP] = None):
     """
     Depth-first iterator for a DROP graph.
 
@@ -362,7 +365,7 @@ class DROPFile(object):
         self.open()
         return self
 
-    def __exit__(self, typ, value, traceback):
+    def __exit__(self, typ, value, tb):
         self.close()
 
     def __del__(self):
@@ -371,24 +374,22 @@ class DROPFile(object):
 
 
 def has_path(x):
-    """Returns `True` if `x` has a `path` attribute"""
-    try:
-        getattr(x, "path")
-        return True
-    except:
-        return False
-
-
-def replace_path_placeholders(cmd, inputs, outputs):
     """
-    Replaces any placeholder found in ``cmd`` with the path of the respective
-    input or output Drop from ``inputs`` or ``outputs``.
-    Placeholders have the different formats:
+    :returns: `True` if `x` has a `path` attribute
+    """
+    return hasattr(x, "path")
 
-    * ``%iN``, with N starting from 0, indicates the path of the N-th element
-      from the ``inputs`` argument; likewise for ``%oN``.
-    * ``%i[X]`` indicates the path of the input with UID ``X``; likewise for
-      ``%o[X]``.
+
+def replace_placeholders(cmd, inputs, outputs):
+    """
+    Attemps to replace any placeholder found in ``cmd`` with the path of the respective
+    input or output Drop from ``inputs`` or ``outputs``.
+
+    This will attempt to use the value from the associated input or output DROP,
+    provided it has a `path` attribute.
+
+    Sometimes there will be no matching replacement, in which case the argument is not
+    replaced.
     """
 
     logger.debug(
@@ -397,24 +398,17 @@ def replace_path_placeholders(cmd, inputs, outputs):
         inputs.keys(),
         outputs.keys(),
     )
+    replacements = {**inputs, **outputs}
+    for attr, value in replacements.items():
+        try:
+            cmd = cmd.replace(f"{{{attr}}}", value.path)
+        except AttributeError:
+            logger.debug("Input %s does not have 'path' attr", attr)
 
-    for x, i in enumerate(inputs.values()):
-        pathRef = "%%i%d" % (x,)
-        if pathRef in cmd:
-            cmd = cmd.replace(pathRef, i.path)
-    for x, o in enumerate(outputs.values()):
-        pathRef = "%%o%d" % (x)
-        if pathRef in cmd:
-            cmd = cmd.replace(pathRef, o.path)
-
-    for uid, i in inputs.items():
-        pathRef = "%%i[%s]" % (uid,)
-        if pathRef in cmd:
-            cmd = cmd.replace(pathRef, i.path)
-    for uid, o in outputs.items():
-        pathRef = "%%o[%s]" % (uid,)
-        if pathRef in cmd:
-            cmd = cmd.replace(pathRef, o.path)
+        try:
+            cmd = cmd.replace(f"{{{attr}}}", value.dataUrl)
+        except AttributeError:
+            logger.debug("Input %s does not have 'dataUrl' attr", attr)
 
     logger.debug("Command after path placeholder replacement is: %s", cmd)
 
@@ -425,12 +419,12 @@ def replace_dataurl_placeholders(cmd, inputs, outputs):
     """
     Replaces any placeholder found in ``cmd`` with the dataURL property of the
     respective input or output Drop from ``inputs`` or ``outputs``.
-    Placeholders have the different formats:
 
-    * ``%iDataURLN``, with N starting from 0, indicates the path of the N-th
-      element from the ``inputs`` argument; likewise for ``%oDataURLN``.
-    * ``%iDataURL[X]`` indicates the path of the input with UID ``X``; likewise
-      for ``%oDataURL[X]``.
+    This will attempt to use the value from the reciprocal input or output DROP,
+    provided it has a `dataURL` attribute.
+
+    Sometimes there will be no matching replacement, in which case the argument is not
+    replaced.
     """
 
     # Inputs/outputs that are not FileDROPs or DirectoryContainers can't

@@ -31,11 +31,9 @@ import os
 import os.path as osp
 import uuid
 
-from .definition_classes import Categories, ConstructTypes
+from .definition_classes import ConstructTypes
 
-from typing import Dict
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 LG_VER_OLD = 1
 LG_VER_EAGLE_CONVERTED = 2
@@ -57,6 +55,23 @@ class GInvalidNode(GraphException):
     pass
 
 
+class Port(dict):
+    """
+    Class to represent a port of a node
+    """
+
+    def __init__(self, port_type, port_name, port_id):
+        self.port_type = port_type
+        self.port_name = port_name
+        self.port_id = port_id
+        self.target_id = ""
+
+    def __str__(self):
+        return f'{{"{self.port_name}":{{"id":"{self.port_id}", "type":"{self.port_type}", "target_id": "{self.target_id}"}}}}'
+
+    def __repr__(self):
+        return f'{{"{self.port_name}":{{"id":"{self.port_id}", "type":"{self.port_type}", "target_id": "{self.target_id}"}}}}'
+
 def get_lg_ver_type(lgo):
     """
     Get the version type of this logical graph
@@ -70,9 +85,9 @@ def get_lg_ver_type(lgo):
 
     # First check whether modelData and schemaVersion is in graph
     if (
-            "modelData" in lgo
-            and len(lgo["modelData"]) > 0
-            and "schemaVersion" in lgo["modelData"]
+        "modelData" in lgo
+        and len(lgo["modelData"]) > 0
+        and "schemaVersion" in lgo["modelData"]
     ):
         if lgo["modelData"]["schemaVersion"] != "OJS":
             return lgo["modelData"]["schemaVersion"]
@@ -119,19 +134,34 @@ def getNodesKeyDict(lgo):
     return dict([(x["id"], x) for x in lgo["nodeDataArray"]])
 
 
-def convert_fields(lgo):
+def convert_fields(lgo:dict) -> dict:
+    """Convert fields of all logical graph nodes to node attributes
+
+    Args:
+        lgo: The logical graph object
+
+    Returns:
+        converted logical graph object
+    """
     logger.debug("Converting fields")
     nodes = lgo["nodeDataArray"]
     for node in nodes:
         fields = node["fields"]
+        node["inputPorts"] = {}
+        node["outputPorts"] = {}
         for field in fields:
             name = field.get("name", "")
             if name != "":
-                # Add a node property.
-                # print("Set %s to %s" % (name, field.get('value', '')))
                 node[name] = field.get("value", "")
                 if node[name] == "":
                     node[name] = field.get("defaultValue", "")
+            port = field.get("usage", "")
+            if port in ["InputPort", "OutputPort", "InputOutput"]:
+                node[name] = f"<port>: {Port(port, name, field['id'])}"
+                if port in ["InputPort", "InputOutput"]:
+                    node["inputPorts"][field["id"]] = {"type":port, "name": name, "source_id": ""}
+                elif port in ["OutputPort", "InputOutput"]:
+                    node["outputPorts"][field["id"]] = {"type":port, "name": name, "target_id": ""}
     return lgo
 
 
@@ -141,20 +171,6 @@ def _build_node_index(lgo):
         ret[node["id"]] = node
 
     return ret
-
-
-def _relink_gather(appnode, lgo, gather_newkey, node_index):
-    """
-    for links whose 'from' is gather, 'to' is gather-internal data,
-    relink them such that 'from' is the appnode
-    """
-
-    gather_oldkey = appnode["id"]
-    for link in lgo["linkDataArray"]:
-        if link["from"] == gather_oldkey:
-            node = node_index[link["to"]]
-            if node["parentId"] == gather_oldkey:
-                pass
 
 
 def _check_MKN(m, k, n):
@@ -197,9 +213,7 @@ def convert_mkn(lgo):
         for ak in app_keywords:
             if ak not in node:
                 raise Exception(
-                    "MKN construct {0} must specify {1}".format(
-                        node["id"], ak
-                    )
+                    "MKN construct {0} must specify {1}".format(node["id"], ak)
                 )
         mknv_dict = dict()
         for mknv in node["fields"]:
@@ -236,7 +250,6 @@ def convert_mkn(lgo):
         #        del node_mk["outputAppFields"]
         new_field = {
             "name": "num_of_inputs",
-            "name": "Number of inputs",
             "value": "%d" % (M),
         }
         node_mk["fields"].append(new_field)
@@ -263,7 +276,6 @@ def convert_mkn(lgo):
 
         new_field_kn = {
             "name": "num_of_copies",
-            "name": "Number of copies",
             "value": "%d" % (K),
         }
         node_kn["fields"].append(new_field_kn)
@@ -300,7 +312,6 @@ def convert_mkn(lgo):
 
         new_field_kn = {
             "name": "num_of_copies",
-            "name": "Number of copies",
             "value": "%d" % (N),
         }
         node_split_n["fields"].append(new_field_kn)
@@ -360,9 +371,7 @@ def convert_mkn_all_share_m(lgo):
         for ak in app_keywords:
             if ak not in node:
                 raise Exception(
-                    "MKN construct {0} must specify {1}".format(
-                        node["id"], ak
-                    )
+                    "MKN construct {0} must specify {1}".format(node["id"], ak)
                 )
         mknv_dict = dict()
         for mknv in node["fields"]:
@@ -427,22 +436,6 @@ def convert_mkn_all_share_m(lgo):
     return lgo
 
 
-def getAppRefInputs(lgo):
-    """
-    Function to retrieve the inputs from an App node referenced by a group.
-    Used to recover the Gather node inputs for AppRef format graphs.
-    """
-    for node in lgo["nodeDataArray"]:
-        if node["category"] not in [
-            ConstructTypes.SCATTER,
-            ConstructTypes.GATHER,
-        ]:
-            continue
-        has_app = None
-
-    pass
-
-
 def convert_construct(lgo):
     """
     1. for each scatter/gather, create a "new" application drop, which shares
@@ -482,12 +475,12 @@ def convert_construct(lgo):
         # step 1
         app_args = {"fields": "inputAppFields"}
         if node["category"] == ConstructTypes.GATHER:
-            app_args['group_start'] = 1
+            app_args["group_start"] = 1
 
         if node["category"] == ConstructTypes.SERVICE:
-            app_args['isService'] = True
+            app_args["isService"] = True
 
-        app_node = _create_from_node(node, node[has_app], node["name"], app_args)
+        app_node = _create_from_node(node, node[has_app], app_args)
 
         # step 2
         new_id = str(uuid.uuid4())
@@ -506,12 +499,12 @@ def convert_construct(lgo):
             keyset.add(dup_app_node_k)
             dup_app_args = {
                 "id": dup_app_node_k,
-                "fields": "appFields" if "appFields" in node else "inputAppFields"
+                "fields": "appFields" if "appFields" in node else "inputAppFields",
             }
-            tmp_node = _create_from_node(node=node, category=node[has_app], 
-                                         name=node["name"],
-                                         app_params=dup_app_args)
-            redundant_keys = ['fields', 'reprodata']
+            tmp_node = _create_from_node(
+                node=node, category=node[has_app], app_params=dup_app_args
+            )
+            redundant_keys = ["fields", "reprodata"]
             tmp_node = {k: v for k, v in tmp_node.items() if k not in redundant_keys}
             duplicated_gather_app[new_id] = tmp_node
 
@@ -560,15 +553,12 @@ def convert_construct(lgo):
                     new_id = old_new_gather_map[k_old]
                     to_node = node_index[link["to"]]
                     gather_construct = node_index[new_id]
-                    if (
-                            "parentId" not in to_node
-                            and "parentId" not in gather_construct
-                    ):
+                    if "parentId" not in to_node and "parentId" not in gather_construct:
                         cond1 = True
                     elif (
-                            "parentId" in to_node
-                            and "parentId" in gather_construct
-                            and to_node["parentId"] == gather_construct["parentId"]
+                        "parentId" in to_node
+                        and "parentId" in gather_construct
+                        and to_node["parentId"] == gather_construct["parentId"]
                     ):
                         cond1 = True
                     else:
@@ -581,7 +571,7 @@ def convert_construct(lgo):
     return lgo
 
 
-def _create_from_node(node: dict, category: str, name: str, app_params: dict) -> dict:
+def _create_from_node(node: dict, category: str, app_params: dict) -> dict:
     """
     Create a new dictionary from the node based on the category of the new drop, and any
     specific attributes for the application
@@ -608,18 +598,18 @@ def _create_from_node(node: dict, category: str, name: str, app_params: dict) ->
     new_node["id"] = node["id"]
     new_node["category"] = category
 
-    new_node["name"] = name
+    new_node["name"] = node["text"] if "text" in node else node["name"]
     if "mkn" in node:
         new_node["mkn"] = node["mkn"]
 
     if "parentId" in node:
         new_node["parentId"] = node["parentId"]
 
-    if 'fields' in app_params:
+    if "fields" in app_params:
         field = app_params.pop("fields")
         if field in node:
-            new_node['fields'] = list(node[field])
-            new_node['fields'] += node["fields"]
+            new_node["fields"] = list(node[field])
+            new_node["fields"] += node["fields"]
             for afd in node[field]:
                 new_node[afd["name"]] = afd["value"]
 
@@ -678,9 +668,9 @@ def _update_keys(old_new_grpk_map: dict, lgo: dict) -> dict:
     return lgo
 
 
-def identify_and_connect_output_input(input_node: dict,
-                                      out_node: dict,
-                                      logical_graph: dict) -> dict:
+def identify_and_connect_output_input(
+    input_node: dict, out_node: dict, logical_graph: dict
+) -> dict:
     """
     # If the link is to a node that _isn't_ in the subgraph group
     # then it is an output node,  so check that group is either
@@ -695,30 +685,30 @@ def identify_and_connect_output_input(input_node: dict,
     :return: logical_graph: the updated logical_graph
     """
 
-    for link in logical_graph['linkDataArray']:
+    for link in logical_graph["linkDataArray"]:
         if link["to"] == input_node["id"]:
-            for n in logical_graph['nodeDataArray']:
+            for n in logical_graph["nodeDataArray"]:
 
                 if n["id"] == link["from"]:
                     try:
-                        if n['parentId'] == input_node['parentId']:
+                        if n["parentId"] == input_node["parentId"]:
                             link["to"] = out_node["id"]
                     except KeyError:
                         pass
         if link["from"] == input_node["id"]:
-            for n in logical_graph['nodeDataArray']:
+            for n in logical_graph["nodeDataArray"]:
                 if n["id"] == link["to"]:
                     try:
-                        if n['parentId'] != input_node['parentId']:
-                            link['from'] = out_node["id"]
+                        if n["parentId"] != input_node["parentId"]:
+                            link["from"] = out_node["id"]
                     except KeyError:
-                        link['from'] = out_node["id"]
+                        link["from"] = out_node["id"]
     return logical_graph
 
 
-def _extract_subgraph_nodes(input_node: dict,
-                            out_node: dict,
-                            logical_graph: dict) -> (dict, dict, dict):
+def _extract_subgraph_nodes(
+    input_node: dict, out_node: dict, logical_graph: dict
+) -> (dict, dict, dict):
     """
     1. Identify the SubGraph nodes that are not from the Construct
     2. Find the data inputs to the outputApp
@@ -738,44 +728,49 @@ def _extract_subgraph_nodes(input_node: dict,
     construct_apps = {input_node["id"], out_node["id"]}
 
     # 1. Identifying subgraph nodes that are not the input/ouput app
-    for n in logical_graph['nodeDataArray']:
-        if ('parentId' in n
-                and n['parentId'] == input_node['parentId']
-                and n["id"] not in construct_apps):
+    for n in logical_graph["nodeDataArray"]:
+        if (
+            "parentId" in n
+            and n["parentId"] == input_node["parentId"]
+            and n["id"] not in construct_apps
+        ):
             subgraphNodes[n["id"]] = n
 
     output_links = {}
 
-    for link in logical_graph['linkDataArray']:
-        if link['from'] in subgraphNodes:
+    for link in logical_graph["linkDataArray"]:
+        if link["from"] in subgraphNodes:
             # Find links from inside the SubGraph to the Output App to preserve
-            if link['to'] in construct_apps:
-                key = subgraphNodes[link['from']]
+            if link["to"] in construct_apps:
+                key = subgraphNodes[link["from"]]
                 output_links[key["id"]] = {}
-                output_links[key["id"]]['node'] = key
-                output_links[key["id"]]['link'] = link
+                output_links[key["id"]]["node"] = key
+                output_links[key["id"]]["link"] = link
             subgraphLinks.append(link)
-        if link['to'] in subgraphNodes.keys() and link not in subgraphLinks:
+        if link["to"] in subgraphNodes.keys() and link not in subgraphLinks:
             subgraphLinks.append(link)
 
     for e in subgraphNodes.values():
         if e["id"] not in output_links:
-            logical_graph['nodeDataArray'].remove(e)
+            logical_graph["nodeDataArray"].remove(e)
     for e in subgraphLinks:
-        logical_graph['linkDataArray'].remove(e)
+        logical_graph["linkDataArray"].remove(e)
 
     # Ensure we aren't linking from the Input/Output app into the subgraph
     # Any nodes outside the subgraph won't exist when it is deployed.
-    subgraphLinks = [link for link in subgraphLinks
-                     if (link['from'] not in construct_apps)]
-    subgraphLinks = [link for link in subgraphLinks
-                     if (link['to'] not in construct_apps)]
+    subgraphLinks = [
+        link for link in subgraphLinks if (link["from"] not in construct_apps)
+    ]
+    subgraphLinks = [
+        link for link in subgraphLinks if (link["to"] not in construct_apps)
+    ]
     # 4. Create links from the subgraph output data to input/output applications
 
     for n in output_links.values():
-        logical_graph['linkDataArray'].append(
-            {'to': n['node']["id"], 'from': input_node["id"]})
-        logical_graph['linkDataArray'].append(n['link'])
+        logical_graph["linkDataArray"].append(
+            {"to": n["node"]["id"], "from": input_node["id"]}
+        )
+        logical_graph["linkDataArray"].append(n["link"])
 
     return subgraphNodes, subgraphLinks, logical_graph
 
@@ -795,28 +790,26 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
         "SubGraphGroupKey": subgraph_node["id"],
         "parentId": subgraph_node["id"],
         "group_start": 1,
-        "fields": 'inputAppFields',
-        'inputApp': True
+        "fields": "inputAppFields",
+        "inputApp": True,
     }
-    input_node = _create_from_node(subgraph_node,
-                                   subgraph_node["inputApplicationType"],
-                                   subgraph_node["inputApplicationName"],
-                                   input_app_args)
+    input_node = _create_from_node(
+        subgraph_node, subgraph_node["inputApplicationType"], input_app_args
+    )
 
     output_app_args = {
-        "id": subgraph_node['outputApplicationId'],
+        "id": subgraph_node["outputApplicationId"],
         "isSubGraphApp": True,
         "isSubGraphConstruct": False,
         "SubGraphGroupKey": input_node["id"],
         "parentId": input_node["id"],
         "group_start": 1,
-        "fields": 'outputAppFields',
-        "outputApp": True
+        "fields": "outputAppFields",
+        "outputApp": True,
     }
-    output_node = _create_from_node(subgraph_node,
-                                    subgraph_node["outputApplicationType"],
-                                    subgraph_node["outputApplicationName"],
-                                    output_app_args)
+    output_node = _create_from_node(
+        subgraph_node, subgraph_node["outputApplicationType"], output_app_args
+    )
 
     return input_node, output_node
 
@@ -855,7 +848,7 @@ def convert_subgraphs(lgo: dict) -> dict:
         node["isSubGraphConstruct"] = True
         node["hasInputApp"] = True
         if not _has_app_keywords(node, app_keywords, requires_all=True):
-            node['hasInputApp'] = False
+            node["hasInputApp"] = False
             continue
 
         # Construct nodes
@@ -880,9 +873,9 @@ def convert_subgraphs(lgo: dict) -> dict:
             lgo = _update_keys(old_new_grpk_map, lgo)
 
             # Manage SubGraph nodes and links
-            subgraphNodes, subgraphLinks, lgo = _extract_subgraph_nodes(app_node,
-                                                                        out_node,
-                                                                        lgo)
+            subgraphNodes, subgraphLinks, lgo = _extract_subgraph_nodes(
+                app_node, out_node, lgo
+            )
 
             # Create SubGraph as InputData to the SubGraph Input App
             new_id = str(uuid.uuid4())
@@ -890,18 +883,19 @@ def convert_subgraphs(lgo: dict) -> dict:
             subgraph = {
                 "nodeDataArray": list(subgraphNodes.values()),
                 "linkDataArray": subgraphLinks,
-                "modelData": lgo['modelData']
+                "modelData": lgo["modelData"],
             }
-            for n in lgo['nodeDataArray']:
+            for n in lgo["nodeDataArray"]:
                 if n["id"] == app_node["id"]:
                     n = apply_subgraph_keyword(n, node, subgraph)
+
     return lgo
 
-def apply_subgraph_keyword(app_node, construct_node, subgraph): 
+def apply_subgraph_keyword(app_node, construct_node, subgraph):
     """
-    Allocate the subgraph to a field in the subgraph input app. 
+    Allocate the subgraph to a field in the subgraph input app.
     If the field does not exist, create it.
-    If no keyword was provided, the default field is "subgraph". 
+    If no keyword was provided, the default field is "subgraph".
     """
     keyword = "subgraph"
     for f in construct_node["fields"]:
@@ -909,22 +903,22 @@ def apply_subgraph_keyword(app_node, construct_node, subgraph):
             keyword = f["value"]
 
     subgraph_added = False
-    for f in app_node["fields"]: 
+    for f in app_node["fields"]:
         if f["name"] == keyword:
-            f["value"] = subgraph 
+            f["value"] = subgraph
             subgraph_added = True
             break
     if not subgraph_added:
         app_node["fields"].append({
             "name": keyword,
             "value": subgraph,
-            "parameterType": "applicationArgument", 
+            "parameterType": "applicationArgument",
         })
         logger.warning(f"No subgraph keyword map found for {app_node['name']}. Using"
                        "'subgraph' as default.")
     return app_node
 
-    
+
 
 def convert_eagle_to_daliuge_json(lg_name):
     """
@@ -980,8 +974,8 @@ def convert_eagle_to_daliuge_json(lg_name):
                 group_category = group_node.get("category", "")
 
                 if (
-                        group_category == ConstructTypes.GATHER
-                        or group_category == ConstructTypes.GROUP_BY
+                    group_category == ConstructTypes.GATHER
+                    or group_category == ConstructTypes.GROUP_BY
                 ):
                     # Check if the node is first in that group.
                     fields = node["fields"]
@@ -1022,11 +1016,9 @@ def convert_eagle_to_daliuge_json(lg_name):
         with open(new_path, "w") as outfile:
             json.dump(logical_graph, outfile, sort_keys=True, indent=4)
     except Exception as exp:
-        raise Exception(
-            "Failed to save a pretranslated graph {0}:{1}".format(
-                lg_name, str(exp)
-            )
-        )
+        raise RuntimeError(
+            "Failed to save a pretranslated graph {0}:{1}".format(lg_name, str(exp))
+        ) from exp
     finally:
         pass
 

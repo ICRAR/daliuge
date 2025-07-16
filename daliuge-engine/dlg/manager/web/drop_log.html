@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Drop Log</title>
+    <script src="/static/js/d3/d3.v5.min.js"></script>
+    <script src="/static/js/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/bootbox.min.js"></script>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <link href="/static/css/dm.css" rel="stylesheet" type="text/css"/>
+    <link href="/static/css/progressBar.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet"
+          href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <style>
+        @import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.css";
+    </style>
+</head>
+<body>
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark"
+     style="background-color: #004085;">
+    <!-- Navbar content -->
+    <a id="managerLink" class="navbar-brand inactiveLink" href="#" disabled>
+        <object data="/static/icons/liu.svg" type="image/svg+xml" width="30" height="30"
+                class="d-inline-block align-top" alt="LiuIcon"></object>
+        <img src="/static/icons/engine.svg" width="auto" height="30"
+             class="d-inline-block align-top" alt="EngineIcon">
+        <span>DROP Log Viewer</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+            aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="nav navbar-nav navbar-center">
+            <div class="btn-group" role="group" id="view-mode-buttons">
+                <button type="button" value="progress-bar"
+                        class="btn btn-secondary tooltip tooltipBottom"
+                        data-text="View Session As Progress Bar">Progress Bar
+                </button>
+                <button type="button" value="graph"
+                        class="btn btn-secondary tooltip tooltipBottom"
+                        data-text="View Session As Graph">Graph
+                </button>
+                <button type="button" value="list"
+                        class="btn btn-secondary tooltip tooltipBottom"
+                        data-text="View Session As List">List
+                </button>
+            </div>
+            <div class="btn-group" role="group" id="graph-orientation-buttons">
+                <button type="button" value="LR"
+                        class="btn btn-secondary active tooltip tooltipBottom"
+                        data-text="Display Graph From Left To Right">
+                    <span class="fa fa-arrows-h"></span>
+                </button>
+                <button type="button" value="TB"
+                        class="btn btn-secondary tooltip tooltipBottom"
+                        data-text="Display Graph From Top to Bottom"><span
+                        class="fa fa-arrows-v"> </span></button>
+            </div>
+        </ul>
+    </div>
+</nav>
+<div id="graphNameWrapper">
+    <ul id="graphName">
+        <li>Session:{{data.get("session")}}</li>
+        <li></li>
+        <li>DROP: {{data.get("oid")}}</li>
+    </ul>
+</div>
+<div id="dimContentWrapper">
+</div>
+<!--<div id="listContainer" class="container">-->
+<div class="table-container">
+    <div>
+        <h3>Log Entries</h3>
+        <label for="levelFilter">Filter by Log Level:</label>
+        <select id="levelFilter" class="form-select"
+                style="width: 200px; display: inline-block; margin-bottom: 10px;">
+            <option value="">Show All</option>
+        </select>
+        <div class="container-fluid">
+            <table id="logentries" align="left"
+                   class="table table-striped table-hover">
+                <thead>
+                <tr>
+                    % for col in columns:
+                    <th class="text-start">{{ col }}</th>
+                    % end
+                </tr>
+                </thead>
+                <tbody>
+                %for row in data["logs"]:
+                <tr>
+                    % for col in columns:
+                    <td class="text-start">{{! row.get(col, '') }}</td>
+                    % end
+                </tr>
+                %end
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!--</div>-->
+
+<script>
+    $(document).ready(function() {
+        var table = $('#logentries').DataTable({
+            scrollX: false,
+            paging: false
+        });
+
+        // Get unique values for the column (City)
+        table.column({{filter_index}}).data().unique().sort().each(function(d, j) {
+            $('#levelFilter').append('<option value="' + d + '">' + d + '</option>');
+        });
+
+        // Filter the table when a selection is made
+        $('#levelFilter').on('change', function() {
+            var selected = $(this).val();
+            if (selected) {
+                table.column({{filter_index}}).search('^' + selected + '$', true, false).draw();
+            } else {
+                table.column({{filter_index}}).search('').draw();
+            }
+        });
+    });
+</script>
+</body>
+</html>

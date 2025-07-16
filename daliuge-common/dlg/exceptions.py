@@ -122,6 +122,10 @@ class NoSessionException(DaliugeException):
             ret += ". Reason: %s" % (self._reason)
         return ret
 
+    @property
+    def session_id(self):
+        return self._session_id
+
 
 class SessionAlreadyExistsException(DaliugeException):
     """
@@ -139,6 +143,10 @@ class SessionAlreadyExistsException(DaliugeException):
         if self._reason:
             ret += ". Reason: %s" % (self._reason)
         return ret
+
+    @property
+    def session_id(self):
+        return self._session_id
 
 
 class InvalidSessionState(DaliugeException):

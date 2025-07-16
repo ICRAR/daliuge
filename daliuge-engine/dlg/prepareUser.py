@@ -36,8 +36,8 @@ def prepareUser(DLG_ROOT="."):
     workdir = f"{DLG_ROOT}/workspace/settings"
     try:
         os.makedirs(workdir, exist_ok=True)
-    except:
-        raise
+    except OSError as e:
+        raise e
     template_dir = os.path.dirname(__file__)
     # get current user info
     pw = pwd.getpwuid(os.getuid())

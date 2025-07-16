@@ -20,12 +20,10 @@
 #    MA 02111-1307  USA
 #
 
-import json
 import pickle
 import unittest
 
-from dlg.common import CategoryType
-from dlg.dropmake import path_utils
+from dlg.common import CategoryType, path_utils
 from dlg.dropmake.lg import LG
 
 NODES = 'nodeDataArray'
@@ -145,6 +143,21 @@ class TestLGNToPGN(unittest.TestCase):
                 _calc_num_drops(lg_non_recursive._drop_dict.values())
             )
 
+    def test_branch(self):
+        """
+        Test that the branch is getting the correct inputs and maps the output
+        names to the correct drops.
+        """
+
+        lg_name = "branchTest.graph"
+
+        lg = LG(path_utils.get_lg_fpath("logical_graphs", lg_name), ssid="TEST")
+        outputPorts = lg._lgn_list[0].jd["outputPorts"]
+        trueTargetId = [outputPorts[k]["target_id"] for k,v in outputPorts.items() if outputPorts[k]["name"]=="true"][0]
+        trueTargetName = [n.name for n in lg._lgn_list if n.id == trueTargetId][0]
+        lg.unroll_to_tpl()
+        self.assertEqual("true",
+                         trueTargetName)
 
 class TestLGNodeLoading(unittest.TestCase):
 

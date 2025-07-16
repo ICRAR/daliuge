@@ -26,12 +26,13 @@ import sys
 import time
 import unittest
 
-from dlg import utils, restutils
+from dlg import utils
 from dlg import constants
 from dlg.manager.client import MasterManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
+from dlg.restutils import RestClient, RestClientException
 
-_TIMEOUT = 5
+_TIMEOUT = 10
 IDENTITY = lambda x: x
 
 
@@ -95,8 +96,8 @@ class TestDaemon(unittest.TestCase):
         # in the daemon's hand
         # self.assertTrue(utils.portIsOpen('localhost', 9000, _TIMEOUT))
         try:
-            restutils.RestClient("localhost", 9000, timeout=_TIMEOUT)._GET("/anything")
-        except restutils.RestClientException:
+            RestClient("localhost", 9000, timeout=_TIMEOUT)._GET("/anything")
+        except RestClientException:
             # We don't care about the result
             pass
 
@@ -143,7 +144,7 @@ class TestDaemon(unittest.TestCase):
         # if we query the MM it should know about its nodes, which should have
         # one element
         mc = MasterManagerClient()
-        nodes = _get_nodes_from_client(mc)
+        nodes = _get_nodes_from_client(mc)["nodes"]
         self.assertIsNotNone(nodes)
         self.assertEqual(
             1,

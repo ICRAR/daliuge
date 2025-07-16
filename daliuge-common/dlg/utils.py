@@ -23,6 +23,7 @@
 Module containing miscellaneous utility classes and functions.
 """
 import base64
+import dill
 import errno
 import functools
 import importlib
@@ -38,15 +39,12 @@ import zlib
 import re
 import grp
 import pwd
-import pickle
-
-from pathlib import Path
 
 import netifaces
 
 from . import common
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def timed_import(module_name):
@@ -174,7 +172,7 @@ def to_externally_contactable_host(host, prefer_local=False):
             return a
 
     # All addresses were loopbacks! let's return the last one
-    raise a
+    raise addresses[-1] if addresses else ''
 
 
 def getDlgDir():
@@ -187,7 +185,7 @@ def getDlgDir():
     else:
         path = os.path.join(os.path.expanduser("~"), "dlg")
         os.environ["DLG_ROOT"] = path
-    logger.debug(f"DLG_ROOT directory is {path}")
+    logger.debug("DLG_ROOT directory is %s", path)
     return path
 
 
@@ -246,7 +244,7 @@ def createDirIfMissing(path):
     """
     try:
         os.makedirs(path)
-        logger.debug(f"created path {path}")
+        logger.debug("created path %s", path)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -505,8 +503,9 @@ def prepareUser(DLG_ROOT=getDlgDir()):
     workdir = f"{DLG_ROOT}/workspace/settings"
     try:
         os.makedirs(workdir, exist_ok=True)
-    except:
-        raise
+    except Exception as e:
+        logger.debug("prepareUser has failed")
+        raise e
     template_dir = os.path.dirname(__file__)
     # get current user info
     pw = pwd.getpwuid(os.getuid())
@@ -517,48 +516,52 @@ def prepareUser(DLG_ROOT=getDlgDir()):
         file.write(
             f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n"
         )
-        logger.debug(f"passwd file written {file.name}")
+        logger.debug("passwd file written %s", file.name)
     with open(os.path.join(workdir, "group"), "wt") as file:
         file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
         file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
         file.write(f"docker:x:{dgr.gr_gid}\n")
-        logger.debug(f"Group file written {file.name}")
+        logger.debug("Group file written %s", file.name)
 
     return dgr.gr_gid
 
 
 def serialize_data(d):
-    # return pickle.dumps(d)
-    return b2s(base64.b64encode(pickle.dumps(d)))
+    # return dill.dumps(d)
+    return b2s(base64.b64encode(dill.dumps(d)))
 
 
 def deserialize_data(d):
-    # return pickle.loads()
-    return pickle.loads(base64.b64decode(d.encode("utf8")))
+    # return dill.loads(d)
+    return dill.loads(base64.b64decode(d.encode("utf8")))
+
 
 def truncateUidToKey(uid: str) -> str:
     """
     Given a UID of a Drop, generate a human-readable Uid that can be
-    used for easier visualisation and file navigation. 
+    used for easier visualisation and file navigation.
 
-    When submitting a graph through the UI, we add the "humanReadableKey" to 
+    When submitting a graph through the UI, we add the "humanReadableKey" to
     the dropSpec. However, this key is not always available (i.e. in the instance we
     submit via the command line, or use tests). We need an alternative default
-    that does not run the risk of being duplicated, which can lead to over-writes when 
-    generating files based on Drop UIDs.  
+    that does not run the risk of being duplicated, which can lead to over-writes when
+    generating files based on Drop UIDs.
 
-    :params: uid, the Drop UID either generated or provided at runtime. 
+    :params: uid, the Drop UID either generated or provided at runtime.
 
     Notes
     -----
     The heuristic for generating truncated UID is as follows:
-    
-    - Split on "_", which is used to separate the Date of the UID in standard Drops. 
-    - If there are no "_" in the UID, then we default to just using the UID. 
+
+    - Split on "_", which is used to separate the Date of the UID in standard Drops.
+    - If there are no "_" in the UID, then we default to just using the UID.
     - If there is an "_" in the UID, we
         - Take the second element of the resulting split
         - If the length is less than the readableLengthlimit, we use the whole value
         - If the length is great than the readableLengthLimit, we use up to that value
+        - if there are two "_" we also append everything including the second "_" to the result
+
+    This assumes that the UID does not contain a "_" character.
 
     Examples
     --------
@@ -566,19 +569,22 @@ def truncateUidToKey(uid: str) -> str:
 
     >>> truncated("2022-02-11T08:05:47_-1_0") # -1
 
-    >>> truncated('2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0') # 0140
+    >>> truncated('2024-10-30T12:01:57_0140555b-8c23-4d6a-9e24-e16c15555e8c_0') # 0140_0
     """
     truncatedUid = uid
     readableLengthLimit = 4
-    split = uid.split("_")
+    split = uid.split("_", 2)
     if len(split) > 1:
         second_el = str(split[1])
         if len(second_el) > readableLengthLimit:
             truncatedUid = split[1][:readableLengthLimit]
         else:
             truncatedUid = split[1]
+        if len(split) == 3:
+            truncatedUid = f"{truncatedUid}_{split[-1]}"  # add the rest of the original
 
     return truncatedUid
+
 
 # Backwards compatibility
 terminate_or_kill = common.osutils.terminate_or_kill

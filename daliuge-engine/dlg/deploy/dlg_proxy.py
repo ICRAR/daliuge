@@ -53,7 +53,7 @@ default_dlg_monitor_port = 8081
 default_dlg_port = 8001
 FORMAT = "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] %(name)s#%(funcName)s:%(lineno)s %(message)s"
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 delimit = b"@#%!$"
 dl = len(delimit)
 
@@ -112,7 +112,7 @@ class ProxyServer:
                 the_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
                 logger.info("Connected to %s on port %d", server, port)
                 return the_socket
-            except Exception:
+            except OSError:
                 logger.exception("Failed to connect to %s:%d", server, port)
                 # Sleep for a while before trying to connect again
                 time.sleep(conn_retry_timeout)
@@ -127,7 +127,7 @@ class ProxyServer:
         if not ok:
             the_socket.shutdown(socket.SHUT_RDWR)
             the_socket.close()
-            raise Exception("Monitor rejected us due to duplicated ID")
+            raise RuntimeError("Monitor rejected us due to duplicated ID")
         logger.info("Identification successful!")
         self.monitor_socket = the_socket
 
@@ -200,9 +200,7 @@ class ProxyServer:
                     tag = self._dlg_sock_tag_dict.get(the_socket, None)
                     logger.debug("Received %s from DALiuGE manager", b2s(tag))
                     if tag is None:
-                        logger.error(
-                            "Tag for DALiuGE socket %r is gone", the_socket
-                        )
+                        logger.error("Tag for DALiuGE socket %r is gone", the_socket)
                     else:
                         send_to_monitor(self.monitor_socket, delimit.join([tag, data]))
                         logger.debug("Sent %s to Monitor", b2s(tag))

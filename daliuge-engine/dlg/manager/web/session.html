@@ -57,7 +57,7 @@
 			<li id="islandDisplay"></li>
 			<li><a id="local-manager-a"></a></li>
 			<li id="nodeDisplay"></li>
-			<li>Session: {{sessionId}}</li>
+			<li>Session: <a href="#" title="Click to copy session directory" onclick="copyToClipboard('{{sessionDir}}'); return false;">{{sessionId}}</a></li>
 		</ol>
 	</div>
 	<div id="listContainer" class="container">
@@ -87,6 +87,13 @@
 	</div>
 
 <script>
+	function copyToClipboard(text) {
+	  navigator.clipboard.writeText(text).then(function() {
+		alert("Copied to clipboard:\n" + text);
+	  }, function(err) {
+		alert("Failed to copy: " + err);
+	  });
+	}
 
     function view_as_progress_bar(sessionId, selectedNode, serverUrl) {
 
@@ -95,7 +102,7 @@
         d3.select('#pg-graph').remove();
 
 	const width = $('#pg-progress-bar').innerWidth();
-	var graph_update_handler = function(oids, dropSpecs) {};
+	var graph_update_handler = function(oids, dropSpecs, url) {};
 
 	var status_update_handler = function(statuses){
 		// This is the order in which blocks are drawn in the progress bar,

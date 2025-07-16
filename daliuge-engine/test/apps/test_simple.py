@@ -31,6 +31,7 @@ from psutil import cpu_count
 
 from dlg import droputils, drop_loaders
 from dlg.apps.simple import (
+    Branch,
     GenericScatterApp,
     GenericNpyScatterApp,
     ListAppendThrashingApp,
@@ -46,7 +47,7 @@ from dlg.data.drops.file import FileDROP
 if sys.version_info >= (3, 8):
     from dlg.manager.shared_memory_manager import DlgSharedMemoryManager
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class TestSimpleApps(unittest.TestCase):
@@ -278,7 +279,7 @@ class TestSimpleApps(unittest.TestCase):
         max_threads = cpu_count(logical=False)
         drop_ids = [chr(97 + x) for x in range(max_threads)]
         threadpool = ThreadPool(processes=max_threads)
-        memory_manager = DlgSharedMemoryManager()  # pylint: disable=possibly-used-before-assignment
+        memory_manager = DlgSharedMemoryManager()  # pylint: disable=E0606
         session_id = 1
         memory_manager.register_session(session_id)
         S = InMemoryDROP("S", "S")
@@ -346,3 +347,5 @@ class TestSimpleApps(unittest.TestCase):
         else:
             # Ensure that multi-threading overhead doesn't ruin serial performance?
             self.assertAlmostEqual(t1, t2, delta=0.5)
+
+

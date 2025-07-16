@@ -33,7 +33,7 @@ from ..meta import (
     dlg_streaming_input,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ExternalStoreApp(BarrierAppDROP):
@@ -79,8 +79,15 @@ class ExternalStoreApp(BarrierAppDROP):
 # @brief NgasArchivingApp
 # @details Takes an input and archives it in an NGAS server.
 # @par EAGLE_START
-# @param category PythonApp
+# @param category DALiuGEApp
 # @param tag daliuge
+# @param ngasSrv localhost/String/ApplicationArgument/NoPort/ReadWrite//False/False/URL of the NGAS Server
+# @param ngasPort 7777/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/"TCP/IP Port on the NGAS Server"
+# @param ngasMime "application/octet-stream"/String/ApplicationArgument/NoPort/ReadWrite//False/False/Mime-type of the NGAS payload
+# @param ngasTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/Archiving request timeout
+# @param ngasConnectTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/NGAS Server connection timeout
+# @param fileObject /Object.File/ApplicationArgument/InputPort/ReadWrite//False/False/Input File Object
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.archiving.NgasArchivingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name archiving/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -88,14 +95,6 @@ class ExternalStoreApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input_error_threshold 0/Integer/ComponentParameter/NoPort/ReadWrite//False/False/the allowed failure rate of the inputs (in percent), before this component goes to ERROR state and is not executed
 # @param n_tries 1/Integer/ComponentParameter/NoPort/ReadWrite//False/False/Specifies the number of times the 'run' method will be executed before finally giving up
-# @param ngasSrv localhost/String/ApplicationArgument/NoPort/ReadWrite//False/False/URL of the NGAS Server
-# @param ngasPort 7777/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/"TCP/IP Port on the NGAS Server"
-# @param ngasMime "application/octet-stream"/String/ApplicationArgument/NoPort/ReadWrite//False/False/Mime-type of the NGAS payload
-# @param ngasTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/Archiving request timeout
-# @param ngasConnectTimeout 2/Integer/ApplicationArgument/NoPort/ReadOnly//False/False/NGAS Server connection timeout
-# @param fileObject /Object.File/ApplicationArgument/InputPort/ReadWrite//False/False/Input File Object
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class NgasArchivingApp(ExternalStoreApp):
     """
@@ -122,30 +121,28 @@ class NgasArchivingApp(ExternalStoreApp):
     ngasTimeout = dlg_int_param("ngasTimeout", 2)
     ngasConnectTimeout = dlg_int_param("ngasConnectTimeout", 2)
 
-    def initialize(self, **kwargs):
-        super(NgasArchivingApp, self).initialize(**kwargs)
 
-    def store(self, inDrop):
+    def store(self, inputDrop):
         logger.debug("NGAS Server %s", self.ngasSrv)
         logger.debug("NGAS Port %s", self.ngasPort)
 
-        if isinstance(inDrop, ContainerDROP):
+        if isinstance(inputDrop, ContainerDROP):
             raise Exception(
                 "ContainerDROPs are not supported as inputs for this application"
             )
 
-        if inDrop.size is None or inDrop.size < 0:
+        if inputDrop.size is None or inputDrop.size < 0:
             logger.error(
                 "NGAS requires content-length to be know, but the given input does not provide a size."
             )
             size = None
         else:
-            size = inDrop.size
+            size = inputDrop.size
             logger.debug("Content-length %s", size)
         try:
             ngasIO = NgasIO(
                 self.ngasSrv,
-                inDrop.uid,
+                inputDrop.uid,
                 self.ngasPort,
                 self.ngasConnectTimeout,
                 self.ngasTimeout,
@@ -156,7 +153,7 @@ class NgasArchivingApp(ExternalStoreApp):
             logger.warning("NgasIO library not available, falling back to NgasLiteIO.")
             ngasIO = NgasLiteIO(
                 self.ngasSrv,
-                inDrop.uid,
+                inputDrop.uid,
                 self.ngasPort,
                 self.ngasConnectTimeout,
                 self.ngasTimeout,
@@ -167,7 +164,7 @@ class NgasArchivingApp(ExternalStoreApp):
         ngasIO.open(OpenMode.OPEN_WRITE)
 
         # Copy in blocks of 4096 bytes
-        with DROPFile(inDrop) as f:
+        with DROPFile(inputDrop) as f:
             while True:
                 buff = f.read(4096)
                 ngasIO.write(buff)

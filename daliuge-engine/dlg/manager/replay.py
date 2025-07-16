@@ -32,7 +32,7 @@ from .rest import ManagerRestServer
 from .session import SessionStates
 from ..exceptions import NoSessionException, InvalidSessionState
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 build_step = 3
 deploy_step = 6
@@ -82,9 +82,9 @@ class ReplayManager(DROPManager):
         if session_id != self._session_id:
             raise NoSessionException(session_id)
 
-    def getSessionStatus(self, session_id):
+    def getSessionStatus(self, sessionId):
 
-        self.check_session_id(session_id)
+        self.check_session_id(sessionId)
 
         # Move through the different steps as we are requested
         # our status
@@ -100,9 +100,9 @@ class ReplayManager(DROPManager):
 
         return self._status
 
-    def getGraphStatus(self, session_id):
+    def getGraphStatus(self, sessionId):
 
-        self.check_session_id(session_id)
+        self.check_session_id(sessionId)
         if self._session_status_reqno < run_step:
             raise InvalidSessionState(
                 "Requesting status of graph that is not running yet"
@@ -118,7 +118,7 @@ class ReplayManager(DROPManager):
             content = json.loads(l)
 
             this_session_id = content["ssid"]
-            if this_session_id != session_id:
+            if this_session_id != sessionId:
                 continue
 
             graph_status = content["gs"]
@@ -127,13 +127,13 @@ class ReplayManager(DROPManager):
             logger.info("Serving graph status")
             return graph_status
 
-    def getGraph(self, session_id):
-        self.check_session_id(session_id)
+    def getGraph(self, sessionId):
+        self.check_session_id(sessionId)
         logger.info("Serving graph")
         return self._graph
 
-    def getGraphSize(self, session_id):
-        self.check_session_id(session_id)
+    def getGraphSize(self, sessionId):
+        self.check_session_id(sessionId)
         logger.info("Serving graph size")
         return len(self._graph)
 

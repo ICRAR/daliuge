@@ -23,19 +23,22 @@
 import logging
 import os
 import subprocess
-import sys
 import sysconfig
 
+# pylint: disable=unused-import
 try:
     from importlib.metadata import version, PackageNotFoundError
 except ModuleNotFoundError:
     from importlib_metadata import version, PackageNotFoundError
+# pylint: enable=unused-import
 
+from pathlib import Path
 from setuptools import find_packages
 from setuptools import setup
 from setuptools.command.install import install
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
+
 
 # Version information
 # We do like numpy: we have a major/minor/patch hand-written version written
@@ -43,14 +46,22 @@ logger = logging.getLogger(__name__)
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-try:
-    VERSION = version("daliuge-common")
-except PackageNotFoundError:
-    logger.warning(
-        "WARNING: daliuge-engine requires daliuge-common to be installed first. "
-        "Stopping installation..."
-    )
-    sys.exit(1)
+def extract_version():
+    """
+    Retrived the current version based on the most recent version tag, stored in daliuge-common/VERSION.
+    This is then split into the individual major/minor/patch numbers.
+
+    :return: tuple(int, int, int): major, minor, patch
+    """
+    TAG_VERSION_FILE = "VERSION"
+    with (Path(__file__).parent / TAG_VERSION_FILE).open(encoding="utf8") as open_file:
+        mjr, mnr, ptch = open_file.read().strip("v").split(".")
+        print("logging details: ", mjr, mnr, ptch)
+    return int(mjr), int(mnr), int(ptch)
+
+
+major, minor, patch = extract_version()
+VERSION = f"{major}.{minor}.{patch}"
 RELEASE = True
 VERSION_FILE = "dlg/runtime/version.py"
 PTH_FILE = "lib64_dist.pth"
@@ -63,8 +74,9 @@ def get_git_version():
 
 def get_version_info():
     git_version = "Unknown"
-    if os.path.exists(".git"):
+    if os.path.exists("../.git"):
         git_version = get_git_version()
+
     full_version = VERSION
     if not RELEASE:
         full_version = "%s.dev0+%s" % (VERSION, git_version[:7])
@@ -83,6 +95,7 @@ is_release = %(is_release)s
 if not is_release:
     version = full_version
 """
+
     full_version, git_version = get_version_info()
     with open(VERSION_FILE, "w") as f:
         info = tpl % {
@@ -122,7 +135,8 @@ class lib64_path(install):
         lp = sysconfig.get_path("stdlib")
         with open(PTH_FILE, "w") as f:
             f.write("{0}/dist-packages".format(lp))
-        install.copy_file(self, PTH_FILE, os.path.join(self.install_lib, PTH_FILE))
+        install.copy_file(self, PTH_FILE, os.path.join(
+            self.install_lib, PTH_FILE))
 
 
 # Core requirements of DALiuGE
@@ -130,11 +144,12 @@ class lib64_path(install):
 install_requires = [
     "wheel",  # need to get wheel first...
     "bottle",
-    "urllib3<1.27,>=1.25.4",
-    "boto3",
+    "urllib3>=1.25.4, <1.27 ; python_version < '3.10'",
+    "urllib3>=2.5.0; python_version >= '3.10'",
+    "boto3>=1.38.0",
     "configobj",
     "crc32c",
-    "daliuge-common==%s" % (VERSION,),
+    "daliuge-common",
     "dill",
     "docker",
     "lockfile",
@@ -147,7 +162,6 @@ install_requires = [
     "python-daemon",
     "pyzmq == 25.1.1",  # Python 25.1.1 is minimal install that supports Python 3.12
     "scp",
-    "pyext @ git+https://github.com/itea1001/PyExt",
     "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
     "zeroconf == 0.38.4",
@@ -167,10 +181,11 @@ extra_requires = {
     "MPI": ["mpi4py"],
     # AWS storage types
     "aws": ["boto3"],
-    "test": [
-        "pytest",
-        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
-    ],
+    "test": ["pytest",
+        # Toggle comments below if adding new test graphs
+        "eagle-test-graphs==0.1.9"
+        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@branch-name"
+    ]
 }
 
 setup(
@@ -186,10 +201,27 @@ setup(
     author="ICRAR DIA Group",
     author_email="dfms_prototype@googlegroups.com",
     url="https://github.com/ICRAR/daliuge",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Topic :: System :: Distributed Computing",
+        "Topic :: Scientific/Engineering",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+    ],
     license="LGPLv2+",
     packages=find_packages(exclude=("test", "test.*", "fabfile")),
     package_data={
+        "": ["VERSION"],
         "dlg.apps": ["dlg_app.h", "dlg_app2.h"],
+        "dlg.deploy.configs": ["*.ini", ".slurm"],
         "dlg.manager": [
             "web/*.html",
             "web/static/css/*.css",

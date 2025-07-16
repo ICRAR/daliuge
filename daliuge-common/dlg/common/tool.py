@@ -20,17 +20,31 @@
 #    MA 02111-1307  USA
 #
 
+# pylint: disable=unused-argument
+
 """dlg command line utility"""
 import importlib
 import logging
-import optparse
+import optparse # pylint: disable=deprecated-module
 import subprocess
 import sys
 import time
 
+from dataclasses import dataclass
 from importlib.metadata import entry_points
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("dlg")
+
+@dataclass
+class CommandGroup:
+    """
+    Collection for information about a particular CLI 'Group'.
+
+    The Group will ensure relevant commands are collected and displayed together for
+    easier understanding.
+    """
+    name: str
+    description: str
 
 
 def add_logging_options(parser):
@@ -85,7 +99,7 @@ def setup_logging(opts):
 commands = {}
 
 
-def cmdwrap(cmdname, desc, f):
+def cmdwrap(cmdname, group, desc, f):
 
     # If it's not a callable we assume it's a string
     # in which case we lazy-load the module:function when it gets called
@@ -96,7 +110,10 @@ def cmdwrap(cmdname, desc, f):
             def __call__(self, *args, **kwargs):
                 modname, fname = orig_f.split(":")
                 module = importlib.import_module(modname)
-                return getattr(module, fname)(*args, **kwargs)
+                try:
+                    return getattr(module, fname)(*args, **kwargs)
+                except TypeError:
+                    return getattr(module, fname)()
 
         f = Importer()
 
@@ -104,17 +121,29 @@ def cmdwrap(cmdname, desc, f):
         parser = optparse.OptionParser(description=desc)
         f(parser, *args, **kwargs)
 
-    commands[cmdname] = (desc, wrapped)
-
+    if group.name in commands:
+        commands[group.name]["commands"][cmdname] = (desc, wrapped)
+    else:
+        commands[group.name] = {"desc": group.description, "commands":{}}
+        commands[group.name]["commands"][cmdname] = (desc, wrapped)
 
 def version(parser, args):
-    from .version import version, git_version
+    from .version import version as vversion
+    from .version import git_version
 
-    print("Version: %s" % version)
+    print("Version: %s" % vversion)
     print("Git version: %s" % git_version)
 
+common_group = CommandGroup("common", "Base commands for dlg CLI")
+cmdwrap("version", common_group, "Reports the DALiuGE version and exits", version)
 
-cmdwrap("version", "Reports the DALiuGE version and exits", version)
+try:
+    import dlg_paletteGen # pylint: disable=unused-import
+    palette_group = CommandGroup("zpalette", "Wrapper for dlg_paletteGen")
+    cmdwrap("palette", palette_group, "Generate palettes for EAGLE",
+            "dlg_paletteGen.__main__:main")
+except ImportError:
+    pass
 
 def _load_commands():
     if sys.version_info.minor < 10:
@@ -122,24 +151,30 @@ def _load_commands():
         for entry_point in all_entry_points["dlg.tool_commands"]:
             entry_point.load().register_commands()
     else:
-        for entry_point in entry_points(group="dlg.tool_commands"):  # pylint: disable=unexpected-keyword-arg
+        for entry_point in entry_points(  # pylint: disable=E1123
+            group="dlg.tool_commands"
+        ):  # pylint: disable=unexpected-keyword-arg
             entry_point.load().register_commands()
 
+def format_cmd(cmd, data):
+    desc, _ = data
+    return f"\t {cmd:25}{desc:25}"
 
 def print_usage(prgname):
-    print("Usage: %s [command] [options]" % (prgname))
-    print("")
-    print(
-        "\n".join(
-            ["Commands are:"]
-            + [
-                "\t%-25.25s%s" % (cmdname, desc_and_f[0])
-                for cmdname, desc_and_f in sorted(commands.items())
-            ]
-        )
-    )
+    print("Usage: %s [command] [options]\n" % (prgname))
+    for _, grouped_commands in sorted(commands.items()):
+        print(f"\n{grouped_commands['desc']}")
+        print("\n".join([format_cmd(cmd, data)
+                         for cmd, data in sorted(grouped_commands['commands'].items())]))
     print("")
     print("Try %s [command] --help for more details" % (prgname))
+
+def _get_cmd(cmd):
+    _group = None
+    for group, grouped_commands in sorted(commands.items()):
+        if cmd in grouped_commands['commands']:
+            return group, cmd
+    return _group, cmd
 
 
 def run(args=sys.argv):
@@ -161,12 +196,13 @@ def run(args=sys.argv):
         print_usage(prgname)
         sys.exit(0)
 
-    if cmd not in commands:
+    group, _  = _get_cmd(cmd)
+    if not group:
         print("Unknown command: %s" % (cmd,))
         print_usage(prgname)
         sys.exit(1)
 
-    commands[cmd][1](sys.argv[1:])
+    commands[group]["commands"][cmd][1](sys.argv[1:])
 
 
 def start_process(cmd, args=(), **subproc_args):
@@ -179,10 +215,10 @@ def start_process(cmd, args=(), **subproc_args):
     """
 
     _load_commands()
-
+    group, _  = _get_cmd(cmd)
     from ..exceptions import DaliugeException
 
-    if cmd not in commands:
+    if cmd not in commands[group]["commands"]:
         raise DaliugeException("Unknown command: %s" % (cmd,))
 
     cmdline = ["dlg", cmd]

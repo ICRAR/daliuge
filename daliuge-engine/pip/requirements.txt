@@ -18,7 +18,10 @@ pyzmq
 scp
 twine
 pyyaml
-# 0.6 brings python3 support plus other fixes
+# 0.6 brings python3 support plus other fixeINFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8084 (Press CTRL+C to quit)
+s
 zerorpc >= 0.6
 # For reproducibility
 merklelib >= 1.0

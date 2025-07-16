@@ -22,18 +22,13 @@
 
 import logging
 import os
-import sys
 import subprocess
 
+from pathlib import Path
 from setuptools import find_packages
 from setuptools import setup
 
-try:
-    from importlib.metadata import version, PackageNotFoundError
-except ModuleNotFoundError:
-    from importlib_metadata import version, PackageNotFoundError
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 # Version information
 # We do like numpy: we have a major/minor/patch hand-written version written
@@ -41,14 +36,24 @@ logger = logging.getLogger(__name__)
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
 # by setuptools/pkg_resources or "final" versions.
-try:
-    VERSION = version("daliuge-common")
-except PackageNotFoundError:
-    logger.warning(
-        "WARNING: daliuge-translator requires daliuge-common to be installed first. "
-        "Stopping installation..."
-    )
-    sys.exit(1)
+
+
+def extract_version():
+    """
+    Retrived the current version based on the most recent version tag, stored in daliuge-common/VERSION.
+    This is then split into the individual major/minor/patch numbers.
+
+    :return: tuple(int, int, int): major, minor, patch
+    """
+    TAG_VERSION_FILE = "VERSION"
+    with (Path(__file__).parent / TAG_VERSION_FILE).open(encoding="utf8") as open_file:
+        major, minor, patch = open_file.read().strip("v").split(".")
+        print("logging details: ", major, minor, patch)
+    return int(major), int(minor), int(patch)
+
+
+mj, mnr, pch = extract_version()
+VERSION = f"{mj}.{mnr}.{pch}"
 RELEASE = True
 VERSION_FILE = "dlg/translator/version.py"
 
@@ -97,7 +102,7 @@ write_version_info()
 
 def package_files(directory):
     paths = []
-    for path, directories, filenames in os.walk(directory):
+    for path, _, filenames in os.walk(directory):
         for filename in filenames:
             paths.append(os.path.join("..", path, filename))
     return paths
@@ -106,7 +111,7 @@ def package_files(directory):
 src_files = package_files("dlg")
 
 install_requires = [
-    "daliuge-common==%s" % (VERSION,),
+    "daliuge-common",
     "fastapi",
     "jinja2",
     "jsonschema",
@@ -118,14 +123,19 @@ install_requires = [
     "psutil",
     "pyswarm",
     "python-multipart",
-    # "ruamel.yaml.clib<=0.2.2",
-    "uvicorn==0.18",
+    "uvicorn",
     "wheel",
 ]
 extra_requires = {
     "test": [
         "pytest",
-        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo",
+        # Toggle comments below if adding new test graphs
+        "eagle-test-graphs==0.1.9",
+        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@branch-name",
+        "np-merklelib",
+        "parameterized>=0.9.0",
+        "ruamel.yaml==0.16.0",
+        "pyyaml>=0.6",
     ]
 }
 
@@ -137,12 +147,26 @@ setup(
     author="ICRAR DIA Group",
     author_email="rtobar@icrar.org",
     url="https://github.com/ICRAR/daliuge",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Topic :: System :: Distributed Computing",
+        "Topic :: Scientific/Engineering",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+    ],
     license="LGPLv2+",
     install_requires=install_requires,
     extras_require=extra_requires,
     packages=find_packages(),
-    package_data={"dlg": src_files},
-    entry_points={"dlg.tool_commands": [
-        "translator=dlg.translator.tool_commands"]},
+    package_data={"": ["VERSION"], "dlg": src_files},
+    entry_points={"dlg.tool_commands": ["translator=dlg.translator.tool_commands"]},
     test_suite="test",
 )

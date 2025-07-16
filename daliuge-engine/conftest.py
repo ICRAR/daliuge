@@ -4,5 +4,7 @@ This file ensures dlg.runtime is loaded up when running pytest on a suite of tes
 This sets up the correct logging runtime and drop-tracking.
 """
 
+# pylint: skip-file
+
 import dlg.runtime
 import pytest

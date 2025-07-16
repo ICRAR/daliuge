@@ -27,12 +27,14 @@ like DMs and DIMs.
 import logging
 import os
 import signal
+import subprocess
 import sys
 import time
 import re
 
 import daemon
 from lockfile.pidlockfile import PIDLockFile
+from multiprocessing import Process
 
 from .composite_manager import DataIslandManager, MasterManager
 from dlg.constants import (
@@ -41,7 +43,7 @@ from dlg.constants import (
     MASTER_DEFAULT_REST_PORT,
     REPLAY_DEFAULT_REST_PORT,
     NODE_DEFAULT_RPC_PORT,
-    NODE_DEFAULT_EVENTS_PORT
+    NODE_DEFAULT_EVENTS_PORT,
 )
 from .node_manager import NodeManager
 from .replay import ReplayManager, ReplayManagerServer
@@ -55,7 +57,7 @@ from ..runtime import version
 
 
 _terminating = False
-
+MAX_WATCHDOG_RESTART = 10
 
 class DlgFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -68,38 +70,100 @@ class DlgFormatter(logging.Formatter):
         return super().format(record)
 
 
+def run_server(server, host, port):
+    """
+    Run the server using the options. Non-nested to avoid issues if needing to be pickled.
+    :param opts: Command line options
+    :return: None
+    """
+    server.start(host, port)
+
+
 def launchServer(opts):
     # we might be called via __main__, but we want a nice logger name
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(f"dlg.{__name__}")
     dmName = opts.dmType.__name__
 
     logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())
     logger.info("Creating %s", dmName)
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
-    except:
+    except Exception as e:
         logger.exception(
             "Error while creating/starting our %s, exiting in shame :-(",
             dmName,
         )
-        return
+        raise RuntimeError from e
 
     server = opts.restType(dm, opts.maxreqsize)
 
     # Signal handling
     def handle_signal(signNo, stack_frame):
-        global _terminating
+        global _terminating # pylint: disable=global-statement
         if _terminating:
             return
         _terminating = True
-        logger.info("Exiting from %s", dmName)
+        logger.info("Exiting from %s after receiving signal %s in frame %s",
+                    dmName, signNo, stack_frame)
 
         server.stop_manager()
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
+    # signal.signal(signal.SIGSEGV, handle_signal)
 
-    server.start(opts.host, opts.port)
+    if opts.watchdog_enabled:
+        start_watchdog(server, opts, logger)
+    else:
+        run_server(server, opts.host, opts.port)
+
+
+def start_watchdog(server, opts, logger):
+    """
+    Run the server in a separate process to keep it under observation.
+
+    This is an experimental feature intended to secure complete runtime shutdown when we
+    run potentially memory-unsafe code in child threads of the server.
+
+    If we detect a SIGSEGV, we warn the user and attempt to re-run the server on a new
+    port so that the NodeManager doesn't completely disappear and we avoid any issues with
+    phantom threads using the old port.
+
+    If we recieve any other exitcodes, we do not attempt a restart and instead following
+    existing exit protocols.
+
+    This method only acts as the watchdog, and does not support Session management or
+    any explicit reconnect, and instead leaves that up to the respective manager
+    implementations.
+
+    :param server: server object that we are watching
+    :param opts: runtime options
+    :param logger: runtime logger
+    """
+
+    watchdog = True
+    wait_period = 30
+    current_restart = 0
+    while watchdog:
+        p = Process(target=run_server, args=(server, opts.host, opts.port))
+        p.start()
+        p.join()
+        if p.exitcode == signal.SIGSEGV or p.exitcode == -signal.SIGSEGV:
+            logger.warning(
+                "Threaded server crashed with SIGSEGV (signal 11)."
+                "Restarting in %s seconds...",
+                wait_period
+            )
+            opts.port += 27 # Avoid collisions with more obvious ports, e.g. 8080 or 8888
+            if current_restart < MAX_WATCHDOG_RESTART:
+                current_restart +=1
+            else:
+                watchdog=False
+                logger.warning(
+                    "Watchdog service reached maximum restarts. Shutting Down..."
+            )
+        else:
+            watchdog = False
 
 
 def addCommonOptions(parser, defaultPort):
@@ -185,6 +249,19 @@ def addCommonOptions(parser, defaultPort):
         help="The directory where the logging files will be stored",
         default=utils.getDlgLogsDir(),
     )
+    parser.add_option(
+        "--watchdog",
+        action="store_true",
+        dest="watchdog_enabled",
+        help="Enable watchdog process wrapper for server (WARNING: Experimental feature)"
+    )
+
+    parser.add_option(
+        "--local-time",
+        action="store_true",
+        help="Use local system time when logging",
+        default=False,
+    )
 
 
 def commonOptionsCheck(options, parser):
@@ -198,6 +275,7 @@ def commonOptionsCheck(options, parser):
     # -v and -q are exclusive
     if options.verbose and options.quiet:
         parser.error("-v and -q cannot be specified together")
+
 
 def start(options, parser):
     # Perform common option checks
@@ -216,7 +294,7 @@ def start(options, parser):
         with daemon.DaemonContext(
             pidfile=PIDLockFile(pidfile, 1),
             files_preserve=[fileHandler.stream],
-            working_directory=utils.getDlgWorkDir()
+            working_directory=utils.getDlgWorkDir(),
         ):
             launchServer(options)
 
@@ -257,7 +335,6 @@ def setupLogging(opts):
         # Let's reset the root handlers
         for h in logging.root.handlers[:]:
             logging.root.removeHandler(h)
-        pass
 
     levels = [
         logging.NOTSET,
@@ -276,7 +353,6 @@ def setupLogging(opts):
         lidx += min((opts.quiet, 2))
     level = levels[lidx]
 
-
     # Output to files/stdout uses a command format, which can or not contain
     # optionally a session_id and drop_uid to indicate what is currently being
     # executed. This only applies to the NodeManager logs though, for which a
@@ -289,12 +365,12 @@ def setupLogging(opts):
         fmt += "[%(session_id)10.10s] [%(drop_uid)10.10s] "
     fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
     fmt = DlgFormatter(fmt)
-    # fmt = logging.Formatter(fmt)
-    fmt.converter = time.gmtime
-
+    fmt.converter = time.localtime if opts.local_time else time.gmtime
+    time_fmt =  "Local" if opts.local_time else "GMT"
     # Let's configure logging now
     # Daemons don't output stuff to the stdout
-    if not opts.daemon:
+    is_daemon_argument = opts.daemon or opts.stop
+    if not is_daemon_argument:
         streamHdlr = logging.StreamHandler(sys.stdout)
         streamHdlr.setFormatter(fmt)
         logging.root.addHandler(streamHdlr)
@@ -316,6 +392,7 @@ def setupLogging(opts):
     # user. A Warning message here let's the user know something is happening without
     # us needing to modify the default logging level.
     logging.warning("Starting with level: %s...", logging.getLevelName(level))
+    logging.warning("Using %s Time for logging...", time_fmt)
 
     return fileHandler
 
@@ -404,7 +481,7 @@ def dlgNM(parser, args):
         type="int",
         dest="rpc_port",
         help="Set the port number for the NodeManager RPC client",
-        default=NODE_DEFAULT_RPC_PORT
+        default=NODE_DEFAULT_RPC_PORT,
     )
     parser.add_option(
         "--event_port",
@@ -412,7 +489,7 @@ def dlgNM(parser, args):
         type="int",
         dest="events_port",
         help="Set the port number for the NodeManager ZMQ client",
-        default=NODE_DEFAULT_EVENTS_PORT
+        default=NODE_DEFAULT_EVENTS_PORT,
     )
 
     (options, args) = parser.parse_args(args)
@@ -442,6 +519,7 @@ def dlgNM(parser, args):
         "max_threads": options.max_threads,
         "use_processes": options.use_processes,
         "logdir": options.logdir,
+        "use_local_time": options.local_time,
     }
     options.dmAcronym = "NM"
     options.restType = NMRestServer
@@ -500,7 +578,7 @@ def dlgCompositeManager(parser, args, dmType, acronym, dmPort, dmRestServer):
     options.dmKwargs = {
         "pkeyPath": options.pkeyPath,
         "dmCheckTimeout": options.dmCheckTimeout,
-        "dump_graphs": options.dump_graphs
+        "dump_graphs": options.dump_graphs,
     }
     options.dmAcronym = acronym
     options.restType = dmRestServer

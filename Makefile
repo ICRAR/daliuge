@@ -54,7 +54,7 @@ test: 		  ## Run tests and generate coverage report.
 	@ pip install pytest
 	@ pip install pytest-cov
 	@ cd daliuge-translator
-	@ $(ENV_PREFIX)py.test --cov --show-capture=no
+	@ $(env_prefix)py.test --cov --show-capture=no
 	@ cd ../daliuge-engine
 	@ $(ENV_PREFIX)py.test --cov --show-capture=no
 
@@ -89,8 +89,10 @@ release:          ## Create a new tag for release.
 	@read -p "Version? (provide the next x.y.z semver) : " TAG
 	@if ! grep -q "v$${TAG}" CHANGELOG.md; then echo "TAG version number must be added to CHANGELOG.md before committing." && exit; fi
 	@echo "v$${TAG}" > daliuge-common/VERSION
-	@git add daliuge-common/VERSION CHANGELOG.md
-	@git commit -m "release: version v$${TAG} 🚀"
+	@echo "v$${TAG}" > daliuge-engine/VERSION
+	@echo "v$${TAG}" > daliuge-translator/VERSION
+	@git add daliuge-common/VERSION daliuge-engine/VERSION daliuge-translator/VERSION CHANGELOG.md
+	@git commit -m "Release: version v$${TAG} 🚀"
 	@echo "creating git tag : v$${TAG}"
 	@git tag v$${TAG}
 	@git push -u origin HEAD --tags

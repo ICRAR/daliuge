@@ -22,12 +22,13 @@
 import codecs
 import json
 import os
+import pathlib
 import time
 import unittest
 import shutil
 from asyncio.log import logger
 
-import pkg_resources
+# import pkg_resources
 
 from dlg import utils, droputils
 from dlg.testutils import ManagerStarter
@@ -39,8 +40,11 @@ from dlg.manager.session import SessionStates
 from dlg.manager.manager_data import Node
 
 from dlg.testutils import ManagerStarter
-from test.dlg_engine_testutils import (RESTTestUtils, DROPManagerUtils,
-                                       TerminatingTestHelper)
+from test.dlg_engine_testutils import (
+    RESTTestUtils,
+    DROPManagerUtils,
+    TerminatingTestHelper,
+)
 
 hostname = "localhost"
 dim_host = f"{hostname}:{ISLAND_DEFAULT_REST_PORT}"
@@ -158,7 +162,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
 
         # Deploy now and get A and C
         self.dim.deploySession(sessionId)
-        a, c = [self.dm._sessions[sessionId].drops[x] for x in ("A", "C")]
+        a, c = [self.dm.sessions[sessionId].drops[x] for x in ("A", "C")]
 
         data = os.urandom(10)
         with droputils.DROPWaiterCtx(self, c, 3):
@@ -178,7 +182,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
 
         # Deploy now and get C
         self.dim.deploySession(sessionId, completedDrops=["A"])
-        c = self.dm._sessions[sessionId].drops["C"]
+        c = self.dm.sessions[sessionId].drops["C"]
 
         # This should be happening before the sleepTime expires
         with droputils.DROPWaiterCtx(self, c, 2):
@@ -205,7 +209,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         self.dm.deploySession(sessionId)
         assertSessionStatus(sessionId, SessionStates.RUNNING)
 
-        a, c = [self.dm._sessions[sessionId].drops[x] for x in ("A", "C")]
+        a, c = [self.dm.sessions[sessionId].drops[x] for x in ("A", "C")]
         data = os.urandom(10)
         with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
@@ -237,7 +241,7 @@ class TestDIM(LocalDimStarter, unittest.TestCase):
         self.dim.deploySession(sessionId)
         assertGraphStatus(sessionId, DROPStates.INITIALIZED)
 
-        a, c = [self.dm._sessions[sessionId].drops[x] for x in ("A", "C")]
+        a, c = [self.dm.sessions[sessionId].drops[x] for x in ("A", "C")]
         data = os.urandom(10)
         with droputils.DROPWaiterCtx(self, c, 3):
             a.write(data)
@@ -341,13 +345,21 @@ class TestREST(LocalDimStarter, unittest.TestCase):
         A test that exercises most of the REST interface exposed on top of the
         DataIslandManager
         """
+        cwd = pathlib.Path.cwd()
         os.makedirs("/tmp/test_dim_rest/", exist_ok=True)
         os.environ["DLG_ROOT"] = "/tmp/test_dim_rest"
 
         sessionId = "lala"
         nmPort = 8000  # NOTE: can't use any other port yet.
         dimPort = 8989  # don't interfere with EAGLE default port
-        args = ["--port", str(dimPort), "-N", f"{hostname}:{nmPort}", "-qqq", "--dump_graphs"]
+        args = [
+            "--port",
+            str(dimPort),
+            "-N",
+            f"{hostname}:{nmPort}",
+            "-qqq",
+            "--dump_graphs",
+        ]
         dimProcess = tool.start_process("dim", args)
 
         with TerminatingTestHelper(dimProcess, timeout=10):
@@ -381,12 +393,12 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             # The UID of the two leaf nodes of this complex.js graph are T and S
             # Since the original complexGraph doesn't have node information
             # we need to add it manually before submitting -- otherwise it will
+            import importlib.resources
+            ref = importlib.resources.files('test').joinpath('graphs/complex.js')
+            with ref.open('rb') as fp:
+                complexGraphSpec = json.load(codecs.getreader("utf-8")(fp))
+            logger.debug(f"Loaded graph: {fp}")
             # get rejected by the DIM.
-            with pkg_resources.resource_stream(
-                "test", "graphs/complex.js"
-            ) as f:  # @UndefinedVariable
-                complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
-                logger.debug(f"Loaded graph: {f}")
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = nm_host
             RESTTestUtils.post(
@@ -440,6 +452,7 @@ class TestREST(LocalDimStarter, unittest.TestCase):
             self.assertEqual(0, len(sessions))
             pastSessions = RESTTestUtils.get(self, "/past_sessions", dimPort)
             self.assertEqual(1, len(pastSessions))
-            # Reset environment and test directories
+        # Reset environment and test directories
+        os.chdir(cwd)
         shutil.rmtree("/tmp/test_dim_rest/", ignore_errors=True)
-        del os.environ['DLG_ROOT']
+        del os.environ["DLG_ROOT"]

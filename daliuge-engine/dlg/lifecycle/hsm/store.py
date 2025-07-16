@@ -38,7 +38,7 @@ from dlg.data.drops.memory import InMemoryDROP
 from dlg.data.drops.ngas import NgasDROP
 from dlg.data.drops.file import FileDROP
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class AbstractStore(object):
@@ -48,7 +48,7 @@ class AbstractStore(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super(AbstractStore, self).__init__()
         self._setTotalSpace(0)
         self._setAvailableSpace(0)
@@ -62,10 +62,8 @@ class AbstractStore(object):
             total = self.getTotalSpace()
             perc = avail * 100.0 / total
             logger.debug(
-                "Available/Total space on %s: %d/%d (%.2f %%)",
-                self, avail, total, perc
+                "Available/Total space on %s: %d/%d (%.2f %%)", self, avail, total, perc
             )
-        pass
 
     def _setTotalSpace(self, totalSpace):
         self._totalSpace = totalSpace
@@ -168,10 +166,10 @@ class NgasStore(AbstractStore):
     NgasDROPs and monitors the disks usage of the NGAS system.
     """
 
-    def __init__(self, host=None, port=None, initialCheck=True):
-
+    def __init__(self, host=None, port=None):
+        super(NgasStore, self).__init__()
         try:
-            from ngamsPClient import ngamsPClient  # @UnusedImport
+            from ngamsPClient import ngamsPClient  # pylint: disable=unused-import
         except:
             logger.error("NGAMS client libs not found, cannot use NGAMS as a store")
             raise
@@ -202,7 +200,7 @@ class NgasStore(AbstractStore):
             # col14 = bytes_stored
             totalAvailable += float(disk["col13"])
             totalStored += int(disk["col14"])
-        totalAvailable *= 1024 ** 2  # to bytes
+        totalAvailable *= 1024**2  # to bytes
 
         # TODO: Check if these computations are correct, I'm not sure if the
         #       quantities stored by NGAS should be interpreted like this, or
@@ -239,7 +237,7 @@ class DirectoryStore(AbstractStore):
     __SIZE_FILE = "SIZE"
 
     def __init__(self, dirName, initialize=False):
-
+        super(DirectoryStore, self).__init__()
         if not dirName:
             raise Exception("No directory given to DirectoryStore")
 
@@ -254,7 +252,7 @@ class DirectoryStore(AbstractStore):
             )
         else:
             # Should be used only for testing
-            size = 1024 ** 3
+            size = 1024**3
             logger.info(
                 "Initializing %s with size %d. THIS SHOULD ONLY BE USED DURING TESTING",
                 sizeFile,

@@ -27,8 +27,8 @@ full JSON representation.
 import collections
 import importlib
 import logging
+from typing import List, Optional
 
-from typing import List
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
 from . import droputils
@@ -39,14 +39,14 @@ from .drop import (
     LINKTYPE_NTO1_PROPERTY,
     LINKTYPE_1TON_APPEND_METHOD,
 )
-from .data.drops.data_base import NullDROP
-from .data.drops.container import ContainerDROP
 
+from dlg.data.drops import InMemoryDROP, SharedMemoryDROP, FileDROP, NgasDROP
+from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
 from dlg.data.drops.parset_drop import ParameterSetDROP
-from .exceptions import InvalidGraphException
+from dlg.data.drops.container import ContainerDROP
+from dlg.exceptions import InvalidGraphException
 from dlg.data.drops.json_drop import JsonDROP
-from dlg.data.drops import *
 
 
 class CategoryType:
@@ -73,7 +73,7 @@ __TOONE = {DROPLinkType.PARENT: "parent"}
 __TOMANY.update({v: k for k, v in __TOMANY.items()})
 __TOONE.update({v: k for k, v in __TOONE.items()})
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def addLink(linkType, lhDropSpec, rhOID, force=False):
@@ -95,12 +95,12 @@ def addLink(linkType, lhDropSpec, rhOID, force=False):
         if rhOID not in relList:
             relList.append(rhOID)
         else:
-            raise Exception("DROP %s is already part of %s's %s" % (rhOID, lhOID, rel))
+            raise RuntimeError("DROP %s is already part of %s's %s" % (rhOID, lhOID, rel))
     # N-1 relationship, overwrite existing relationship only if `force` is specified
     elif linkType in __TOONE:
         rel = __TOONE[linkType]
         if rel and not force:
-            raise Exception(
+            raise RuntimeError(
                 "DROP %s already has a '%s', use 'force' to override" % (lhOID, rel)
             )
         lhDropSpec[rel] = rhOID
@@ -200,11 +200,13 @@ def loadDropSpecs(dropSpecList):
     reprodata = None
     if dropSpecList is None:
         raise InvalidGraphException("DropSpec is empty %r" % dropSpecList)
-    if dropSpecList[-1].get("rmode"):
+    if dropSpecList[-1].get("rmode") or not dropSpecList[-1]:
         reprodata = dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
         # "categoryType" and 'oid' are mandatory
         check_dropspec(n, dropSpec)
+        dropSpec.pop("input_parser", None)
+        dropSpec.pop("output_parser", None)
         dropType = dropSpec["categoryType"].lower()
 
         cf = __CREATION_FUNCTIONS[dropType]
@@ -224,37 +226,30 @@ def loadDropSpecs(dropSpecList):
                 # relationship list but doesn't exist in the list of DROPs
                 for oid in dropSpec[rel]:
                     oid = list(oid.keys())[0] if isinstance(oid, dict) else oid
-                    if oid in dropSpecs:
-                        dropSpecs[oid]
-                    else:
+                    if oid not in dropSpecs:
                         logger.error("OID: %s not found!", oid)
                         continue
-                        # raise KeyError
-
-            # N-1 relationships
-            elif rel in __TOONE:
-                port = (
-                    list(dropSpecs[rel].keys())
-                    if isinstance(dropSpecs[rel], dict)
-                    else dropSpecs[rel]
-                )
-                # See comment above
-                dropSpecs[port]
 
     # Done!
     return dropSpecs, reprodata
 
 
-def createGraphFromDropSpecList(dropSpecList, session=None):
+def createGraphFromDropSpecList(
+    dropSpecList: List[dict], session: Optional["Session"] = None
+) -> List[AbstractDROP]:
     logger.debug("Found %d DROP definitions", len(dropSpecList))
 
     # Step #1: create the actual DROPs
     drops = collections.OrderedDict()
     logger.info("Creating %d drops", len(dropSpecList))
+    if dropSpecList[-1].get("rmode") or not dropSpecList[-1]:
+        dropSpecList.pop()
     for n, dropSpec in enumerate(dropSpecList):
         check_dropspec(n, dropSpec)
         #        dropType = dropSpec.pop("categoryType")
         # backwards compatibility
+        dropSpec.pop("input_parser", None)
+        dropSpec.pop("output_parser", None)
         dropType = dropSpec["categoryType"]
         # if dropType.lower() in ["application", "app"]:
         #     dropType = "dropclass"
@@ -317,7 +312,6 @@ def createGraphFromDropSpecList(dropSpecList, session=None):
         drop for drop in drops.values() if not droputils.getUpstreamObjects(drop)
     ]
     logger.info("%d graph roots found, bye-bye!", len(roots))
-
     return roots
 
 
@@ -347,7 +341,7 @@ def _createData(dropSpec, dryRun=False, session_id=None):
         }
 
         try:
-            from .data.drops.s3_drop import S3DROP
+            from dlg.data.drops.s3_drop import S3DROP
 
             STORAGE_TYPES["S3"] = S3DROP
         except ImportError:
@@ -412,10 +406,10 @@ def _createApp(dropSpec, dryRun=False, session_id=None):
     try:
         module = importlib.import_module(".".join(parts[:-1]))
         appType = getattr(module, parts[-1])
-    except (ImportError, AttributeError, ValueError):
+    except (ImportError, AttributeError, ValueError) as e:
         raise InvalidGraphException(
             "drop %s specifies non-existent application: %s" % (oid, appName)
-        )
+        ) from e
 
     if dryRun:
         return

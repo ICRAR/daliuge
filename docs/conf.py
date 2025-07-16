@@ -75,7 +75,7 @@ needs_sphinx = "1.3"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.todo",
-    "sphinx.ext.coverage",
+    # "sphinx.ext.coverage",
     "sphinx.ext.imgmath",
     "sphinx_rtd_theme",
 ]
@@ -95,7 +95,9 @@ except ImportError:
     release = version
 
 language = "en"
-exclude_patterns = ["_build"]
+app_development = "development/app_development/"
+exclude_patterns = ["_build", "tutorial/*", "development/wip_docs/*", "development/dev/*"]
+
 pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
@@ -112,9 +114,13 @@ rst_prolog = """
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = "sphinx_rtd_theme"
-
+html_static_path = ["_static"]
+html_css_files = ["css/daliuge.css"]
+html_style = "css/daliuge.css"
 htmlhelp_basename = "daliugedoc"
 
+html_logo = "images/DLGLogo_White.png"
+html_theme_options = {"logo_only": True}
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {}

@@ -40,12 +40,13 @@ import docker
 from docker.models.containers import Container
 
 from dlg import utils, droputils
+from dlg.drop import track_current_drop
 from dlg.named_port_utils import replace_named_ports
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import DaliugeException, InvalidDropException
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 DLG_ROOT = utils.getDlgDir()
 
@@ -89,6 +90,7 @@ class ContainerIpWaiter(object):
 # @param entrypoint /String/ComponentParameter/NoPort/ReadWrite//False/False/Alternate entrypoint
 # @param paramValueSeparator " "/String/ComponentParameter/NoPort/ReadWrite//False/False/Separator character(s) between parameters and their respective values on the command line
 # @param argumentPrefix "--"/String/ComponentParameter/NoPort/ReadWrite//False/False/Prefix to each keyed argument on the command line
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
 # @param dropclass dlg.apps.dockerapp.DockerApp/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name dockerapp/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
@@ -101,8 +103,6 @@ class ContainerIpWaiter(object):
 # @param removeContainer True/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Instruct Docker engine to delete the container after execution is complete
 # @param additionalBindings /String/ComponentParameter/NoPort/ReadWrite//False/False/Directories which will be visible inside the container during run-time. Format is srcdir_on_host:trgtdir_on_container. Multiple entries can be separated by commas.
 # @param portMappings /String/ComponentParameter/NoPort/ReadWrite//False/False/Port mappings on the host machine
-# @param input_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Input port parsing technique
-# @param output_parser pickle/Select/ComponentParameter/NoPort/ReadWrite/raw,pickle,eval,npy,path,dataurl/False/False/Output port parsing technique
 # @par EAGLE_END
 class DockerApp(BarrierAppDROP):
     """
@@ -284,7 +284,8 @@ class DockerApp(BarrierAppDROP):
         self._userid = pw.pw_uid
         self._groupid = pw.pw_gid
         logger.debug(
-            f"User for docker container: {self._user} {self._userid}:{self._groupid}"
+            "User for docker container: %s %s:%s",
+            self._user, self._userid,self._groupid
         )
 
         # By default containers are removed from the filesystem, but people
@@ -296,10 +297,10 @@ class DockerApp(BarrierAppDROP):
         # Ports - a comma seperated list of the host port mappings of form:
         # "hostport1:containerport1, hostport2:containerport2"
         self._portMappings = self._popArg(kwargs, "portMappings", "")
-        logger.info(f"portMappings: {self._portMappings}")
+        logger.info("portMappings: %s", self._portMappings)
 
         self._shmSize = self._popArg(kwargs, "shmSize", "")
-        logger.info(f"shmSize: {self._shmSize}")
+        logger.info("shmSize: %s", self._shmSize)
 
         # Additional volume bindings can be specified for existing files/dirs
         # on the host system. They are given either as a list or as a
@@ -391,10 +392,11 @@ class DockerApp(BarrierAppDROP):
         # The only interest we currently have is the containerIp of other
         # DockerApps, and only if our command actually uses this IP
         if isinstance(drop, DockerApp):
-            if "%containerIp[{0}]%".format(drop.uid) in self._command:
+            if f"%containerIp[{{{drop.uid}}}]%" in self._command:
                 self._waiters.append(ContainerIpWaiter(drop))
                 logger.debug("%r: Added ContainerIpWaiter for %r", self, drop)
 
+    @track_current_drop
     def run(self):
         # lock this object to prevent other processes from signaling until the
         # container object is running.
@@ -418,8 +420,6 @@ class DockerApp(BarrierAppDROP):
                 uid: DockerPath(o.path)
                 for uid, o in fsOutputs.items()
             }
-            dataURLInputs = {uid: i for uid, i in iitems if not droputils.has_path(i)}
-            dataURLOutputs = {uid: o for uid, o in oitems if not droputils.has_path(o)}
 
             # We bind the inputs and outputs inside the docker under the utils.getDlgDir()
             # directory, maintaining the rest of their original paths.
@@ -444,7 +444,7 @@ class DockerApp(BarrierAppDROP):
             binds = list(set(binds))  # make this a unique list else docker complains
             try:
                 binds.remove(":")
-            except:
+            except ValueError:
                 pass
             logger.debug("Volume bindings: %r", binds)
 
@@ -456,13 +456,14 @@ class DockerApp(BarrierAppDROP):
                     else:
                         host_port, container_port = mapping.split(":")
                     if host_port not in portMappings:
-                        logger.debug(f"mapping port {host_port} -> {container_port}")
+                        logger.debug("mapping port %s -> %s",
+                                     host_port, container_port)
                         portMappings[host_port] = int(container_port)
                     else:
                         raise Exception(
                             f"Duplicate port {host_port} in container port mappings"
                         )
-            logger.debug(f"port mappings: {portMappings}")
+            logger.debug("port mappings: %s", portMappings)
 
             # deal with environment variables
             env = {}
@@ -472,7 +473,7 @@ class DockerApp(BarrierAppDROP):
             if self._user is not None:
                 env.update({"USER": self._user, "DLG_ROOT": utils.getDlgDir()})
             if self._env is not None:
-                logger.debug(f"Found environment variable setting: {self._env}")
+                logger.debug("Found environment variable setting: %s", self._env)
                 if (
                     self._env.lower() == "all"
                 ):  # pass on all environment variables from host
@@ -488,11 +489,8 @@ class DockerApp(BarrierAppDROP):
                     if isinstance(addEnv, dict):  # if it is a dict populate directly
                         # but replace placeholders first
                         for key in addEnv:
-                            value = droputils.replace_path_placeholders(
+                            value = droputils.replace_placeholders(
                                 addEnv[key], dockerInputs, dockerOutputs
-                            )
-                            value = droputils.replace_dataurl_placeholders(
-                                value, dataURLInputs, dataURLOutputs
                             )
                             addEnv[key] = value
                         env.update(addEnv)
@@ -505,7 +503,7 @@ class DockerApp(BarrierAppDROP):
                     logger.warning(
                         "Ignoring provided environment variables: Format wrong! Check documentation"
                     )
-            logger.debug(f"Adding environment variables: {env}")
+            logger.debug("Adding environment variables: %s",env)
 
             # deal with named ports
             appArgs = self._applicationArgs
@@ -521,36 +519,27 @@ class DockerApp(BarrierAppDROP):
                 inport_names,
                 outport_names,
                 appArgs,
-                argumentPrefix=self._argumentPrefix,
-                separator=self._paramValueSeparator,
             )
 
-            argumentString = f"{' '.join(keyargs + pargs)}"
-
             # complete command including all additional parameters and optional redirects
-            cmd = f"{self._command} {argumentString} {self._cmdLineArgs} "
-            if cmd:
-                cmd = droputils.replace_path_placeholders(
-                    cmd, dockerInputs, dockerOutputs
+            if self._command:
+                cmd = droputils.replace_placeholders(
+                    self._command, dockerInputs, dockerOutputs
                 )
-                cmd = droputils.replace_dataurl_placeholders(
-                    cmd, dataURLInputs, dataURLOutputs
-                )
-                # if "output_redirection" in self._applicationArgs:
-                #     logger.debug(">>>> outport_names: %s", outport_names)
-                #     out_name = outport_names["output_redirection"]
-                #     cmd = f"{cmd} > {out_name}"
-                # if "input_redirection" in self._applicationArgs:
-                #     in_name = inport_names["input_redirection"]
-                #     cmd = f"cat {in_name} > {cmd}"
+                for key, value in keyargs.items():
+                    cmd = cmd.replace(f"{{{key}}}", str(value))
+                for key, value in pargs.items():
+                    cmd = cmd.replace(f"{{{key}}}", str(value))
             else:
                 cmd = ""
+
+
             ###############
             # Wait until the DockerApps this application runtime depends on have
             # started, and replace their IP placeholders by the real IPs
             for waiter in self._waiters:
                 uid, ip = waiter.waitForIp()
-                cmd = cmd.replace("%containerIp[{0}]%".format(uid), ip)
+                cmd = cmd.replace(f"%containerIp[{{{uid}}}]%", ip)
                 logger.debug("Command after IP replacement is: %s", cmd)
 
             # Wrap everything inside bash
@@ -570,7 +559,8 @@ class DockerApp(BarrierAppDROP):
                 )
 
             c = DockerApp._get_client()
-            logger.debug(f"Final user for container: {self._user}:{self._userid}")
+            logger.debug("Final user for container: %s:%s",
+                         self._user, self._userid)
 
             # Create container
             self._container = c.containers.create(  # type: ignore
@@ -594,7 +584,7 @@ class DockerApp(BarrierAppDROP):
         else:
             self._containerId = cId = self.container.id
             logger.info("Created container %s for %r", cId, self)
-            logger.debug(f"autoremove container {self._removeContainer}")
+            logger.debug("autoremove container %s", self._removeContainer)
 
             # Start it
             start = time.time()
@@ -612,7 +602,7 @@ class DockerApp(BarrierAppDROP):
             # In docker-py < 3 the .wait() method returns the exit code directly
             # In docker-py >= 3 the .wait() method returns a dictionary with the API response
             x = self.container.wait()
-            logger.debug(f"container {cId} finished")
+            logger.debug("container %s finished", cId)
 
             if isinstance(x, dict) and "StatusCode" in x:
                 self._exitCode = x["StatusCode"]
@@ -650,13 +640,15 @@ class DockerApp(BarrierAppDROP):
                 ):
                     # termination via SIGKILL, SIGSEGV, and SIGTERM is expected for some services
                     logger.warning(
-                        f"{msg}, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                        "%s, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                        msg,
                         stdout,
                         stderr,
                     )
                 else:
                     logger.error(
-                        f"{msg}, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                        "%s, output follows.\n==STDOUT==\n%s==STDERR==\n%s",
+                        msg,
                         stdout,
                         stderr,
                     )
@@ -707,11 +699,9 @@ class DockerApp(BarrierAppDROP):
         return docker.from_env(version="auto", **cls._kwargs_from_env())
 
     @classmethod
-    def _kwargs_from_env(cls, ssl_version=None, assert_hostname=False):
+    def _kwargs_from_env(cls):
         """
         Look for parameters to make Docker work under OS X
-        :param ssl_version:     which SSL version
-        :param assert_hostname: perform hostname checking
         :return:
         """
         config_file_name = os.path.join(utils.getDlgDir(), "dlg.settings")

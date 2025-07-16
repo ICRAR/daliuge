@@ -20,6 +20,9 @@
 #    MA 02111-1307  USA
 #
 #    chen.wu@icrar.org
+
+# pylint: disable=global-at-module-level
+
 import argparse
 import datetime
 import json
@@ -40,7 +43,6 @@ import uvicorn
 from fastapi import FastAPI, Request, Body, Query, HTTPException, Form
 from fastapi.responses import (
     HTMLResponse,
-    StreamingResponse,
     JSONResponse,
     RedirectResponse,
 )
@@ -49,7 +51,7 @@ from fastapi.templating import Jinja2Templates
 from jsonschema import validate, ValidationError
 from pydantic import BaseModel
 
-import dlg.constants
+import dlg.constants as constants
 import dlg.dropmake.pg_generator
 from dlg import restutils, common
 from dlg.clients import CompositeManagerClient
@@ -86,7 +88,6 @@ from dlg.dropmake.web.translator_utils import (
     get_mgr_deployment_methods,
     parse_mgr_url,
 )
-from dlg import constants
 
 APP_DESCRIPTION = """
 DALiuGE LG Web interface translates and deploys logical graphs.
@@ -131,7 +132,7 @@ app = FastAPI(
     },
 )
 app.mount("/static", StaticFiles(directory=file_location), name="static")
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 post_sem = threading.Semaphore(1)
 gen_pgt_sem = threading.Semaphore(1)
@@ -161,16 +162,16 @@ def jsonbody_post_lg(
     except JSONDecodeError:
         logger.warning("Could not decode lgt %s", lg_name)
     lg_content = init_lgt_repro_data(lg_content, rmode)
-    lg_path = pathlib.Path(lg_dir, lg_name)
+    logical_path = pathlib.Path(lg_dir, lg_name)
     post_sem.acquire()
     try:
-        with open(lg_path, "w") as lg_file:
+        with open(logical_path, "w") as lg_file:
             lg_file.write(json.dumps(lg_content))
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail="Failed to save logical graph {0}:{1}".format(lg_name, str(e)),
-        )
+        ) from e
     finally:
         post_sem.release()
 
@@ -299,7 +300,7 @@ def get_gantt_chart(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate Gantt chart for {0}: {1}".format(pgt_id, ge),
-        )
+        ) from ge
 
 
 @app.get("/show_schedule_mat", response_class=HTMLResponse, tags=["Original"])
@@ -339,7 +340,7 @@ def get_schedule_matrices(
         raise HTTPException(
             status_code=500,
             detail="Failed to get schedule matrices for {0}: {1}".format(pgt_id, e),
-        )
+        ) from e
 
 
 # ------ Graph deployment methods ------ #
@@ -416,20 +417,20 @@ def gen_pgt(
         raise HTTPException(
             status_code=500,
             detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name),
-        )
+        ) from ge
     except SchedulerException as se:
         logger.info("Schedule Exception")
         raise HTTPException(
             status_code=500,
             detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name),
-        )
-    except Exception:
+        ) from se
+    except Exception as e:
         logger.info("Partition / Other exception")
         trace_msg = traceback.format_exc()
         raise HTTPException(
             status_code=500,
             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name),
-        )
+        ) from e
 
 
 @app.post("/gen_pgt", response_class=HTMLResponse, tags=["Original"])
@@ -530,25 +531,24 @@ async def gen_pgt_post(
         raise HTTPException(
             status_code=500,
             detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name),
-        )
+        ) from ge
     except SchedulerException as se:
         logger.info("SCHEDULE EXCEPTION")
         raise HTTPException(
             status_code=500,
             detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name),
-        )
-    except Exception:
+        ) from se
+    except Exception as e:
         logger.info("OTHER EXCEPTION")
         trace_msg = traceback.format_exc()
         raise HTTPException(
             status_code=500,
             detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name),
-        )
+        ) from e
 
 
 @app.get("/gen_pg", response_class=JSONResponse, tags=["Original"])
 def gen_pg(
-    request: Request,
     pgt_id: str = Query(
         description="The pgt_id used to internally reference this graph"
     ),
@@ -583,8 +583,8 @@ def gen_pg(
         try:
             (mhost, mport) = mparse.netloc.split(":")
             mport = int(mport)
-        except:
-            logger.debug("URL parsing error of: %s", dlg_mgr_url)
+        except ValueError as e:
+            logger.debug("URL parsing error of: %s, %s", dlg_mgr_url, str(e))
             mhost = mparse.netloc
             if mparse.scheme == "http":
                 mport = 80
@@ -615,7 +615,7 @@ def gen_pg(
             ),
         )
 
-    pgtpj = pgtp._gojs_json_obj
+    pgtpj = pgtp.gojs_json_obj
     reprodata = pgtp.reprodata
     num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
 
@@ -667,13 +667,13 @@ def gen_pg(
         raise HTTPException(
             status_code=500,
             detail="Failed to interact with DALiUGE Drop Manager: {0}".format(re),
-        )
+        ) from re
     except Exception as ex:
         logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=500,
             detail="Failed to deploy physical graph: {0}".format(ex),
-        )
+        ) from ex
 
 
 @app.post("/gen_pg_spec", tags=["Original"])
@@ -706,7 +706,7 @@ def gen_pg_spec(
         raise HTTPException(
             status_code=500,
             detail="Unable to parse json body of request for pg_spec: {0}".format(ex),
-        )
+        ) from ex
     pgtp = pg_mgr.get_pgt(pgt_id)
     if pgtp is None:
         raise HTTPException(
@@ -738,7 +738,7 @@ def gen_pg_spec(
         raise HTTPException(
             status_code=500,
             detail="Failed to generate pg_spec: {0}".format(ex),
-        )
+        ) from ex
 
 
 @app.get("/gen_pg_helm", tags=["Original"])
@@ -762,7 +762,7 @@ def gen_pg_helm(
             ),
         )
 
-    pgtpj = pgtp._gojs_json_obj
+    pgtpj = pgtp.gojs_json_obj
     logger.info("PGTP: %s", pgtpj)
     num_partitions = len(list(filter(lambda n: "isGroup" in n, pgtpj["nodeDataArray"])))
     # Send pgt_data to helm_start
@@ -773,7 +773,7 @@ def gen_pg_helm(
         raise HTTPException(
             status_code=500,
             detail="Failed to deploy physical graph: {0}".format(ex),
-        )
+        ) from ex
     # TODO: Not sure what to redirect to yet
     return "Inspect your k8s dashboard for deployment status"
 
@@ -826,7 +826,8 @@ def load_graph(graph_content: str, graph_name: str):
                 out_graph = json.loads(graph_content)
             except JSONDecodeError as jerror:
                 logger.error(jerror)
-                raise HTTPException(status_code=400, detail="LG content is malformed")
+                raise HTTPException(status_code=400, detail="LG content is malformed") \
+                    from jerror
     else:
         lgp = lg_path(lg_dir, graph_name)
         with open(lgp, "r") as f:
@@ -836,7 +837,7 @@ def load_graph(graph_content: str, graph_name: str):
                 logger.error(jerror)
                 raise HTTPException(
                     status_code=500, detail="LG graph on file cannot be loaded"
-                )
+                ) from jerror
     return out_graph
 
 
@@ -869,7 +870,9 @@ def lg_fill(
         params = json.loads(parameters)
     except JSONDecodeError as jerror:
         logger.error(jerror)
-        raise HTTPException(status_code=400, detail="Parameter string is invalid")
+        raise HTTPException(
+            status_code=400,
+            detail="Parameter string is invalid") from jerror
     output_graph = dlg.dropmake.pg_generator.fill(lg_graph, params)
     output_graph = init_lg_repro_data(init_lgt_repro_data(output_graph, rmode))
     return JSONResponse(output_graph)
@@ -1040,7 +1043,7 @@ def pgt_map(
         nodes = [f"{host}:{port}"] + client.nodes()
     if len(nodes) <= num_islands:
         logger.error("Not enough nodes to fill all islands")
-        HTTPException(
+        raise HTTPException(
             status_code=500,
             detail="#nodes (%d) should be larger than the number of islands (%d)"
             % (len(nodes), num_islands),
@@ -1167,6 +1170,13 @@ def run(_, args):
         default=utils.getDlgLogsDir(),
     )
 
+    parser.add_argument(
+        "--local-time",
+        action="store_true",
+        help="Use local system time when logging",
+        default=False,
+    )
+
     options = parser.parse_args(args)
 
     if options.lg_path is None or options.pgt_path is None:
@@ -1174,12 +1184,14 @@ def run(_, args):
     elif not os.path.exists(options.lg_path):
         parser.error(f"{options.lg_path} does not exist")
 
+    time_fmt_str = "Local" if options.local_time else "GMT"
     if options.verbose or options.logdir:
         fmt = logging.Formatter(
             "%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "
             "%(name)s#%(funcName)s:%(lineno)s %(message)s"
         )
-        fmt.converter = time.gmtime
+
+        fmt.converter = time.localtime if options.local_time else time.gmtime
         if options.verbose:
             stream_handler = logging.StreamHandler(sys.stdout)
             stream_handler.setFormatter(fmt)
@@ -1199,9 +1211,9 @@ def run(_, args):
     except OSError:
         logging.warning("Cannot create path %s", options.pgt_path)
 
-    global lg_dir
-    global pgt_dir
-    global pg_mgr
+    global lg_dir # pylint: disable=global-variable-undefined
+    global pgt_dir # pylint: disable=global-variable-undefined
+    global pg_mgr # pylint: disable=global-variable-undefined
 
     lg_dir = options.lg_path
     pgt_dir = options.pgt_path
@@ -1214,7 +1226,9 @@ def run(_, args):
     signal.signal(signal.SIGINT, handler)
 
     logging.debug("Starting uvicorn verbose %s", options.verbose)
-    uvicorn.run(app=app, host=options.host, port=options.port, debug=options.verbose)
+    logging.warning("Logging using %s time", time_fmt_str)
+    ll = 'debug' if options.verbose else 'warning'
+    uvicorn.run(app=app, host=options.host, port=options.port, log_level=ll)
 
 
 if __name__ == "__main__":

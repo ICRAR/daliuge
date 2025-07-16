@@ -30,27 +30,41 @@ def include_dir(_parser, _args):
 
 
 def register_commands():
-    tool.cmdwrap("nm", "Starts a Node Manager", "dlg.manager.cmdline:dlgNM")
-    tool.cmdwrap("dim", "Starts a Drop Island Manager", "dlg.manager.cmdline:dlgDIM")
-    tool.cmdwrap("mm", "Starts a Master Manager", "dlg.manager.cmdline:dlgMM")
-    tool.cmdwrap("replay", "Starts a Replay Manager", "dlg.manager.cmdline:dlgReplay")
+    manager_group = tool.CommandGroup("managers", "DROP Manager Commands")
+    tool.cmdwrap("nm", manager_group, "Starts a Node Manager", "dlg.manager.cmdline:dlgNM")
+    tool.cmdwrap("dim", manager_group, "Starts a Drop Island Manager", "dlg.manager.cmdline:dlgDIM")
+    tool.cmdwrap("mm", manager_group, "Starts a Master Manager", "dlg.manager.cmdline:dlgMM")
+    tool.cmdwrap("replay", manager_group, "Starts a Replay Manager", "dlg.manager.cmdline:dlgReplay")
     tool.cmdwrap(
-        "daemon",
+        "daemon", manager_group,
         "Starts a DALiuGE Daemon process",
         "dlg.manager.proc_daemon:run_with_cmdline",
     )
     tool.cmdwrap(
-        "proxy",
+        "proxy", manager_group,
         "A reverse proxy to be used in restricted environments to contact the Drop Managers",
         "dlg.deploy.dlg_proxy:run",
     )
     tool.cmdwrap(
-        "monitor",
+        "monitor", manager_group,
         "A proxy to be used in conjunction with the dlg proxy in restricted environments",
         "dlg.deploy.dlg_monitor:run",
     )
+    manager_utilities = tool.CommandGroup("utilities", "Utility commands")
     tool.cmdwrap(
-        "include_dir",
+        "include_dir", manager_utilities,
         "Print the directory where C header files can be found",
         include_dir,
     )
+
+    remote_group = tool.CommandGroup("remote", "Remote environment configuration and "
+                                               "deployment")
+    tool.cmdwrap(
+        "remote-submit",remote_group,
+        "Create a DALiuGE graph to a remote computing environment",
+        "dlg.deploy.create_dlg_job:run", 
+    )
+    tool.cmdwrap("config", remote_group,
+                 "Manage dlg config environment",
+                 "dlg.deploy.configs.config_manager:run")
+

@@ -19,9 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-from abc import abstractmethod, ABCMeta
+import base64
 from http.client import HTTPConnection
-from multiprocessing.sharedctypes import Value
 from overrides import overrides
 import io
 import logging
@@ -32,12 +31,13 @@ from abc import abstractmethod, ABCMeta
 from typing import Optional, Union
 
 from dlg import ngaslite
+from dlg.common import b2s
 
 if sys.version_info >= (3, 8):
     from dlg.shared_memory import DlgSharedMemory
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class OpenMode:
@@ -109,7 +109,7 @@ class DataIO:
         """
         if self._mode is None:
             return
-        self._close()
+        self._close(**kwargs)
         self._mode = None
 
     def size(self, **kwargs) -> int:
@@ -241,7 +241,7 @@ class MemoryIO(DataIO):
 
     _desc: io.BytesIO  # TODO: This might actually be a problem
 
-    def __init__(self, buf: io.BytesIO, **kwargs):
+    def __init__(self, buf: io.BytesIO):
         super().__init__()
         self._buf = buf
 
@@ -250,13 +250,26 @@ class MemoryIO(DataIO):
             return self._buf
         elif self._mode == OpenMode.OPEN_READ:
             # TODO: potentially wasteful copy
+            if isinstance(self._buf, io.StringIO):
+                self._desc = io.StringIO
+                return io.StringIO(self._buf.getvalue())
             return io.BytesIO(self._buf.getbuffer())
         else:
             raise ValueError()
 
     @overrides
     def _write(self, data, **kwargs) -> int:
-        self._desc.write(data)
+        if isinstance(self._desc, io.BytesIO) and isinstance(data, str):
+            data = bytes(data, encoding="utf8")
+        elif isinstance(self._desc, io.StringIO) and isinstance(data, bytes):
+            data = b2s(base64.b64encode(data))
+        elif isinstance(data, memoryview):
+            data = bytes(data)
+        try:
+            self._desc.write(data)
+        except Exception:
+            logger.debug("Writing of data failed: %s", data)
+            raise
         return len(data)
 
     @overrides
@@ -288,7 +301,7 @@ class MemoryIO(DataIO):
     @overrides
     def buffer(self) -> memoryview:
         # TODO: This may also be an issue
-        return self._buf.getbuffer()
+        return self._buf.getbuffer() if hasattr(self._buf,  "getbuffer") else self._buf.getvalue()
 
 
 # pylint: disable=possibly-used-before-assignment
@@ -297,7 +310,7 @@ class SharedMemoryIO(DataIO):
     A DataIO class that writes to a shared memory buffer
     """
 
-    def __init__(self, uid, session_id, **kwargs):
+    def __init__(self, uid, session_id):
         super().__init__()
         self._name = f"{session_id}_{uid}"
         self._written = 0
@@ -318,10 +331,10 @@ class SharedMemoryIO(DataIO):
         total_size = len(data) + self._written
         if total_size > self._buf.size:
             self._buf.resize(total_size)
-            self._buf.buf[self._written: total_size] = data
+            self._buf.buf[self._written : total_size] = data
             self._written = total_size
         else:
-            self._buf.buf[self._written: total_size] = data
+            self._buf.buf[self._written : total_size] = data
             self._written = total_size
             self._buf.resize(total_size)
             # It may be inefficient to resize many times, but assuming data is written 'once' this is
@@ -358,7 +371,9 @@ class SharedMemoryIO(DataIO):
     def delete(self):
         self._close()
 
+
 # pylint: enable=possibly-used-before-assignment
+
 
 class FileIO(DataIO):
     """
@@ -367,7 +382,7 @@ class FileIO(DataIO):
 
     _desc: io.BufferedRWPair
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename):
         super().__init__()
         self._fnm = filename
 
@@ -382,6 +397,8 @@ class FileIO(DataIO):
 
     @overrides
     def _write(self, data, **kwargs) -> int:
+        if isinstance(data, str):
+            data = bytes(data, encoding="utf8")
         self._desc.write(data)
         return len(data)
 
@@ -432,10 +449,10 @@ class NgasIO(DataIO):
 
         # Check that we actually have the NGAMS client libraries
         try:
-            from ngamsPClient import ngamsPClient  # @UnusedImport @UnresolvedImport
-        except:
+            from ngamsPClient import ngamsPClient  # pylint: disable=unused-import
+        except ImportError as e:
             logger.error("No NGAMS client libs found, cannot use NgasIO")
-            raise
+            raise e
 
         super(NgasIO, self).__init__()
         self._ngasSrv = hostname
@@ -468,7 +485,7 @@ class NgasIO(DataIO):
     def _close(self, **kwargs):
         client = self._desc
         if self._mode == OpenMode.OPEN_WRITE:
-            reply, msg, _, _ = client._httpPost(
+            reply, _, _, _ = client._httpPost( # pylint: disable=protected-access
                 client.getHost(),
                 client.getPort(),
                 "QARCHIVE",
@@ -567,7 +584,7 @@ class NgasLiteIO(DataIO):
         return self._length is None or self._length < 0
 
     def _getClient(self):
-        return ngaslite.open(
+        return ngaslite.open_archive(
             self._ngasSrv,
             self._fileId,
             port=self._ngasPort,
@@ -604,7 +621,8 @@ class NgasLiteIO(DataIO):
                 self._buf = None
             else:
                 logger.debug(
-                    f"Length is known, assuming data has been sent ({self._fileId}, {self._length})"
+                    "Length is known, assuming data has been sent (%s, %s)",
+                    self._fileId, self._length
                 )
             ngaslite.finishArchive(conn, self._fileId)
             conn.close()
@@ -645,7 +663,7 @@ def IOForURL(url):
     suitable DataIO class can be found to handle the URL, `None` is returned.
     """
     url = urllib.parse.urlparse(url)
-    io = None
+    data_io = None
     if url.scheme == "file":
         hostname = url.netloc
         filename = url.path
@@ -654,9 +672,9 @@ def IOForURL(url):
             or hostname == "localhost"
             or hostname == os.uname()[1]
         ):
-            io = FileIO(filename)
+            data_io = FileIO(filename)
     elif url.scheme == "null":
-        io = NullIO()
+        data_io = NullIO()
     elif url.scheme == "ngas":
         networkLocation = url.netloc
         if ":" in networkLocation:
@@ -667,13 +685,11 @@ def IOForURL(url):
             port = 7777
         fileId = url.path[1:]  # remove the trailing slash
         try:
-            io = NgasIO(hostname, fileId, port)
-        except:
+            data_io = NgasIO(hostname, fileId, port)
+        except ImportError:
             logger.warning("NgasIO not available, using NgasLiteIO instead")
-            io = NgasLiteIO(hostname, fileId, port)
+            data_io = NgasLiteIO(hostname, fileId, port)
 
-    logger.debug("I/O chosen for dataURL %s: %r", url, io)
+    logger.debug("I/O chosen for dataURL %s: %r", url, data_io)
 
-    return io
-
-
+    return data_io

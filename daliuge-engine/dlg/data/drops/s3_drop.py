@@ -61,11 +61,11 @@ from dlg.meta import (
 # @param Key /String/ComponentParameter/NoPort/ReadWrite//False/False/The S3 object key
 # @param profile_name /String/ComponentParameter/NoPort/ReadWrite//False/False/The S3 profile name
 # @param endpoint_url /String/ComponentParameter/NoPort/ReadWrite//False/False/The URL exposing the S3 REST API
+# @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
 # @param dropclass dlg.data.drops.s3_drop.S3DROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name s3_drop/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param streaming False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component streams input and output data
-# @param persist False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Specifies whether this data component contains data that should not be deleted after execution
-# @param dummy /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Dummy port
+# @param io /Object/ApplicationArgument/InputOutput/ReadWrite//False/False/Input Output port
 # @par EAGLE_END
 class S3DROP(DataDROP):
     """
@@ -191,7 +191,7 @@ class S3IO(DataIO):
         if self._mode == 1:
             try:
                 self._s3Stream = self._open()
-            except botocore.exceptions.ClientError as e:
+            except botocore.exceptions.ClientError:
                 if not self.exists():
                     logger.debug("Object does not exist yet. Creating!")
                     self._mode = 0
@@ -271,7 +271,7 @@ class S3IO(DataIO):
             )
             self._partNo += 1
             self._written += len(write_buffer)
-        except botocore.exceptions.ClientError as e:
+        except botocore.exceptions.ClientError:
             logger.error("Writing to S3 failed")
             return -1
 
@@ -370,7 +370,7 @@ class S3IO(DataIO):
                 logger.info("Object: %s does not exist", self._key)
                 return True, False
             else:
-                raise RuntimeError("Error occured in Client: %s", e.response)
+                raise RuntimeError("Error occured in Client: %s" % e.response) from e
 
     @overrides
     def exists(self) -> bool:

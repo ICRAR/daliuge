@@ -28,12 +28,11 @@ parse the log result, and produce the plot
 
 import datetime
 import json
-import optparse
+import optparse # pylint: disable=deprecated-module
 import pwd
 import re
 import socket
 import sys
-import tempfile
 import time
 import os
 
@@ -52,6 +51,9 @@ from dlg.common.reproducibility.reproducibility import (
     init_pgt_unroll_repro_data,
     init_pgt_partition_repro_data,
 )
+
+from dlg.deploy.configs.config_manager import ConfigManager, ConfigType
+
 from dlg.dropmake import pg_generator
 
 FACILITIES = ConfigFactory.available()
@@ -429,54 +431,58 @@ def process_slurm_template(template_file: str):
         return fp.read()
 
 def create_experiment_group(parser: optparse.OptionParser):
-    from optparse import OptionGroup
-    group=OptionGroup(parser, "Experimental Options", 
+    """
+    Establish experiment group to separate out experimenatal options
+
+    :param parser: parser that we are updating
+    :return: the group for experiments
+    """
+    group=optparse.OptionGroup(parser, "Experimental Options",
                       "Caution: These are not properly tested and likely to"
                       "be rough around the edges.")
 
     group.add_option(
         "--config_file",
-        dest="config_file", 
-        type="string", 
-        action="store", 
+        dest="config_file",
+        type="string",
+        action="store",
         help="Use INI configuration file.",
         default=None
     )
     group.add_option(
-        "--slurm_template", 
+        "--slurm_template",
         dest="slurm_template",
-        type="string", 
-        action="store", 
-        help="Use SLURM template file for job submission. WARNING: Using this command will over-write other job-parameters passed here.", 
+        type="string",
+        action="store",
+        help="Use SLURM template file for job submission. WARNING: Using this command will over-write other job-parameters passed here.",
         default=None
     )
+
     return group
 
 def create_job_group():
     """
     TODO: LIU-424
     """
-    pass
 
 def create_graph_group():
     """
     TODO: LIU-424
     """
-    pass
 
-
-def main():
+def run(_, args):
     parser = optparse.OptionParser(
-        usage="\n%prog -a [1|2] -f <facility> [options]\n\n%prog -h for further help"
+        usage="\n%prog --action [submit|analyse] -f <facility> [options]\n\n%prog -h for further help"
     )
 
     parser.add_option(
         "-a",
         "--action",
         action="store",
-        type="int",
+        type="choice",
+        choices=["submit", "analyse"],
         dest="action",
-        help="1 - create/submit job, 2 - analyse log",
+        help="**submit** job or **analyse** log",
         default=None,
     )
     parser.add_option(
@@ -545,8 +551,7 @@ def main():
         action="store",
         type="int",
         dest="num_nodes",
-        help="number of compute nodes requested",
-        default=3,
+        help="Number of compute nodes requested",
     )
     parser.add_option(
         "-i",
@@ -629,7 +634,6 @@ def main():
         action="store",
         type="int",
         dest="num_islands",
-        default=1,
         help="The number of Data Islands",
     )
     parser.add_option(
@@ -661,14 +665,14 @@ def main():
         "--submit",
         dest="submit",
         action="store_true",
-        help=f"If set to False, the job is not submitted, but the script is generated",
+        help="If set to False, the job is not submitted, but the script is generated",
         default=False,
     )
     parser.add_option(
         "--remote",
         dest="remote",
         action="store_true",
-        help=f"If set to True, the job is submitted/created for a remote submission",
+        help="If set to True, the job is submitted/created for a remote submission",
         default=False,
     )
     parser.add_option(
@@ -687,6 +691,7 @@ def main():
         help="Display the available configurations and exit",
         default=False,
     )
+
     parser.add_option(
         "-U",
         "--username",
@@ -699,25 +704,25 @@ def main():
 
     parser.add_option(
         "--ssh_key",
-        dest="ssh_key",
-        type="string", 
         action="store",
         help="Path to ssh private key",
-        default=""
+        default=None
     )
 
     parser.add_option_group(create_experiment_group(parser))
-
     (opts, _) = parser.parse_args(sys.argv)
+
+    cfg_manager = ConfigManager(FACILITIES)
+
     if opts.configs:
         print(f"Available facilities: {FACILITIES}")
-        sys.exit(1)
     if not (opts.action and opts.facility):
         parser.error("Missing required parameters!")
+        parser.print_help()
     if opts.facility not in FACILITIES:
         parser.error(f"Unknown facility provided. Please choose from {FACILITIES}")
 
-    if opts.action == 2:
+    if opts.action == "analyse":
         if opts.log_dir is None:
             # you can specify:
             # either a single directory
@@ -740,12 +745,12 @@ def main():
                         try:
                             log_parser = LogParser(log_dir)
                             log_parser.parse(out_csv=opts.csv_output)
-                        except Exception as exp:
+                        except Exception as exp: # pylint: disable=broad-exception-caught
                             print("Fail to parse {0}: {1}".format(log_dir, exp))
         else:
             log_parser = LogParser(opts.log_dir)
             log_parser.parse(out_csv=opts.csv_output)
-    elif opts.action == 1:
+    elif opts.action == "submit":
         path_to_graph_file = None
         if opts.logical_graph and opts.physical_graph:
             parser.error(
@@ -787,13 +792,25 @@ def main():
             else:
                 pgt_file = path_to_graph_file
 
-        config = process_config(opts.config_file) if opts.config_file else None
-        template = process_slurm_template(
-            opts.slurm_template) if opts.slurm_template else None
+        if opts.config_file:
+            config_path = cfg_manager.load_user_config(ConfigType.ENV, opts.config_file)
+            if not config_path:
+                print("Provided --config_file option that does not exist!")
+                sys.exit(1)
+            config = process_config(config_path) if config_path else None
+        else:
+            config = None
+        if opts.slurm_template:
+            template_path = cfg_manager.load_user_config(ConfigType.SLURM, opts.slurm_template)
+            if not template_path:
+                print("Provided --slurm_template option that does not exist!")
+                sys.exit(1)
+            template = process_slurm_template(template_path)  if template_path else None
+        else:
+            template = None
 
         client = SlurmClient(
             dlg_root=opts.dlg_root,
-            log_root=opts.log_root,
             facility=opts.facility,
             job_dur=opts.job_dur,
             num_nodes=opts.num_nodes,
@@ -810,16 +827,16 @@ def main():
             submit=opts.submit,
             remote=opts.remote,
             username=opts.username,
+            ssh_key=opts.ssh_key,
             config=config,
             slurm_template=template
-            ssh_key=opts.ssh_key
         )
-        
-        client._visualise_graph = opts.visualise_graph
+
+        client.visualise_graph = opts.visualise_graph
         client.submit_job()
     else:
         parser.print_help()
-        parser.error("Invalid input!")
+        parser.error(f"Invalid input from args: {args}!")
 
 
 if __name__ == "__main__":

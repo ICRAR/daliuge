@@ -2,9 +2,9 @@
 
 .. _python_components:
 
-Python Components
-=================
-We strongly recommend to use the `component development template <https://github.com/ICRAR/daliuge-component-template>`_ we are providing, please refer to chapter :doc:`../template_primer` for more details. The following is based on the usage of the template.
+DALiuGEApp Components
+=====================
+We strongly recommend to use the `component development template <https://github.com/ICRAR/daliuge-component-template>`_ we are providing, please refer to chapter :ref:`template_primer` for more details. The following is based on the usage of the template.
 
 Change to the sub-directory ``my_components`` and open the file ``app_components.py``:
 

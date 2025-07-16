@@ -22,7 +22,7 @@
 """
 Helper classes to aid the translation
 """
-from dataclasses import dataclass, fields, asdict
+from dataclasses import dataclass
 
 
 class Categories:
@@ -59,6 +59,7 @@ class Categories:
     DATA = "Data"
     COMPONENT = "Component"
     PYTHON_APP = "PythonApp"
+    DALIUGE_APP = "DALiuGEApp"
     BASH_SHELL_APP = "BashShellApp"
     MPI = "Mpi"
     DYNLIB_APP = "DynlibApp"
@@ -92,6 +93,7 @@ APP_TYPES = [
     Categories.DATA,
     Categories.COMPONENT,
     Categories.PYTHON_APP,
+    Categories.DALIUGE_APP,
     Categories.BASH_SHELL_APP,
     Categories.MPI,
     Categories.DYNLIB_APP,

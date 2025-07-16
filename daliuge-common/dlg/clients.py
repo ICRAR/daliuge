@@ -28,7 +28,7 @@ import urllib.parse
 from dlg import constants
 from .restutils import RestClient
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 compress = os.environ.get("DALIUGE_COMPRESSED_JSON", True)
 
 quote = urllib.parse.quote
@@ -51,10 +51,10 @@ class BaseDROPManagerClient(RestClient):
         return RestClient._request(self, url, method, content=content, headers=headers)
 
     def stop(self):
-        self._POST("/stop")
+        self.POST("/stop")
 
     def cancelSession(self, sessionId):
-        self._POST(f"/sessions/{quote(sessionId)}/cancel")
+        self.POST(f"/sessions/{quote(sessionId)}/cancel")
 
     def create_session(self, sessionId):
         """
@@ -118,6 +118,16 @@ class BaseDROPManagerClient(RestClient):
         )
         return ret
 
+    def get_drop_status(self, sid, did):
+        ret = self._get_json(f"/sessions/{quote(sid)}/graph/drop/{quote(did)}")
+        logger.debug(
+            "Successfully read graph status from session %s on %s:%s",
+            sid,
+            self.host,
+            self.port,
+        )
+        return ret
+
     def graph(self, sessionId):
         """
         Returns a dictionary where the key are the DROP UIDs, and the values are
@@ -161,6 +171,20 @@ class BaseDROPManagerClient(RestClient):
         Returns the status of session `sessionId`
         """
         status = self._get_json(f"/sessions/{quote(sessionId)}/status")
+        logger.debug(
+            "Successfully read session %s status (%s) from %s:%s",
+            sessionId,
+            status,
+            self.host,
+            self.port,
+        )
+        return status
+
+    def session_dir(self, sessionId):
+        """
+        Returns the session directory of session `sessionId`
+        """
+        status = self._get_json(f"/sessions/{quote(sessionId)}/dir")
         logger.debug(
             "Successfully read session %s status (%s) from %s:%s",
             sessionId,
@@ -215,11 +239,13 @@ class BaseDROPManagerClient(RestClient):
     createSession = create_session
     destroySession = destroy_session
     getSessionStatus = session_status
+    getSessionDir = session_dir
     addGraphSpec = append_graph
     deploySession = deploy_session
     getGraphStatus = graph_status
     getGraphSize = graph_size
     getGraph = graph
+    getDropStatus = get_drop_status
 
 
 class NodeManagerClient(BaseDROPManagerClient):
@@ -256,7 +282,7 @@ class CompositeManagerClient(BaseDROPManagerClient):
         return self._get_json("/nodes")
 
     def add_node(self, node):
-        self._POST(f"/node/{node}", content=None)
+        self.POST(f"/node/{node}", content=None)
 
     def remove_node(self, node):
         self._DELETE(f"/node/{node}")
@@ -295,7 +321,7 @@ class MasterManagerClient(CompositeManagerClient):
         return self._get_json("/islands")
 
     def add_dim(self, dim):
-        self._POST(f"/island/{dim}", content=None)
+        self.POST(f"/island/{dim}", content=None)
 
     def remove_dim(self, dim):
         self._DELETE(f"/island/{dim}")
@@ -304,7 +330,7 @@ class MasterManagerClient(CompositeManagerClient):
         """
         Adds a nm to a dim
         """
-        self._POST(
+        self.POST(
             f"/managers/{dim}/node/{nm}",
             content=None,
         )

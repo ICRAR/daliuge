@@ -74,11 +74,9 @@ DEFAULT_INTERNAL_PARAMETERS = {
 if sys.version_info >= (3, 8):
     pass
 from dlg.utils import (
-    createDirIfMissing,
-    isabs,
     object_tracking,
     getDlgVariable,
-    truncateUidToKey
+    truncateUidToKey,
 )
 from dlg.meta import (
     dlg_float_param,
@@ -93,15 +91,15 @@ from dlg.meta import (
 # Opt into using per-drop checksum calculation
 checksum_disabled = "DLG_DISABLE_CHECKSUM" in os.environ
 try:
-    from crc32c import crc32c  # @UnusedImport
+    from crc32c import crc32c  # pylint: disable=unused-import
 
     _checksumType = ChecksumTypes.CRC_32C
-except:
-    from binascii import crc32  # @Reimport
+except (ModuleNotFoundError, ImportError):
+    from binascii import crc32 # pylint: disable=unused-import
 
     _checksumType = ChecksumTypes.CRC_32
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class ListAsDict(list):
@@ -218,6 +216,16 @@ class AbstractDROP(EventFirer, EventHandler):
         self._oid = str(oid)
         self._uid = str(uid)
 
+        # Set log_level for this drop to level provided
+        self._log_level = self._popArg(
+            kwargs, "log_level", logging.getLevelName(logger.getEffectiveLevel())
+        )
+        if self._log_level == "" or self._log_level == logging.getLevelName(
+                logging.NOTSET
+        ):
+            self._log_level = logging.getLevelName(logger.getEffectiveLevel())
+        self._global_log_level = logging.getLevelName(logger.getEffectiveLevel())
+
         # The physical graph drop type. This is determined
         # by the drop category when generating the drop spec
         self._type = self._popArg(kwargs, "categoryType", None)
@@ -231,7 +239,7 @@ class AbstractDROP(EventFirer, EventHandler):
         # A simple name that the Drop might receive
         # This is usually set in the Logical Graph Editor,
         # but is not necessarily always there
-        self.name = self._popArg(kwargs, "name", "")
+        self.name = self._popArg(kwargs, "name", self._oid)
 
         # The key of this drop in the original Logical Graph
         # This information might or might not be present depending on how the
@@ -317,9 +325,9 @@ class AbstractDROP(EventFirer, EventHandler):
         # TODO: Make these threadsafe, no lock around them yet
         self._rios = {}
 
-        self._humanKey = self._popArg(kwargs,
-                                       "humanReadableKey", 
-                                       truncateUidToKey(self._uid))
+        self._humanKey = self._popArg(
+            kwargs, "humanReadableKey", truncateUidToKey(self._uid)
+        )
         # The execution mode.
         # When set to DROP (the default) the graph execution will be driven by
         # DROPs themselves by firing and listening to events, and reacting
@@ -375,6 +383,13 @@ class AbstractDROP(EventFirer, EventHandler):
         if self._persist:
             self._expireAfterUse = False
 
+        # Flag to control whether a call to skip blocks until the
+        # last producer is finished. This is useful for data drops capturing
+        # the output of multiple branches. Default is false, meaning that
+        # the first call to skip will close the drop and also skip the following
+        # drops.
+        self.block_skip = self._popArg(kwargs, "block_skip", False)
+
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
         self.autofill_environment_variables()
@@ -408,31 +423,19 @@ class AbstractDROP(EventFirer, EventHandler):
         """
 
         def get_param_value(attr_name, default_value):
-            has_component_param = attr_name in kwargs
-            has_app_param = (
-                "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"]
-            )
-            param = default_value
-            if has_component_param and has_app_param:
-                logger.warning(
-                    f"Drop has both component and app param {attr_name}. Using component param."
-                )
-            if has_component_param:
-                param = kwargs.get(attr_name)
-            elif has_app_param:
-                if kwargs["applicationArgs"].get(attr_name).usage in [
+
+            if attr_name in kwargs:
+                return kwargs.get(attr_name)
+            elif "applicationArgs" in kwargs and attr_name in kwargs["applicationArgs"] and (
+                kwargs["applicationArgs"].get(attr_name).usage not in [
                     "InputPort",
                     "OutputPort",
                     "InputOutput",
-                ]:
-                    # inp = kwargs["input"]
-                    # param = pickle.loads(
-                    #     droputils.allDropContents()
-                    #     )
-                    pass
-                else:
-                    param = kwargs["applicationArgs"].get(attr_name).value
-            return param
+                    ]
+                ):
+                    return kwargs["applicationArgs"].get(attr_name).value
+            else:
+                return default_value
 
         # Take a class dlg defined parameter class attribute and create an instanced attribute on object
         for attr_name, member in self._get_members():
@@ -464,7 +467,7 @@ class AbstractDROP(EventFirer, EventHandler):
                     else:
                         value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, list):
-                    raise Exception(
+                    raise TypeError(
                         f"dlg_list_param {attr_name} is not a list. Type is {type(value)}"
                     )
             elif isinstance(member, dlg_dict_param):
@@ -475,7 +478,7 @@ class AbstractDROP(EventFirer, EventHandler):
                     else:
                         value = ast.literal_eval(value)
                 if value is not None and not isinstance(value, dict):
-                    raise Exception(
+                    raise TypeError(
                         "dlg_dict_param {} is not a dict. It is a {}".format(
                             attr_name, type(value)
                         )
@@ -589,7 +592,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 self._merkleTree = None
                 self._merkleData = []
         else:
-            raise NotImplementedError("new_flag %d is not supported", new_flag.value)
+            raise NotImplementedError("new_flag %d is not supported" % new_flag.value)
 
     def generate_rerun_data(self):
         """
@@ -826,12 +829,12 @@ class AbstractDROP(EventFirer, EventHandler):
     @size.setter
     def size(self, size):
         if self._size is not None:
-            raise Exception(
+            raise RuntimeError(
                 "The size of DROP %s is already calculated, cannot overwrite with new value"
                 % (self)
             )
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception(
+            raise RuntimeError(
                 "DROP %s is still not fully written, cannot manually set a size yet"
                 % (self)
             )
@@ -885,7 +888,7 @@ class AbstractDROP(EventFirer, EventHandler):
             if hasattr(parent, "addChild") and self not in parent.children:
                 try:
                     parent.addChild(self)
-                except:
+                except InvalidRelationshipException:
                     self._parent = prevParent
 
     def get_consumers_nodes(self):
@@ -1016,9 +1019,10 @@ class AbstractDROP(EventFirer, EventHandler):
             self._finishedProducers.append(drop_state)
             nFinished = len(self._finishedProducers)
             nProd = len(self._producers)
+            self._refCount -= 1
 
             if nFinished > nProd:
-                raise Exception(
+                raise RuntimeError(
                     "More producers finished that registered in DROP %r: %d > %d"
                     % (self, nFinished, nProd)
                 )
@@ -1026,7 +1030,7 @@ class AbstractDROP(EventFirer, EventHandler):
                 finished = True
 
         if finished:
-            logger.debug("All producers finished for DROP %r", self)
+            logger.debug("All producers finished for DROP %r,%s", self, uid)
 
             # decided that if any producer fails then fail the data drop
             if DROPStates.ERROR in self._finishedProducers:
@@ -1104,6 +1108,13 @@ class AbstractDROP(EventFirer, EventHandler):
         self.commit()
         reprodata = {"data": self._merkleData, "merkleroot": self.merkleroot}
         self._fire(eventType="reproducibility", reprodata=reprodata)
+        if logger.getEffectiveLevel() != logging.getLevelName(self._global_log_level):
+            logger.warning(
+                "log-level after %s.%s: %s",
+                self.name,
+                self._humanKey,
+                logging.getLevelName(logger.getEffectiveLevel()),
+            )
 
     @track_current_drop
     def setError(self):
@@ -1180,11 +1191,26 @@ class AbstractDROP(EventFirer, EventHandler):
         self.completedrop()
 
     def skip(self):
-        """Moves this drop to the SKIPPED state closing any writers we opened"""
+        """
+        Moves this drop to the SKIPPED state closing any writers we opened.
+
+        If the drop has more than one producer it will block until the first
+        producer is skipped or all producers are completed. If the block_skip
+        flag is set the drop will block a skipping chain until the last producer
+        is completed or also skipped. This is useful for branches inside loops
+        to allow alternate paths for each iteration. For a branch to terminate
+        a loop the flag needs to be false (default).
+        """
         if self.status in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            self._closeWriters()
-            self.status = DROPStates.SKIPPED
-        self.completedrop()
+            if not self.block_skip or (
+                    len(self.producers) == 1
+                    or (len(self.producers) > 1 and self._refCount == 1)
+            ):
+                self._closeWriters()
+                self.status = DROPStates.SKIPPED
+                self.completedrop()
+            else:
+                self._refCount -= 1
 
     @property
     def node(self):
@@ -1197,6 +1223,27 @@ class AbstractDROP(EventFirer, EventHandler):
     @property
     def parameters(self):
         return self._parameters
+
+    @property
+    def dlg_session_id(self) -> str:
+        """
+        Get the session id for the session to which this DROP is assigned.
+        """
+        return self._dlg_session_id
+
+    @property
+    def humanKey(self) -> str:
+        """
+        Get the Human Readable Key for this DROP
+        """
+        return self._humanKey
+
+    @property
+    def log_level(self):
+        """
+        Get the log level for this DROP
+        """
+        return self._log_level
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods

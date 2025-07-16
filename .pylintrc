@@ -1,4 +1,4 @@
 [Main]
-disable=C, R, W, no-name-in-module, c-extension-no-member, no-member, import-error, unsupported-membership-test
+disable=C, R, no-name-in-module, c-extension-no-member, no-member, import-error, unsupported-membership-test, unspecified-encoding, attribute-defined-outside-init, fixme, broad-exception-raised, too-many-function-args
 enable=logging-not-lazy,logging-format-interpolation, dangerous-default-value
-
+ignore-paths=.*/test/.*py, .*/build/.*py

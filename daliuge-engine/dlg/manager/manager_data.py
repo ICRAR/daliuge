@@ -25,10 +25,10 @@ This module contains classes and helper-methods to support the various manager c
 """
 
 import logging
-from dlg import constants
+import dlg.constants as constants
 from enum import IntEnum
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class NodeProtocolPosition(IntEnum):
@@ -44,12 +44,16 @@ class Node:
     inter-node communication.
     """
 
-    def __init__(self, host: str):
+    def __init__(self, host: str, dim=False):
         try:
-            chunks = host.split(':')
+            chunks = host.split(":")
             num_chunks = len(chunks)
             self.host = constants.NODE_DEFAULT_HOSTNAME
-            self.port = constants.NODE_DEFAULT_REST_PORT
+            self.port = (
+                constants.ISLAND_DEFAULT_REST_PORT
+                if dim
+                else constants.NODE_DEFAULT_REST_PORT
+            )
             self.events_port = constants.NODE_DEFAULT_EVENTS_PORT
             self.rpc_port = constants.NODE_DEFAULT_RPC_PORT
             self._rest_port_specified = False
@@ -61,28 +65,32 @@ class Node:
                 self._rest_port_specified = True
             if num_chunks >= 3:
                 self.events_port = self._validate_port(
-                    chunks[NodeProtocolPosition.EVENTS_PORT])
+                    chunks[NodeProtocolPosition.EVENTS_PORT]
+                )
             if num_chunks >= 4:
-                self.rpc_port = self._validate_port(chunks[NodeProtocolPosition.RPC_PORT])
+                self.rpc_port = self._validate_port(
+                    chunks[NodeProtocolPosition.RPC_PORT]
+                )
         except AttributeError as e:
             raise RuntimeError(
-                "Constructor has been passed non-string object and cannot"
-                "be converted to Node: type %s.", type(host),
+                f"Constructor has been passed non-string object and cannot"
+                f"be converted to Node: type {type(host)}.",
             ) from e
         except ValueError as e:
-            logger.error("An issue has occured with translating node information",
-                         exc_info=e)
+            logger.error(
+                "An issue has occured with translating node information", exc_info=e
+            )
 
     def _validate_port(self, port: str) -> int:
         """
-         Confirm the port provided is within the correct range of ports and returns it
-         as an integer.
+        Confirm the port provided is within the correct range of ports and returns it
+        as an integer.
 
-         Param:
+        Param:
 
-         Raises: Invalid port
+        Raises: Invalid port
 
-         :return: int, integer representation of port passed to the command line.
+        :return: int, integer representation of port passed to the command line.
         """
         validated_port = int(port)
         if not 1 <= validated_port <= 65535:
@@ -114,6 +122,10 @@ class Node:
         Make our serialized Node the string.
         :return: str
         """
+        return self.serialize()
+
+    def __repr__(self):
+        """ """
         return self.serialize()
 
     def __eq__(self, other):

@@ -39,7 +39,7 @@ from .. import utils
 from ..restserver import RestServer
 from dlg.nm_dim_assigner import NMAssigner
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def get_tool():
@@ -115,7 +115,7 @@ class DlgDaemon(RestServer):
         server.
         """
         self._shutting_down = True
-        super(DlgDaemon, self).stop(timeout)
+        super(DlgDaemon, self).stop()
         self.stopNM(timeout)
         self.stopDIM(timeout)
         self.stopMM(timeout)
@@ -436,10 +436,11 @@ def run_with_cmdline(parser, args):
 
     # Signal handling, which stops the daemon
     def handle_signal(signalNo, stack_frame):
-        global terminating
+        global terminating # pylint: disable=global-statement
         if terminating:
             return
-        logger.info("Received signal %d, will stop the daemon now", signalNo)
+        logger.info("Received signal %d in frame %s, will stop the daemon now",
+                    signalNo, stack_frame)
         terminating = True
         daemon.stop(10)
 

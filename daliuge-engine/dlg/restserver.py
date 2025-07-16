@@ -25,7 +25,7 @@ import bottle
 
 from .restutils import RestServerWSGIServer
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class RestServer(object):
@@ -47,7 +47,7 @@ class RestServer(object):
         self._server = RestServerWSGIServer(self.app, host, port)
         self._server.serve_forever()
 
-    def stop(self, timeout=None):
+    def stop(self):
         if self._server:
             logger.info("Stopping REST server")
             self._server.server_close()

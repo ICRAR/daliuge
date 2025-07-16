@@ -20,6 +20,8 @@
 #    MA 02111-1307  USA
 #
 import base64
+import inspect
+import dill
 import logging
 import os
 import pickle
@@ -28,7 +30,7 @@ import unittest
 import numpy
 
 from dlg import droputils, drop_loaders
-from dlg.named_port_utils import DropParser
+from dlg.named_port_utils import DropParser, get_port_reader_function
 from dlg.apps import pyfunc
 from dlg.apps.simple_functions import string2json
 from dlg.ddap_protocol import DROPStates, DROPRel, DROPLinkType
@@ -40,7 +42,7 @@ from test.dlg_engine_testutils import NMTestsMixIn
 
 from ..manager import test_dm
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 
 
 def func1(arg1):
@@ -58,7 +60,7 @@ def func3():
 def func_with_defaults(a, b=10, c=20, x=30, y=40, z=50):
     """Returns a - b * c + (y - x) * z. Default is a + 300"""
     res = a - b * c + (y - x) * z
-    logger.info("%r - %r * %r + (%r - %r) * %r = %r", a, b, c, y, x, z, res)
+    # logger.info("%r - %r * %r + (%r - %r) * %r = %r", a, b, c, y, x, z, res)
     return res
 
 
@@ -68,23 +70,41 @@ def sum_with_args_and_kwarg(a, *args, **kwargs):
     return a + sum(args) + b
 
 
-def _PyFuncApp(oid, uid, f, **kwargs):
+def _PyFuncApp(oid, uid, f, additional_imports=None, global_parsers= False, **kwargs):
     fname = None
-    if isinstance(f, str):
+    func = None
+    fcode = None
+    if not additional_imports:
+        additional_imports = []
+    if inspect.isfunction(f):
+        # means likely we got a function passed in (from tests)
+        fname = f.__name__
+        func = f
+    elif not isinstance(f, str):
+        fcode = inspect.getsource(f)
+        imports = "\n".join([f"import {i}" for i in additional_imports])
+        fcode = f"{imports}\n{fcode}".strip()
+    elif isinstance(f, str):
         fname = f = "test.apps.test_pyfunc." + f
-    fw_kwargs = {
-        k: v for k, v in kwargs.items() if k in ["input_parser", "output_parser"]
-    }
+    if global_parsers:
+        fw_kwargs = {
+            k: v for k, v in kwargs.items() if k in ["input_parser", "output_parser"]
+        }
+    else:
+        fw_kwargs = {}
+
+    applicationArgs = kwargs.pop("applicationArgs", {})
     input_kws = [
         {k: v} for k, v in kwargs.items() if k not in ["input_parser", "output_parser"]
     ]
-    fcode, fdefaults = pyfunc.serialize_func(f)
+    # fcode, fdefaults = pyfunc.serialize_func(f)
     return pyfunc.PyFuncApp(
         oid,
         uid,
         func_name=fname,
         func_code=fcode,
-        func_defaults=fdefaults,
+        func=func,
+        applicationArgs=applicationArgs,
         inputs=input_kws,
         **fw_kwargs,
     )
@@ -121,11 +141,10 @@ class TestPyFuncApp(unittest.TestCase):
             pyfunc.PyFuncApp,
             "a",
             "a",
-            func_name="test.apps.test_pyfunc.doesnt_exist",
-        )
+            func_name = "test.apps.test_pyfunc.doesnt_exist",)
 
     def test_valid_creation(self):
-        _PyFuncApp("a", "a", "func1")
+        _PyFuncApp("a", "a", func1)
 
     def test_creation_with_code(self):
         def inner_function(x, y):
@@ -135,7 +154,8 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_pickle_func(self, f=lambda x: x, input_data="hello", output_data="hello"):
         a = InMemoryDROP("a", "a")
-        b = _PyFuncApp("b", "b", f)
+        kwargs = {a.uid: "x"}
+        b = _PyFuncApp("b", "b", f, **kwargs)
         c = InMemoryDROP("c", "c")
 
         b.addInput(a)
@@ -151,28 +171,31 @@ class TestPyFuncApp(unittest.TestCase):
     def test_eval_func(self, f=lambda x: x, input_data=None, output_data=None):
         input_data = [2, 2] if input_data is None else input_data
         output_data = [2, 2] if output_data is None else output_data
-
         a = InMemoryDROP("a", "a")
+        kwargs = {a.uid: "x", 
+                  "applicationArgs": {
+                      "x":{"value":None, "type": "numpy.array", "encoding": "eval","usage":"InputPort"},
+                      }
+                      }
         b = _PyFuncApp(
             "b",
             "b",
             f,
-            input_parser=DropParser.EVAL,
-            output_parser=DropParser.EVAL,
+            global_parsers=False,
+            **kwargs,
         )
         c = InMemoryDROP("c", "c")
 
         b.addInput(a)
         b.addOutput(c)
-
-        with DROPWaiterCtx(self, c, 5):
+        with DROPWaiterCtx(self, c, 10):
             a.write(repr(input_data).encode("utf-8"))
             a.setCompleted()
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         self.assertEqual(
             output_data,
-            eval(droputils.allDropContents(c).decode("utf-8"), {}, {}),
+            dill.loads(droputils.allDropContents(c)),
         )
 
     def test_string2json_func(self, f=string2json, input_data=None, output_data=None):
@@ -180,34 +203,37 @@ class TestPyFuncApp(unittest.TestCase):
         output_data = ["a", "b", "c"] if output_data is None else output_data
 
         a = InMemoryDROP("a", "a")
-        b = _PyFuncApp(
-            "b",
-            "b",
-            f,
-        )
+        kwargs = {a.uid: "string"}
+        b = _PyFuncApp("b", "b", f, additional_imports=["json"], **kwargs)
         c = InMemoryDROP("c", "c")
 
         b.addInput(a)
         b.addOutput(c)
 
-        with DROPWaiterCtx(self, c, 5):
+        with DROPWaiterCtx(self, c, 10):
             drop_loaders.save_pickle(a, input_data)
             a.setCompleted()
         for drop in a, b, c:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
-        numpy.testing.assert_equal(output_data, drop_loaders.load_pickle(c))
+        numpy.testing.assert_equal(drop_loaders.load_pickle(c), output_data)
 
     def test_npy_func(self, f=lambda x: x, input_data=None, output_data=None):
         input_data = numpy.ones([2, 2]) if input_data is None else input_data
         output_data = numpy.ones([2, 2]) if output_data is None else output_data
 
         a = InMemoryDROP("a", "a")
+        kwargs = {a.uid: "x", 
+                  "applicationArgs": {
+                      "x":{"value":None, "type": "numpy.array", "encoding": "npy","usage":"InputPort"}
+                      }
+                      }
         b = _PyFuncApp(
             "b",
             "b",
             f,
             input_parser=DropParser.NPY,
             output_parser=DropParser.NPY,
+            **kwargs,
         )
         c = InMemoryDROP("c", "c")
 
@@ -221,13 +247,14 @@ class TestPyFuncApp(unittest.TestCase):
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         numpy.testing.assert_equal(output_data, drop_loaders.load_npy(c))
 
-    def _test_simple_functions(self, f, input_data, output_data):
+    def _test_simple_functions(self, f, input_data, output_data, argname):
         a, c = [InMemoryDROP(x, x) for x in ("a", "c")]
-        b = _PyFuncApp("b", "b", f)
+        kwargs = {a.uid: argname}
+        b = _PyFuncApp("b", "b", f, **kwargs)
         b.addInput(a)
         b.addOutput(c)
 
-        with DROPWaiterCtx(self, c, 5):
+        with DROPWaiterCtx(self, c, 50):
             a.write(pickle.dumps(input_data))
             a.setCompleted()
 
@@ -238,12 +265,12 @@ class TestPyFuncApp(unittest.TestCase):
     def test_func1(self):
         """Checks that func1 in this module works when wrapped"""
         data = os.urandom(64)
-        self._test_simple_functions("func1", data, data)
+        self._test_simple_functions("func1", data, data, argname="arg1")
 
     def test_func2(self):
         """Checks that func2 in this module works when wrapped"""
         n = random.randint(0, 1_000_000)
-        self._test_simple_functions("func2", n, 2 * n)
+        self._test_simple_functions("func2", n, 2 * n, argname="arg1")
 
     def test_inner_func(self):
         n = random.randint(0, 1_000_000)
@@ -251,11 +278,11 @@ class TestPyFuncApp(unittest.TestCase):
         def f(x):
             return x + 2
 
-        self._test_simple_functions(f, n, n + 2)
+        self._test_simple_functions(f, n, n + 2, argname="x")
 
     def test_lambda(self):
         n = random.randint(0, 1_000_000)
-        self._test_simple_functions(lambda x: x / 2, n, n / 2)
+        self._test_simple_functions(lambda x: x / 2, n, n / 2, argname="x")
 
     def test_inner_func_with_closure(self):
         n = random.randint(0, 1_000_000)
@@ -263,11 +290,11 @@ class TestPyFuncApp(unittest.TestCase):
         def f(x):
             return x + n
 
-        self._test_simple_functions(f, n, n + n)
+        self._test_simple_functions(f, n, n + n, argname="x")
 
     def test_lambda_with_closure(self):
         n = random.randint(0, 1_000_000)
-        self._test_simple_functions(lambda x: (x + n) / 2, n, (n + n) / 2)
+        self._test_simple_functions(lambda x: (x + n) / 2, n, (n + n) / 2, argname="x")
 
     def _test_func3(self, output_drops, expected_outputs):
         a = _PyFuncApp("a", "a", "func3")
@@ -298,7 +325,7 @@ class TestPyFuncApp(unittest.TestCase):
         with multiple outputs.
         """
         output_drops = [InMemoryDROP(x, x) for x in ("b", "c", "d")]
-        self._test_func3(output_drops, ("b", "c", "d"))
+        self._test_func3(output_drops, ["b", "c", "d"])
 
     def _test_defaults(self, expected_out, *args, **kwargs):
         def _do_test(func, expected_out, *args, **kwargs):
@@ -355,8 +382,9 @@ class TestPyFuncApp(unittest.TestCase):
                 for i in arg_inputs + [x[1] for x in kwarg_inputs.values()]:
                     i.setCompleted()
 
+            out = droputils.allDropContents(output)
             self.assertEqual(
-                expected_out, pickle.loads(droputils.allDropContents(output))
+                expected_out, pickle.loads(out)
             )  # @UndefinedVariable
 
         # func_with_defaults returns a - b * c + (y - x) * z
@@ -465,6 +493,9 @@ class PyFuncAppIntraNMTest(NMTestsMixIn, unittest.TestCase):
                 "categoryType": "Application",
                 "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
+                "inputs": [
+                    {"A": "arg1"},
+                ],
             },
             {
                 "oid": "C",
@@ -500,6 +531,9 @@ class PyFuncAppIntraNMTest(NMTestsMixIn, unittest.TestCase):
                 "categoryType": "Application",
                 "dropclass": "dlg.apps.pyfunc.PyFuncApp",
                 "func_name": __name__ + ".func1",
+                "inputs": [
+                    {"A": "arg1"},
+                ],
             },
         ]
         g2 = [

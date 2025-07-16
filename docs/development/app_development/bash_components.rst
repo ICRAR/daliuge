@@ -22,7 +22,9 @@ Steps
 
 Please note that the *Hello World* example is also described (with videos) as part of the `EAGLE documentation <https://eagle-dlg.readthedocs.io/en/master/helloWorld.html>`_.
 
-That should give you the idea how to use bash commands as |daliuge| components. Seems not a lot? Well, actually this is allowing you to execute whatever can be executed on the command line where the engine is running as part of a |daliuge| graph. That includes all bash commands, but also every other executable available on the PATH of the engine. Now that is a bit more exciting, but the excitement stops as soon as you think about real world (not Hello World) examples: Really useful commands will require inputs and outputs in the form of command line parameters and files or pipes. This is discussed in the :ref:`advanced_bash` chapter. 
+That should give you the idea how to use bash commands as |daliuge| components. Seems not a lot? Well, actually this is allowing you to execute whatever can be executed on the command line where the engine is running as part of a |daliuge| graph. That includes all bash commands, but also every other executable available on the PATH of the engine. Now that is a bit more exciting, but the excitement stops as soon as you think about real world (not Hello World) examples: Really useful commands will require inputs and outputs in the form of command line parameters and files or pipes. These will be expanded up on in future work. 
+
+.. This is discussed in the :ref:`advanced_bash` chapter. 
 
 Verification
 ------------
@@ -79,9 +81,3 @@ Not all of them need to be present in a component, only the ones the component d
 The applicationArgs are treated in the order of appearance. After the construction of the command line, any placeholder strings will be replaced with actual values. In particular strings of the form '%iX' (where X is the index number of the inputs of this component), will be replaced with the input URL of the input with that index (counting from 0). Similarly '%oX' will be replaced with the respective output URLs.
 
 Eventually we will also drop support for the command_line_arguments parameters. However, currently the applicationArgs can't be used to specify positional arguments (just a value) and thus, as a fallback users can still use one the command_line_arguments to achieve that. It should also be noted that for really simple commands, like the one used in the helloWorld example, users can simply specify that in the command parameter directly and ommit all of the others. 
-
-.. _advanced_bash:
-
-Advanced Bash Components
-------------------------
-.. include:: bash_advanced.rst

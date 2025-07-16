@@ -1,6 +1,73 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.5.2
+- [Fix] Address issue #315 to make `dlg` remote deployment CLI more clear: https://github.com/ICRAR/daliuge/pull/342
+- [Fix] Fix multi-input  AppDROP failing after Branch False condition: https://github.com/ICRAR/daliuge/pull/346
+
+## v5.5.1
+- [Fix] Update `urllib3` to resolve Dependabot security issue: https://github.com/ICRAR/daliuge/pull/345
+
+## v5.5.0
+
+- [Added] Add experimental support for running server under 'watchdog' process: https://github.com/ICRAR/daliuge/pull/339
+- [Added] Add local-time logging option: https://github.com/ICRAR/daliuge/pull/333
+- [Changed] Improve CLI clarity and documentation https://github.com/ICRAR/daliuge/pull/335
+- [Fixed] Translator re-uses DIM tab on deploy: https://github.com/ICRAR/daliuge/pull/338
+
+## v5.4.0
+
+- [Added] Add named-ports functionality to Branch construct: https://github.com/ICRAR/daliuge/pull/325
+- [Changed] Update component docstrings: https://github.com/ICRAR/daliuge/pull/330
+
+## v5.3.1
+
+- [Added] Initial work to build docker images on release: https://github.com/ICRAR/daliuge/pull/312
+- [Fixed] Test np.array is empty correctly in named_port_utils.py: https://github.com/ICRAR/daliuge/pull/334
+
+## v5.3.0
+
+- [Added] Per-app logging from the web UI: https://github.com/ICRAR/daliuge/pull/327
+- [Added] Change "PythonApp" to "DALiuGEApp": https://github.com/ICRAR/daliuge/pull/326
+- [Changed] Update Installation documentation and polish documentation look/structure: https://github.com/ICRAR/daliuge/pull/313
+
+## v5.2.1
+
+- [Fixed] Fix eagle-test-graphs Git branch: https://github.com/ICRAR/daliuge/pull/329
+- [Fixed] TestRunner fix failing unittests due to overlapping PR changes: https://github.com/ICRAR/daliuge/pull/328
+
+## v5.2.0
+
+- [Added] FileDROP naming support for PyFuncApp "side effect" files: https://github.com/ICRAR/daliuge/pull/314
+- [Fixed] Stopped black boxes and graph zoom when errors occur during Deploy state: https://github.com/ICRAR/daliuge/pull/319
+- [Fixed] Added back 'hello' parameter to HelloWorldApp: https://github.com/ICRAR/daliuge/pull/320
+- [Deprecated] Removed xml2palette tool from DALiuGE: https://github.com/ICRAR/daliuge/pull/324
+
+## v5.1.0
+
+- [Added] New Branch component based on PyFuncApp that allows for conditional execution: https://github.com/ICRAR/daliuge/pull/317
+- [Added] Users can to set the log-level of an application from the graph per-application: https://github.com/ICRAR/daliuge/pull/317
+- [Added] Provide ability to read and write plain strings if requested by the user: https://github.com/ICRAR/daliuge/pull/317
+
+## v5.0.0
+
+- [Changed] New BashShellApp command replacement: https://github.com/ICRAR/daliuge/pull/309 
+- [Fixed] Improve PyFunc robustness to erroneous graph input: https://github.com/ICRAR/daliuge/pull/308
+
+## v4.9.0
+
+- [Added] Workflow to deploy DALiuGE to PyPI: https://github.com/ICRAR/daliuge/pull/311
+- [Added] Added prototype .ini environment config and Slurm template scripts: https://github.com/ICRAR/daliuge/pull/297
+- [Added] Private key support for remote submission: https://github.com/ICRAR/daliuge/pull/298
+- [Added] Enable per-port serilaisation: https://github.com/ICRAR/daliuge/pull/300
+- [Added] Add GraphConfig support to translator: https://github.com/ICRAR/daliuge/pull/296
+- [Fixed] Fix writing of BytesIO Data: https://github.com/ICRAR/daliuge/pull/310
+- [Fixed] Updated installation documentation: https://github.com/ICRAR/daliuge/pull/307
+- [Fixed] Drop naming fix: https://github.com/ICRAR/daliuge/pull/306
+- [Fixed] Use translator avahi approach for engine docker container: https://github.com/ICRAR/daliuge/pull/302
+- [Fixed] Use correct ports for CompositeManager: https://github.com/ICRAR/daliuge/pull/303
+
+
 ## v4.8.0
 
 - [Added] Support for Python 3.11 and Python 3.12: https://github.com/ICRAR/daliuge/pull/290

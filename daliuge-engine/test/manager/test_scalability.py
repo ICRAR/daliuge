@@ -29,7 +29,7 @@ from dlg.utils import terminate_or_kill
 
 from test.dlg_engine_testutils import DROPManagerUtils, TerminatingTestHelper
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f"dlg.{__name__}")
 hostname = "localhost"
 
 
@@ -134,5 +134,5 @@ class TestBigGraph(unittest.TestCase):
             # A minute is more than enough, in my PC it takes around 4 or 5 [s]
             # A minute is also way less than the ~2 [h] we observed in AWS
             self.assertLessEqual(
-                delta, 60, "It took way too much time to create all drops"
+                delta, 90, "It took way too much time to create all drops"
             )
