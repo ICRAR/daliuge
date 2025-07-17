@@ -170,7 +170,7 @@ class TestSimpleApps(unittest.TestCase):
         self._test_graph_runs(ad, m0, f)
         for i in range(len(f)):
             self.assertEqual(
-                ("Hello %s" % greets[i]).encode("utf8"),
+                ("Hello, %s" % greets[i]).encode("utf8"),
                 droputils.allDropContents(f[i]),
             )
 

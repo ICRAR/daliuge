@@ -105,7 +105,7 @@ class TestAppLogStorage(unittest.TestCase):
         with DROPWaiterCtx(self, self.result, 5):
             for drop in self.input_drops:
                 drop.setCompleted()
-        logs = filter_logs_by_level(self.app.getLogs(), "INFO")
+        logs = filter_logs_by_level(self.app.getLogs(), "USER")
         self.assertEqual(0, len(logs))
         logs = filter_logs_by_level(self.app.getLogs(), "DEBUG")
         self.assertEqual(0, len(logs))
@@ -124,7 +124,7 @@ class TestAppLogStorage(unittest.TestCase):
             for drop in self.input_drops:
                 drop.setCompleted()
 
-        logs = filter_logs_by_level(self.app.getLogs(), "INFO")
+        logs = filter_logs_by_level(self.app.getLogs(), "USER")
         self.assertLess(0, len(logs))
         logs = filter_logs_by_level(self.app.getLogs(), "DEBUG")
         self.assertLess(0, len(logs))

@@ -96,7 +96,7 @@
                 %for row in data["logs"]:
                 <tr>
                     % for col in columns:
-                    <td class="text-start">{{! row.get(col, '') }}</td>
+                    <td class="text-start wrap-text">{{! row.get(col, '') }}</td>
                     % end
                 </tr>
                 %end
