@@ -140,7 +140,7 @@ gen_pgt_sem = threading.Semaphore(1)
 global lg_dir
 global pgt_dir
 global pg_mgr
-LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", package="dlg.dropmake"))
+LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", module="dlg.dropmake"))
 
 
 @app.post("/jsonbody", tags=["Original"])
@@ -486,7 +486,6 @@ async def gen_pgt_post(
         except ValidationError as ve:
             error = "Validation Error {1}: {0}".format(str(ve), lg_name)
             logger.error(error)
-            # raise HTTPException(status_code=500, detail=error)
         logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT
         # TODO: Warning: I dislike doing it this way with a passion, however without changing the tests/ usage of the api getting all form fields is difficult.
