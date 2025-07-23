@@ -36,7 +36,6 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
-from dlg.apps.branch import BranchAppDrop
 from dlg.drop import track_current_drop
 from dlg.meta import (
     dlg_float_param,
@@ -89,54 +88,16 @@ class DALiuGEApp(BarrierAppDROP):
     """A placeholder BarrierAppDrop that just aids the generation of the palette component"""
 
 
-##
-# @brief SleepApp
-# @details A simple APP that sleeps the specified amount of time (0 by default).
-# This is mainly useful (and used) to test graph translation and structure
-# without executing real algorithms. Very useful for debugging.
-# @par EAGLE_START
-# @param category DALiuGEApp
-# @param tag daliuge
-# @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
-# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.SleepApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @par EAGLE_END
 
+def sleep(sleep_time: float = 0):
+    """
+    Simple wrapper around time.sleep() function
 
-class SleepApp(BarrierAppDROP):
-    """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
+    :param sleep_time: Duration of sleep
+    """
 
-    component_meta = dlg_component(
-        "SleepApp",
-        "Sleep App.",
-        [dlg_batch_input("binary/*", [])],
-        [dlg_batch_output("binary/*", [])],
-        [dlg_streaming_input("binary/*")],
-    )
-    sleep_time = dlg_float_param("sleep_time", 0)
-
-    @track_current_drop
-    def run(self):
-        self._run()
-        try:
-            # If data is coming through a named port we load it from there.
-            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP, DropProxy)):
-                logger.debug("Trying to read from %s", self.sleep_time)
-                self.sleep_time = drop_loaders.load_pickle(self.sleep_time)
-            time.sleep(self.sleep_time)
-        except (TypeError, ValueError):
-            logger.debug(
-                "Found invalid sleep_time: %s. Resetting to 0. %s",
-                self.sleep_time,
-                type(self.sleep_time),
-            )
-            self.sleep_time = 0
-            time.sleep(self.sleep_time)
-        logger.info("%s slept for %s s", self.name, self.sleep_time)
+    time.sleep(sleep_time)
+    logger.info("Slept for %s s", sleep_time)
 
 
 ##
@@ -215,11 +176,11 @@ class CopyApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
-class SleepAndCopyApp(SleepApp, CopyApp):
+class SleepAndCopyApp(CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
-
+    sleep_time = dlg_float_param("sleep_time", 0)
     def run(self):
-        SleepApp.run(self)
+        sleep(self.sleep_time)
         CopyApp.run(self)
 
 
@@ -244,69 +205,22 @@ class SleepAndCopyApp(SleepApp, CopyApp):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
 # @par EAGLE_END
-class RandomArrayApp(BarrierAppDROP):
+
+def random_array(low, high=100, size=100, integer: bool=True):
     """
-    A BarrierAppDrop that generates an array of random numbers. It does
-    not require any inputs and writes the generated array to all of its
-    outputs.
+    Produce a random numpy array of integers or floats of 'size' between 'low' and 'high'
 
-    Keywords:
+    If integer is True the array will be integers (this is default  behaviour).
 
-    integer:  bool [True], generate integer array
-    low:      float, lower boundary (will be converted to int for integer arrays)
-    high:     float, upper boundary (will be converted to int for integer arrays)
-    size:     int, number of array elements
+    :param low: lowest value of the array
+    :param high: highest value of the array
+    :param size: size of the array
+    :param integer: True for integer array; if False, generate a float array
+    :return: np.array
     """
-
-    component_meta = dlg_component(
-        "RandomArrayApp",
-        "Random Array App.",
-        [dlg_batch_input("binary/*", [])],
-        [dlg_batch_output("binary/*", [])],
-        [dlg_streaming_input("binary/*")],
-    )
-
-    # default values
-    integer = dlg_bool_param("integer", True)
-    low = dlg_float_param("low", 0)
-    high = dlg_float_param("high", 100)
-    size = dlg_int_param("size", 100)
-    marray = []
-
-    def initialize(self, keep_array=False, **kwargs):
-        super(RandomArrayApp, self).initialize(**kwargs)
-        self._keep_array = keep_array
-
-
-    @track_current_drop
-    def run(self):
-        self._run()
-        # At least one output should have been added
-        outs = self.outputs
-        if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
-        logger.info("Generating %d random numbers between %f and %f", self.size, self.low, self.high)
-        marray = self.generateRandomArray()
-        if self._keep_array:
-            self.marray = marray
-        for o in outs:
-            d = pickle.dumps(marray)
-            o.len = len(d)
-            o.write(d)
-
-    def generateRandomArray(self):
-        if self.integer:
-            # generate an array of self.size integers with numbers between
-            # slef.low and self.high
-            marray = np.random.randint(int(self.low), int(self.high), size=(self.size))
-        else:
-            # generate an array of self.size floats with numbers between
-            # self.low and self.high
-            marray = (np.random.random(size=self.size) + self.low) * self.high
-        return marray
-
-    def _getArray(self):
-        return self.marray
+    if integer:
+        return np.random.randint(int(low), int(high), size=size)
+    return (np.random.random(size=size) + low) * high
 
 
 ##
@@ -881,98 +795,24 @@ class GenericNpyScatterApp(BarrierAppDROP):
                 drop_loaders.save_numpy(self.outputs[out_index], result[split_index])
 
 
-class SimpleBranch(BranchAppDrop, NullBarrierApp):
-    """
-    Simple branch app that is told the result of its condition.
-    We are keeping this not to break existing graphs.
-    """
+# class SimpleBranch(BranchAppDrop, NullBarrierApp):
+#     """
+#     Simple branch app that is told the result of its condition.
+#     We are keeping this not to break existing graphs.
+#     """
+#
+#     def initialize(self, **kwargs):
+#         self.result = self._popArg(kwargs, "result", True)
+#         BranchAppDrop.initialize(self, **kwargs)
+#
+#     def run(self):
+#         pass
+#
+#     def condition(self):
+#         return self.result
+#
 
-    def initialize(self, **kwargs):
-        self.result = self._popArg(kwargs, "result", True)
-        BranchAppDrop.initialize(self, **kwargs)
 
-    def run(self):
-        pass
-
-    def condition(self):
-        return self.result
-
-
-##
-# @brief Branch
-# @details A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
-# the provided conditional function. The conditional function can be specified either in-line or as an external function and has
-# to return a boolean value.
-# The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
-# a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
-# conditional function.
-# @par EAGLE_START
-# @param category Branch
-# @param tag daliuge
-# @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
-# @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
-# @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
-# @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
-# @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
-# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.Branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @par EAGLE_END
-class Branch(PyFuncApp):
-    """
-    A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
-    the provided conditional function. The conditional function can be specified either in-line or as an external function and has
-    to return a boolean value.
-    The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
-    a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
-    conditional function.
-    """
-
-    bufsize = dlg_int_param("bufsize", 65536)
-    result = dlg_bool_param("result", False)
-
-    def write_results(self,result:bool=False):
-        """
-        Copy the input to the output identified by the condition function.
-        """
-        if result and isinstance(result, bool):
-            self.result = result
-        if not self.outputs:
-            return
-
-        go_result = str(self.result).lower()
-        nogo_result = str(not self.result).lower()
-
-        try:
-            nogo_drop = getattr(self, nogo_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the False condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
-        try:
-            go_drop = getattr(self, go_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the True condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
-
-        logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
-        nogo_drop.skip()  # send skip to correct branch
-
-        if self.inputs and hasattr(go_drop, "write"):
-            droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], go_drop, bufsize=self.bufsize
-            )
-        else:  # this enables a branch based only on the condition function
-            d = pickle.dumps(self.parameters[self.argnames[0]])
-            # d = self.parameters[self.argnames[0]]
-            if hasattr(go_drop, "write"):
-                go_drop.write(d)
 
 
 ##
