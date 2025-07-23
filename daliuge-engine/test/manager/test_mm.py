@@ -26,7 +26,8 @@ import sys
 import time
 import unittest
 
-import pkg_resources
+import importlib.resources
+
 from dlg import droputils
 from dlg import utils
 from dlg.common import tool
@@ -340,9 +341,8 @@ class TestREST(DimAndNMStarter, unittest.TestCase):
             # Since the original complexGraph doesn't have node information
             # we need to add it manually before submitting -- otherwise it will
             # get rejected by the DIM.
-            with pkg_resources.resource_stream(
-                "test", "graphs/complex.js"
-            ) as f:  # @UndefinedVariable
+            fpath = importlib.resources.files("test") / "graphs/complex.js"
+            with fpath.open('rb') as f:
                 complexGraphSpec = json.load(codecs.getreader("utf-8")(f))
             for dropSpec in complexGraphSpec:
                 dropSpec["node"] = f"{hostname}:{constants.NODE_DEFAULT_REST_PORT}"

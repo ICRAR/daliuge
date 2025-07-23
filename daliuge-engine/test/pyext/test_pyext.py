@@ -13,7 +13,7 @@ def test_overload_argc():
     assert f(1) == 1
     assert f(1, 2) == 2
     with pytest.raises(TypeError): f(1, 2, 3)
-    assert len(inspect.getargspec(f).args) == 0
+    assert len(inspect.getfullargspec(f).args) == 0
 
 def test_overload_args():
     @pyext.overload.args(str, int)
@@ -29,7 +29,7 @@ def test_overload_args():
     assert f('s') == str
     assert f('s', 0) == (str, int)
     with pytest.raises(TypeError): f(0, 's')
-    assert len(inspect.getargspec(f).args) == 0
+    assert len(inspect.getfullargspec(f).args) == 0
     class x(object):
         @pyext.overload.args(str, is_cls=True)
         def f(self, s): return 1

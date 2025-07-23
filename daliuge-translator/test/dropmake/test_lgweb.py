@@ -29,8 +29,6 @@ from parameterized import parameterized
 import urllib.parse
 import logging
 
-# import pkg_resources
-
 from dlg import common
 from dlg.common import tool
 from dlg.dropmake.web.translator_utils import get_mgr_deployment_methods
