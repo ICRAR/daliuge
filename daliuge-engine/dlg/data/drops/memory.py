@@ -49,6 +49,32 @@ def get_builtins()-> dict:
     builtin_names = [b.__name__ for b in builtin_types]
     return dict(zip(builtin_names, builtin_types))
 
+def evaluate_type(pd_dict: dict, pydata: object) -> dict:
+    """
+    Evaluate the data type based on pydata and the user-selected type.
+
+    We do some implicit correction if we determine the user has submitted the wrong
+    type in the graph, or if the type appears to be something else.
+
+    :param pd_dict: dictionary of parameters for the DROP
+    :param pydata: the current value of the information in the DROP.
+    :return: pd_dict (make function pure)
+    """
+    builtin_types = get_builtins()
+    if pd_dict["type"] != "raw" and type(pydata) in builtin_types.values() and pd_dict[
+        "type"] not in builtin_types.keys():
+        logger.warning("Type of pydata %s provided differs from specified type: %s",
+                       type(pydata).__name__, pd_dict["type"])
+        pd_dict["type"] = type(pydata).__name__
+        if pd_dict["type"] in ["string", "str"]:
+            if not pydata.isalpha():
+                if pydata.isdigit():
+                    pd_dict["type"] = "int"
+                else:
+                    pd_dict["type"] = "float"
+
+    return pd_dict
+
 
 def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     """
@@ -64,6 +90,7 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     expecting data from an InputPort, then this is not a good assumption.
 
     :returns a byte encoded value
+
     """
     pd_dict = pd if isinstance(pd, dict) else {"value":pd, "type":"raw"}
     pydata = pd_dict["value"]
@@ -74,20 +101,14 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     if pydata in empty_strings:
         pydata = bytes() # Treat None/Empty objects as empty object data.
         pd_dict["type"] = 'object'
-    builtin_types = get_builtins()
-    if pd_dict["type"] != "raw" and type(pydata) in builtin_types.values() and pd_dict["type"] not in builtin_types.keys():
-        logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pd_dict["type"])
-        pd_dict["type"] = type(pydata).__name__
+    pd_dict = evaluate_type(pd_dict, pydata)
     if pd_dict["type"].lower() == "json":
         try:
             pydata = json.loads(pydata)
         except JSONDecodeError:
             pydata = pydata.encode()
     if pd_dict["type"].lower() == "eval":
-        # try:
         pydata = eval(pydata) # pylint: disable=eval-used
-        # except Exception:
-        #     pydata = pydata.encode()
     elif pd_dict["type"].lower() == "int" or isinstance(pydata, int):
         try:
             pydata = int(pydata)
@@ -108,16 +129,16 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
             pydata = pydata.encode()
     elif pd_dict["type"].lower() == "object":
         if pydata:
-            pydata = base64.b64decode(pydata.encode())
             try:
+                pydata = base64.b64decode(pydata.encode())
                 pydata = dill.loads(pydata)
-            except dill.PickleError as e:
-                logger.error("Issue loading pydata object with pickle %s", pydata)
-                raise dill.PickleError from e
+            except (dill.PickleError, binascii.Error) as e:
+                logger.error("Issue encoding/loading pydata %s using object", pydata)
+                raise e
     elif pd_dict["type"].lower() == "raw":
         pydata = dill.loads(base64.b64decode(pydata))
         logger.debug("Returning pydata of type: %s", type(pydata))
-        # return pydata
+
     return dill.dumps(pydata)
 
 
