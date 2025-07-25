@@ -36,7 +36,6 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
-from dlg.apps.branch import BranchAppDrop
 from dlg.drop import track_current_drop
 from dlg.meta import (
     dlg_float_param,
@@ -89,55 +88,166 @@ class DALiuGEApp(BarrierAppDROP):
     """A placeholder BarrierAppDrop that just aids the generation of the palette component"""
 
 
-##
-# @brief SleepApp
-# @details A simple APP that sleeps the specified amount of time (0 by default).
-# This is mainly useful (and used) to test graph translation and structure
-# without executing real algorithms. Very useful for debugging.
+# @brief sleep
 # @par EAGLE_START
-# @param category DALiuGEApp
+# @param category PyFuncApp
 # @param tag daliuge
 # @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.SleepApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param dropclass dlg.apps.simple.SleepAndCopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @par EAGLE_END
+def sleep(sleep_time: float = 0):
+    """
+    Simple wrapper around time.sleep() function
+
+    :param sleep_time: Duration of sleep
+    """
+
+    time.sleep(sleep_time)
+    logger.info("Slept for %s s", sleep_time)
+
+##
+# @brief hello_world
+# @details A simple APP that implements the standard Hello World in DALiuGE.
+# It allows to change 'World' with some other string and it also permits
+# to connect the single output port to multiple sinks, which will all receive
+# the same message. App does not require any input.
+# @par EAGLE_START
+# @param category PyFuncApp
+# @param tag daliuge
+# @param greet World/String/ApplicationArgument/InputPort/ReadWrite//False/False/What appears after 'Hello '
+# @param hello "world"/Object/ApplicationArgument/OutputPort/ReadWrite//False/False/message
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.HelloWorldApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
 
+def hello_world(greet: str="World"):
+    """
+    Return a greeting based on user input
+    :param greet: The greeting, defaults to "World"
+    :return: str
+    """
+    final_greet = greet
+    if isinstance(greet, list) or isinstance(greet, np.ndarray):
+        if not greet:
+            final_greet = ""
+        else:
+            final_greet =" ".join(g for g in g) if len(greet) > 1 else greet[0]
 
-class SleepApp(BarrierAppDROP):
-    """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
+    return f"Hello, {final_greet}"
+##
+# @brief random_array
+# @details A testing APP that does not take any input and produces a random array of
+# type int64, if integer is set to True, else of type float64.
+# size indicates the number of elements ranging between the values low and high.
+# The resulting array will be send to all connected output apps.
+# @par EAGLE_START
+# @param category PyFuncApp
+# @param tag daliuge
+# @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The size of the array
+# @param low 0/Float/ApplicationArgument/NoPort/ReadWrite//False/False/Low value of range in array [inclusive]
+# @param high 100/Float/ApplicationArgument/NoPort/ReadWrite//False/False/High value of
+# range of array [exclusive]
+# @param integer True/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Generate integer array?
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.RandomArrayApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
+# @par EAGLE_END
 
-    component_meta = dlg_component(
-        "SleepApp",
-        "Sleep App.",
-        [dlg_batch_input("binary/*", [])],
-        [dlg_batch_output("binary/*", [])],
-        [dlg_streaming_input("binary/*")],
-    )
-    sleep_time = dlg_float_param("sleep_time", 0)
+def random_array(low=0, high=100, size=100, integer: bool=True, seed: int=0):
+    """
+    Produce a random numpy array of integers or floats of 'size' between 'low' and 'high'
 
-    @track_current_drop
-    def run(self):
-        self._run()
-        try:
-            # If data is coming through a named port we load it from there.
-            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP, DropProxy)):
-                logger.debug("Trying to read from %s", self.sleep_time)
-                self.sleep_time = drop_loaders.load_pickle(self.sleep_time)
-            time.sleep(self.sleep_time)
-        except (TypeError, ValueError):
-            logger.debug(
-                "Found invalid sleep_time: %s. Resetting to 0. %s",
-                self.sleep_time,
-                type(self.sleep_time),
-            )
-            self.sleep_time = 0
-            time.sleep(self.sleep_time)
-        logger.info("%s slept for %s s", self.name, self.sleep_time)
+    If integer is True the array will be integers (this is default  behaviour).
 
+    :param low: lowest value of the array
+    :param high: highest value of the array
+    :param size: size of the array
+    :param integer: True for integer array; if False, generate a float array
+    :param seed: Integer seed value for the array
+    :return: np.array
+    """
+    np.random.seed(seed)
+    if integer:
+        return np.random.randint(int(low), int(high), size=size)
+    return (np.random.random(size=size) + low) * high
+
+##
+# @brief retrieve_url
+# @details A simple APP that retrieves the content of a URL and writes
+# it to all outputs.
+# @par EAGLE_START
+# @param category PyFuncApp
+# @param tag daliuge
+# @param url None/String/ApplicationArgument/NoPort/ReadWrite//False/False/The URL to retrieve
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.UrlRetrieveApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param content /String/ApplicationArgument/OutputPort/ReadWrite//False/False/content read from URL
+# @par EAGLE_END
+
+def retrieve_url(url):
+    """
+    App that retrieves the content of a URL
+    :param url: string-formatted URL
+    :return:
+    """
+    try:
+        logger.info("Accessing URL %s", url)
+        return requests.get(url, timeout=30)
+    except requests.exceptions.RequestException as e:
+        raise e.reason
+
+##
+# @brief list_thrashing
+# @details A testing APP that appends a random integer to a list num times.
+# This is a CPU intensive operation and can thus be used to provide a test for application threading
+# since this operation will not yield.
+# The resulting array will be sent to all connected output apps.
+# @par EAGLE_START
+# @param category PyFuncApp
+# @param tag test
+# @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/the size of the array
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param dropclass dlg.apps.simple.ListAppendThrashingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
+# @par EAGLE_END
+
+def list_thrashing(n: int=100):
+    """
+    A BarrierAppDrop that appends random integers to a list N times. It does
+    not require any inputs and writes the generated array to all of its
+    outputs.
+
+    :param n: size of the list, default=100
+    :return: list
+    """
+    marray = []
+    for _ in range(n):
+        marray = []
+        for _ in range(n):
+            marray.append(random.random())
+    return marray
 
 ##
 # @brief CopyApp
@@ -215,98 +325,12 @@ class CopyApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
-class SleepAndCopyApp(SleepApp, CopyApp):
+class SleepAndCopyApp(CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
-
+    sleep_time = dlg_float_param("sleep_time", 0)
     def run(self):
-        SleepApp.run(self)
+        sleep(self.sleep_time)
         CopyApp.run(self)
-
-
-##
-# @brief RandomArrayApp
-# @details A testing APP that does not take any input and produces a random array of
-# type int64, if integer is set to True, else of type float64.
-# size indicates the number of elements ranging between the values low and high.
-# The resulting array will be send to all connected output apps.
-# @par EAGLE_START
-# @param category DALiuGEApp
-# @param tag daliuge
-# @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The size of the array
-# @param low 0/Float/ApplicationArgument/NoPort/ReadWrite//False/False/Low value of range in array [inclusive]
-# @param high 1/Float/ApplicationArgument/NoPort/ReadWrite//False/False/High value of range of array [exclusive]
-# @param integer True/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Generate integer array?
-# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.RandomArrayApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
-# @par EAGLE_END
-class RandomArrayApp(BarrierAppDROP):
-    """
-    A BarrierAppDrop that generates an array of random numbers. It does
-    not require any inputs and writes the generated array to all of its
-    outputs.
-
-    Keywords:
-
-    integer:  bool [True], generate integer array
-    low:      float, lower boundary (will be converted to int for integer arrays)
-    high:     float, upper boundary (will be converted to int for integer arrays)
-    size:     int, number of array elements
-    """
-
-    component_meta = dlg_component(
-        "RandomArrayApp",
-        "Random Array App.",
-        [dlg_batch_input("binary/*", [])],
-        [dlg_batch_output("binary/*", [])],
-        [dlg_streaming_input("binary/*")],
-    )
-
-    # default values
-    integer = dlg_bool_param("integer", True)
-    low = dlg_float_param("low", 0)
-    high = dlg_float_param("high", 100)
-    size = dlg_int_param("size", 100)
-    marray = []
-
-    def initialize(self, keep_array=False, **kwargs):
-        super(RandomArrayApp, self).initialize(**kwargs)
-        self._keep_array = keep_array
-
-
-    @track_current_drop
-    def run(self):
-        self._run()
-        # At least one output should have been added
-        outs = self.outputs
-        if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
-        logger.info("Generating %d random numbers between %f and %f", self.size, self.low, self.high)
-        marray = self.generateRandomArray()
-        if self._keep_array:
-            self.marray = marray
-        for o in outs:
-            d = pickle.dumps(marray)
-            o.len = len(d)
-            o.write(d)
-
-    def generateRandomArray(self):
-        if self.integer:
-            # generate an array of self.size integers with numbers between
-            # slef.low and self.high
-            marray = np.random.randint(int(self.low), int(self.high), size=(self.size))
-        else:
-            # generate an array of self.size floats with numbers between
-            # self.low and self.high
-            marray = (np.random.random(size=self.size) + self.low) * self.high
-        return marray
-
-    def _getArray(self):
-        return self.marray
 
 
 ##
@@ -640,115 +664,6 @@ class GenericNpyGatherApp(BarrierAppDROP):
 
 
 ##
-# @brief HelloWorldApp
-# @details A simple APP that implements the standard Hello World in DALiuGE.
-# It allows to change 'World' with some other string and it also permits
-# to connect the single output port to multiple sinks, which will all receive
-# the same message. App does not require any input.
-# @par EAGLE_START
-# @param category DALiuGEApp
-# @param tag daliuge
-# @param greet World/String/ApplicationArgument/InputPort/ReadWrite//False/False/What appears after 'Hello '
-# @param hello "world"/Object/ApplicationArgument/OutputPort/ReadWrite//False/False/message
-# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.HelloWorldApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @par EAGLE_END
-class HelloWorldApp(BarrierAppDROP):
-    """
-    An App that writes 'Hello World!' or 'Hello <greet>!' to all of
-    its outputs.
-
-    Keywords:
-    greet:   string, [World], whom to greet.
-    """
-
-    component_meta = dlg_component(
-        "HelloWorldApp",
-        "Hello World App.",
-        [dlg_batch_input("binary/*", [])],
-        [dlg_batch_output("binary/*", [])],
-        [dlg_streaming_input("binary/*")],
-    )
-
-    greet = dlg_string_param("greet", "World")
-
-    def run(self):
-        ins = self.inputs
-        # if no inputs use the parameter else use the input
-        if len(ins) == 0:
-            self.greeting = "Hello %s" % self.greet
-        elif len(ins) != 1:
-            raise Exception("Only one input expected for %r" % self)
-        else:  # the input is expected to be a vector. We'll use the first element
-            try:
-                phrase = str(pickle.loads(droputils.allDropContents(ins[0]))[0])
-            except _pickle.UnpicklingError:
-                phrase = str(droputils.allDropContents(ins[0]), encoding="utf-8")
-            self.greeting = f"Hello {phrase}"
-        logger.debug("Greeting is %s", self.greeting)
-
-        outs = self.outputs
-        if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
-        for o in outs:
-            o.len = len(self.greeting.encode())
-            o.write(self.greeting.encode())  # greet across all outputs
-
-
-##
-# @brief UrlRetrieveApp
-# @details A simple APP that retrieves the content of a URL and writes
-# it to all outputs.
-# @par EAGLE_START
-# @param category DALiuGEApp
-# @param tag daliuge
-# @param url None/String/ApplicationArgument/NoPort/ReadWrite//False/False/The URL to retrieve
-# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.UrlRetrieveApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param content /String/ApplicationArgument/OutputPort/ReadWrite//False/False/content read from URL
-# @par EAGLE_END
-class UrlRetrieveApp(BarrierAppDROP):
-    """
-    An App that retrieves the content of a URL
-
-    Keywords:
-    URL:   string, URL to retrieve.
-    """
-
-    component_meta = dlg_component(
-        "UrlRetrieveApp",
-        "URL Retrieve App",
-        [dlg_batch_input("binary/*", [])],
-        [dlg_batch_output("binary/*", [])],
-        [dlg_streaming_input("binary/*")],
-    )
-
-    url = dlg_string_param("url", "")
-
-    def run(self):
-        try:
-            logger.info("Accessing URL %s", self.url)
-            u = requests.get(self.url, timeout=30)
-        except requests.exceptions.RequestException as e:
-            raise e.reason
-
-        outs = self.outputs
-        if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
-        for o in outs:
-            o.len = len(u.content)
-            o.write(u.content)  # send content to all outputs
-
-
-##
 # @brief GenericScatterApp
 # @details An APP that splits about any object that can be converted to a numpy array
 # into as many parts as the app has outputs, provided that the initially converted numpy
@@ -880,101 +795,6 @@ class GenericNpyScatterApp(BarrierAppDROP):
                 out_index = in_index * self.num_of_copies + split_index
                 drop_loaders.save_numpy(self.outputs[out_index], result[split_index])
 
-
-class SimpleBranch(BranchAppDrop, NullBarrierApp):
-    """
-    Simple branch app that is told the result of its condition.
-    We are keeping this not to break existing graphs.
-    """
-
-    def initialize(self, **kwargs):
-        self.result = self._popArg(kwargs, "result", True)
-        BranchAppDrop.initialize(self, **kwargs)
-
-    def run(self):
-        pass
-
-    def condition(self):
-        return self.result
-
-
-##
-# @brief Branch
-# @details A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
-# the provided conditional function. The conditional function can be specified either in-line or as an external function and has
-# to return a boolean value.
-# The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
-# a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
-# conditional function.
-# @par EAGLE_START
-# @param category Branch
-# @param tag daliuge
-# @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
-# @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
-# @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
-# @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
-# @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
-# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.Branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @par EAGLE_END
-class Branch(PyFuncApp):
-    """
-    A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
-    the provided conditional function. The conditional function can be specified either in-line or as an external function and has
-    to return a boolean value.
-    The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
-    a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
-    conditional function.
-    """
-
-    bufsize = dlg_int_param("bufsize", 65536)
-    result = dlg_bool_param("result", False)
-
-    def write_results(self,result:bool=False):
-        """
-        Copy the input to the output identified by the condition function.
-        """
-        if result and isinstance(result, bool):
-            self.result = result
-        if not self.outputs:
-            return
-
-        go_result = str(self.result).lower()
-        nogo_result = str(not self.result).lower()
-
-        try:
-            nogo_drop = getattr(self, nogo_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the False condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
-        try:
-            go_drop = getattr(self, go_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the True condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
-
-        logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
-        nogo_drop.skip()  # send skip to correct branch
-
-        if self.inputs and hasattr(go_drop, "write"):
-            droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], go_drop, bufsize=self.bufsize
-            )
-        else:  # this enables a branch based only on the condition function
-            d = pickle.dumps(self.parameters[self.argnames[0]])
-            # d = self.parameters[self.argnames[0]]
-            if hasattr(go_drop, "write"):
-                go_drop.write(d)
-
-
 ##
 # @brief PickOne
 # @details App that picks the first element of an input list, passes that
@@ -1040,68 +860,3 @@ class PickOne(BarrierAppDROP):
         self.writeData(value, rest)
 
 
-##
-# @brief ListAppendThrashingApp
-# @details A testing APP that appends a random integer to a list num times.
-# This is a CPU intensive operation and can thus be used to provide a test for application threading
-# since this operation will not yield.
-# The resulting array will be sent to all connected output apps.
-# @par EAGLE_START
-# @param category DALiuGEApp
-# @param tag test
-# @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/the size of the array
-# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param dropclass dlg.apps.simple.ListAppendThrashingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
-# @par EAGLE_END
-class ListAppendThrashingApp(BarrierAppDROP):
-    """
-    A BarrierAppDrop that appends random integers to a list N times. It does
-    not require any inputs and writes the generated array to all of its
-    outputs.
-
-    Keywords:
-
-    size:     int, number of array elements
-    """
-
-    compontent_meta = dlg_component(
-        "ListAppendThrashingApp",
-        "List Append Thrashing",
-        [dlg_batch_input("binary/*", [])],
-        [dlg_batch_output("binary/*", [])],
-        [dlg_streaming_input("binary/*")],
-    )
-
-    def initialize(self, **kwargs):
-        self.size = self._popArg(kwargs, "size", 100)
-        self.marray = []
-        super(ListAppendThrashingApp, self).initialize(**kwargs)
-
-    def run(self):
-        # At least one output should have been added
-        outs = self.outputs
-        if len(outs) < 1:
-            raise Exception("At least one output should have been added to %r" % self)
-        self.marray = self.generateArray()
-        for o in outs:
-            d = pickle.dumps(self.marray)
-            o.len = len(d)
-            o.write(pickle.dumps(self.marray))
-
-    def generateArray(self):
-        # This operation is wasteful to simulate an N^2 operation.
-        marray = []
-        for _ in range(int(self.size)):
-            marray = []
-            for _ in range(int(self.size)):
-                marray.append(random.random())
-        return marray
-
-    def _getArray(self):
-        return self.marray

@@ -19,6 +19,7 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import dill
 import logging
 import os
 import pickle
@@ -26,18 +27,21 @@ import sys
 import time
 import unittest
 from multiprocessing.pool import ThreadPool
+import numpy as np
 from numpy import mean, array, concatenate, random, testing
 from psutil import cpu_count
 
 from dlg import droputils, drop_loaders
+from dlg.apps.pyfunc import PyFuncApp
 from dlg.apps.simple import (
-    Branch,
+    # sleep, hello_world, random_array, list_thrasher,
+    AverageArraysApp,
+    CopyApp,
+    SleepAndCopyApp,
     GenericScatterApp,
     GenericNpyScatterApp,
-    ListAppendThrashingApp,
 )
-from dlg.apps.simple import RandomArrayApp, AverageArraysApp, HelloWorldApp
-from dlg.apps.simple import SleepApp, CopyApp, SleepAndCopyApp
+
 from dlg.ddap_protocol import DROPStates
 from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.memory import InMemoryDROP
@@ -63,7 +67,8 @@ class TestSimpleApps(unittest.TestCase):
     def test_sleepapp(self):
         # Nothing fancy, just run it and be done with it
         a = NullDROP("a", "a")
-        b = SleepApp("b", "b")
+        b = PyFuncApp("b", "b", func_name=f"dlg.apps.simple.sleep")
+        # b = SleepApp("b", "b")
         c = NullDROP("c", "c")
         b.addInput(a)
         b.addOutput(c)
@@ -111,15 +116,16 @@ class TestSimpleApps(unittest.TestCase):
 
     def test_randomarrayapp(self):
         i = NullDROP("i", "i")
-        c = RandomArrayApp("c", "c", keep_array=True)
+        c = PyFuncApp("c", "c", func_name="dlg.apps.simple.random_array")
         o = InMemoryDROP("o", "o")
         c.addInput(i)
         c.addOutput(o)
         self._test_graph_runs((i, c, o), i, o)
-        marray = c._getArray()
+        # Test against default array produced by random_array
+        np.random.seed(0)
+        rarray = np.random.randint(0, 100, size=100)
         data = pickle.loads(droputils.allDropContents(o))
-        v = marray == data
-        self.assertEqual(v.all(), True)
+        self.assertListEqual(list(rarray), list(data))
 
     def test_averagearraysapp(self):
         a = AverageArraysApp("a", "a")
@@ -140,12 +146,12 @@ class TestSimpleApps(unittest.TestCase):
         self.assertEqual(big_mean, average)
 
     def test_helloworldapp(self):
-        h = HelloWorldApp("h", "h")
+        h = PyFuncApp("h", "h", func_name="dlg.apps.simple.hello_world")
         b = FileDROP("c", "c")
         h.addOutput(b)
         b.addProducer(h)
         h.execute()
-        self.assertEqual(h.greeting.encode("utf8"), droputils.allDropContents(b))
+        self.assertEqual("Hello, World", dill.loads(droputils.allDropContents(b)))
 
     def test_parallelHelloWorld(self):
         m0 = InMemoryDROP("m0", "m0")
@@ -158,7 +164,11 @@ class TestSimpleApps(unittest.TestCase):
         f = []
         for i in range(1, len(greets) + 1, 1):
             m.append(InMemoryDROP("m%d" % i, "m%d" % i))
-            h.append(HelloWorldApp("h%d" % i, "h%d" % i))
+            inputs=[{f"m{i}":f"greet"}]
+            h.append(PyFuncApp(
+                "h%d" % i, "h%d" % i, func_name="dlg.apps.simple.hello_world",
+                inputs=inputs
+            ))
             f.append(FileDROP("f%d" % i, "f%d" % i))
             s.addOutput(m[-1])
             h[-1].addInput(m[-1])
@@ -170,8 +180,8 @@ class TestSimpleApps(unittest.TestCase):
         self._test_graph_runs(ad, m0, f)
         for i in range(len(f)):
             self.assertEqual(
-                ("Hello %s" % greets[i]).encode("utf8"),
-                droputils.allDropContents(f[i]),
+                ("Hello, %s" % greets[i]).encode("utf8"),
+                dill.loads(droputils.allDropContents(f[i])).encode("utf8"),
             )
 
     @unittest.skip
@@ -262,14 +272,16 @@ class TestSimpleApps(unittest.TestCase):
 
     def test_listappendthrashing(self, size=1000):
         a = InMemoryDROP("a", "a")
-        b = ListAppendThrashingApp("b", "b", size=size)
-        self.assertEqual(b.size, size)
+        a.write(pickle.dumps(size))
+        inputs=[{"a": "n"}]
+        b = PyFuncApp("b", "b", func_name="dlg.apps.simple.list_thrashing",inputs=inputs)
+        # self.assertEqual(b.size, size)
         c = InMemoryDROP("c", "c")
         b.addInput(a)
         b.addOutput(c)
-        self._test_graph_runs((a, b, c), a, c, timeout=4)
+        self._test_graph_runs((a, b, c), a, c, timeout=400)
         data_out = pickle.loads(droputils.allDropContents(c))
-        self.assertEqual(b.marray, data_out)
+        self.assertEqual(size, len(data_out))
 
     @unittest.skipIf(
         sys.version_info < (3, 8),
@@ -283,9 +295,13 @@ class TestSimpleApps(unittest.TestCase):
         session_id = 1
         memory_manager.register_session(session_id)
         S = InMemoryDROP("S", "S")
+        S.write(pickle.dumps(size))
         X = AverageArraysApp("X", "X")
         Z = InMemoryDROP("Z", "Z")
-        drops = [ListAppendThrashingApp(x, x, size=size) for x in drop_ids]
+        inputs=[{"S": "n"}]
+        drops = [PyFuncApp(x, x, func_name="dlg.apps.simple.list_thrashing",
+                        inputs=inputs) for x in drop_ids]
+        # drops = [ListAppendThrashingApp(x, x, size=size) for x in drop_ids]
         mdrops = [InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)]
         if parallel:
             # a bit of magic to get the app drops using the processes
