@@ -260,7 +260,7 @@ class RDBMSRegistry(Registry):
             self.execute(
                 cur,
                 "INSERT INTO dlg_dropaccesstime (oid, accessTime) VALUES ({0},{1})",
-                (oid, self._dbmod.TimestampFromTicks(time.time())),
+                (oid, time.time()),
             )
             cur.close()
 
