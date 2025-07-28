@@ -31,6 +31,7 @@ The registry simply (for the time being) keeps a record of:
 @author: rtobar
 """
 
+import datetime
 import importlib
 import logging
 import time
@@ -260,7 +261,7 @@ class RDBMSRegistry(Registry):
             self.execute(
                 cur,
                 "INSERT INTO dlg_dropaccesstime (oid, accessTime) VALUES ({0},{1})",
-                (oid, time.time()),
+                (oid, datetime.datetime.now(datetime.timezone.utc).isoformat()),
             )
             cur.close()
 
