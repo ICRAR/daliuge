@@ -21,7 +21,6 @@
 #
 """Applications used as examples, for testing, or in simple situations"""
 
-import _pickle
 from numbers import Number
 import pickle
 import random
@@ -30,12 +29,11 @@ import requests
 import logging
 import time
 import numpy as np
+# from tests.data.example_eagle import RandomArrayApp
 
 from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
-from dlg.data.drops import InMemoryDROP, FileDROP
 from dlg.drop import track_current_drop
 from dlg.meta import (
     dlg_float_param,
@@ -50,7 +48,6 @@ from dlg.meta import (
     dlg_streaming_input,
 )
 from dlg.exceptions import DaliugeException
-from dlg.rpc import DropProxy
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -68,6 +65,7 @@ class NullBarrierApp(BarrierAppDROP):
 
     def run(self):
         pass
+
 
 
 ##
@@ -146,6 +144,7 @@ def hello_world(greet: str="World"):
 ##
 # @brief random_array
 # @details A testing APP that does not take any input and produces a random array of
+
 # type int64, if integer is set to True, else of type float64.
 # size indicates the number of elements ranging between the values low and high.
 # The resulting array will be send to all connected output apps.
@@ -860,3 +859,4 @@ class PickOne(BarrierAppDROP):
         self.writeData(value, rest)
 
 
+RandomArrayApp = random_array
