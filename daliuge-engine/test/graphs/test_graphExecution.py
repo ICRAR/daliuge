@@ -125,7 +125,6 @@ class TestGraphs(LocalDimStarter, unittest.TestCase):
         """
         Use a graph with named ports on an app and check whether it is runnning
         """
-        translate = lambda x: base64.b64encode(pickle.dumps(x))
         init_oid = "2023-07-04T00:13:32_-1_0"  # first drop in graph
         sessionId = "lalo"
         with (

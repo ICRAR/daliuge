@@ -34,6 +34,7 @@ import string
 import sys
 from typing import Union
 
+from dlg.utils import serialize_data
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
@@ -76,9 +77,13 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
 
     :returns a byte encoded value
     """
+    stypes = ["float", "int", "str", "list", "dict"]
     if not isinstance(pd, dict):
         # fix types when just a value is passed (tests)
-        return {"value":pd, "type": guess_type(pd)}
+        pytype = guess_type(pd)
+        if pytype not in stypes:
+            pd = serialize_data(pd)
+        return {"value":pd, "type": pytype}
     pydata = pd["value"]
     pytype = pd["type"].lower()
     logger.debug("pydata value provided: '%s' with type '%s', %s", 
@@ -194,7 +199,7 @@ class InMemoryDROP(DataDROP):
             pdict = parse_pydata(pydata)
         elif "fields" in kwargs and "pydata" in field_names:
             data_pos = field_names.index("pydata")
-            pdict = kwargs["fields"][data_pos]
+            pdict = kwargs["fields"][data_pos].copy()
             pdict = parse_pydata(pdict)
         self.data_type = pdict["type"]
         if pdict and pdict["type"] in ["str","string"]:
