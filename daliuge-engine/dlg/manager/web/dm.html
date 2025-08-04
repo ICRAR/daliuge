@@ -57,7 +57,6 @@
 					<tbody>
 					</tbody>
 				</table>
-			<button id="addSessionBtn"  type="button" class="btn btn-secondary"><span class="fa fa-plus"></span> Add Session</button>
 			<button id="refreshListBtn" type="button" class="btn btn-secondary"><span class="fa fa-refresh"></span> Refresh</button>
 			<button id="resetBtn"       type="button" class="btn btn-secondary"><span class="fa fa-power-off"></span> Reset</button>
 		</div>
@@ -70,7 +69,6 @@
 
     var tbodyEl = d3.select("#sessionsTable tbody");
     var refreshBtn = d3.select('#refreshListBtn');
-    var addSessionBtn = d3.select('#addSessionBtn');
     var resetBtn = d3.select('#resetBtn');
 
 var dimUrlQuery = new URL(window.location.href);
@@ -84,7 +82,6 @@ if(dimUrl){
 }
 
 // Listeners for the two buttons
-addSessionBtn.on('click', function(){ promptNewSession(serverUrl, tbodyEl, refreshBtn); } );
 refreshBtn.on('click', function(){ loadSessions(serverUrl, tbodyEl, refreshBtn, null); } );
 if( reset ) {
 	resetBtn.on('click', function() {

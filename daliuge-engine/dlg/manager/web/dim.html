@@ -59,9 +59,6 @@
                 <tbody>
                 </tbody>
             </table>
-            <button class="btn btn-secondary" id="addSessionBtn" type="button"><span class="fa fa-plus"></span>
-                Add Session
-            </button>
             <button class="btn btn-secondary" id="refreshSessionListBtn" type="button"><span
                     class="fa fa-refresh"></span> Refresh
             </button>
@@ -112,7 +109,6 @@
 
         var refreshSessionListBtn = d3.select('#refreshSessionListBtn');
         var refreshPastSessionListBtn = d3.select('#refreshPastSessionListBtn');
-        var addSessionBtn = d3.select('#addSessionBtn');
         var sessionsTbodyEl = d3.select('#sessionsTable tbody');
         var pastSessionsTbodyEl = d3.select('#pastSessionsTable tbody');
 
@@ -144,17 +140,14 @@
                 .append('span').classed('fa fa-share', true);
         }
         if (!selectedNode) {
-            fillTable('#nodesTable tbody', nodes, function (n) { return '?node=' + n + "&dim_url=" + serverUrl; }, function (n) { return "http://" + n + "?dim_url=" + serverUrl });
+            fillTable(
+                '#nodesTable tbody', nodes,
+                function (n) { return '?node=' + n + "&dim_url=" + serverUrl; },
+                function (n) { return '?node=' + n + "&dim_url=" + serverUrl; },
+            );
         }
 
-        // Listeners for the two session-related buttons
-        if (!selectedNode) {
-            addSessionBtn.on('click', function () {
-                promptNewSession(serverUrl, sessionsTbodyEl, refreshSessionListBtn);
-            });
-        } else {
-            addSessionBtn.remove()
-        }
+        // Listeners for the session-related buttons
         refreshSessionListBtn.on('click', function () {
             loadSessions(serverUrl, sessionsTbodyEl, refreshSessionListBtn, selectedNode);
         });
