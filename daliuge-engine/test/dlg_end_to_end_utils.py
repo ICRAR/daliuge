@@ -36,8 +36,8 @@ from dlg.ddap_protocol import DROPStates
 
 
 from dlg.dropmake.lg import LG
-from dlg.dropmake.pgt import PGT,
-from dlg.dropmake.pgtp import MetisPGTP,
+from dlg.dropmake.pgt import PGT
+from dlg.dropmake.pgtp import MetisPGTP
 from dlg.common.path_utils import get_lg_fpath
 
 # Note this test will only run with a full installation of DALiuGE
