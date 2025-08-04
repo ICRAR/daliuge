@@ -92,15 +92,20 @@ class SlurmClient:
 
         if config:
             # Do the config from the config file
-            self.host = config['login_node']
-            self._acc = config['account'] # superceded by slurm_template if present
-            self.dlg_root = config['dlg_root']
-            self.modules = config['modules']
-            self.venv = config['venv'] # superceded by slurm_template if present
-            self.exec_prefix = config["exec_prefix"]
-            self.username = config['user'] if 'user' in config else username
-            if not self.username:
-                print("Username not configured in INI file, using local username...")
+            try:
+                self.host = config['login_node']
+                self._acc = config['account'] # superceded by slurm_template if present
+                self.dlg_root = config['dlg_root']
+                self.modules = config['modules']
+                self.venv = config['venv'] # superceded by slurm_template if present
+                self.exec_prefix = config["exec_prefix"]
+                self.username = config['user'] if 'user' in config else username
+                if not self.username:
+                    print("Username not configured in INI file, using local username...")
+            except KeyError as e:
+                print(f"Missing {str(e)} entry in .ini, please review your configuration "
+                      f"setup.")
+                sys.exit(1)
         else:
             # Setup SLURM environment variables using config
             config = ConfigFactory.create_config(facility=facility, user=username)

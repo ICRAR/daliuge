@@ -21,8 +21,22 @@
 #
 
 import unittest
+from importlib.resources import files
+from pathlib import Path
 
+import dlg.deploy.configs as deploy_configs
 from dlg.deploy import deployment_utils
+from dlg.deploy.create_dlg_job import process_config
+
+
+class TestIniConfig(unittest.TestCase):
+    """
+    Test Config INI reading
+    """
+    cfg_path = files(deploy_configs) / 'default.ini'
+    cfg =  process_config(str(cfg_path))
+    print(cfg)
+
 
 
 class TestSlurmUtils(unittest.TestCase):
