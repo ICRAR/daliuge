@@ -605,6 +605,23 @@ class CompositeManager(DROPManager):
         )
         return allstatus
 
+    def _getSessionDir(self, dm, host, sessionId):
+        logger.debug("Retrieving directory for session %s on %s", sessionId, host)
+        return dm.getSessionDir(sessionId)
+
+    def getSessionDir(self, sessionId):
+        """
+        Get the session directory for the DMs.
+        """
+        logger.info("Get the directory the in which session data is stored")
+        session_dir = {}
+        self.replicate(
+            sessionId,
+            self._getSessionDir,
+            "Getting logs",
+            collect=session_dir)
+        return session_dir
+
     def _getDropStatus(self, dm, host, sessionId, dropId ):
         """
         See session.getDropLogs()

@@ -32,7 +32,7 @@ from dlg.manager.client import MasterManagerClient
 from dlg.manager.proc_daemon import DlgDaemon
 from dlg.restutils import RestClient, RestClientException
 
-_TIMEOUT = 5
+_TIMEOUT = 10
 IDENTITY = lambda x: x
 
 

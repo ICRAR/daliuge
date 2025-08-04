@@ -482,7 +482,7 @@ def run(_, args):
         type="choice",
         choices=["submit", "analyse"],
         dest="action",
-        help="1 - create/submit job, 2 - analyse log",
+        help="**submit** job or **analyse** log",
         default=None,
     )
     parser.add_option(
@@ -551,8 +551,7 @@ def run(_, args):
         action="store",
         type="int",
         dest="num_nodes",
-        help="number of compute nodes requested",
-        default=3,
+        help="Number of compute nodes requested",
     )
     parser.add_option(
         "-i",
@@ -635,7 +634,6 @@ def run(_, args):
         action="store",
         type="int",
         dest="num_islands",
-        default=1,
         help="The number of Data Islands",
     )
     parser.add_option(
