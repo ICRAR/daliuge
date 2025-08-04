@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.5.3
+- [Fix] Fix Sessions disappearing in DIM page when restarting Node Manager: https://github.com/ICRAR/daliuge/pull/349
+
 ## v5.5.2
 - [Fix] Address issue #315 to make `dlg` remote deployment CLI more clear: https://github.com/ICRAR/daliuge/pull/342
 - [Fix] Fix multi-input  AppDROP failing after Branch False condition: https://github.com/ICRAR/daliuge/pull/346
