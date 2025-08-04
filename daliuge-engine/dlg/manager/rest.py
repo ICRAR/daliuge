@@ -827,6 +827,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     def _getAllCMNodes(self):
         nodes = []
         for host in self.dm.dmHosts:
-            with DataIslandManagerClient(host=host.host, port=host.port) as dm:
+            h = Node(host)
+            with DataIslandManagerClient(host=h.host, port=h.port) as dm:
                 nodes += dm.nodes()
         return [str(n) for n in nodes]

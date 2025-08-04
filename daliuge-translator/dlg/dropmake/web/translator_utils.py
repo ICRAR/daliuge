@@ -1,9 +1,9 @@
 import os
 import logging
-import pkg_resources
+import importlib.resources
 from urllib.parse import urlparse
 
-from dlg import common
+from dlg import common, utils
 from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.reproducibility import (
     init_lg_repro_data,
@@ -72,10 +72,10 @@ def _repo_contents(root_dir):
 
     return contents
 
-
-def file_as_string(fname, package=__name__, enc="utf8"):
-    b = pkg_resources.resource_string(package, fname)  # @UndefinedVariable
-    return common.b2s(b, enc)
+def file_as_string(fname, module, enc="utf8"):
+    module_path = importlib.resources.files(module)
+    res = module_path / fname
+    return utils.b2s(res.read_bytes(), enc)
 
 
 def prepare_lgt(filename, rmode: str):

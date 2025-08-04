@@ -24,13 +24,16 @@ import json
 import logging
 
 import bottle
-import pkg_resources
 
+from pathlib import Path
 from typing import List, Optional
-from .drop_manager import DROPManager
-from .rest import ManagerRestServer
-from .session import SessionStates
-from ..exceptions import NoSessionException, InvalidSessionState
+
+from dlg.manager.drop_manager import DROPManager
+from dlg.manager.rest import ManagerRestServer
+from dlg.manager.session import SessionStates
+
+from dlg import utils
+from dlg.exceptions import NoSessionException, InvalidSessionState
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -140,6 +143,9 @@ class ReplayManager(DROPManager):
     def getSessionIds(self):
         return [self._session_id]
 
+def file_as_string(fname, enc="utf8"):
+    res = Path(__file__).parent / fname
+    return utils.b2s(res.read_bytes(), enc)
 
 class ReplayManagerServer(ManagerRestServer):
     def initializeSpecifics(self, app):
@@ -148,9 +154,7 @@ class ReplayManagerServer(ManagerRestServer):
         app.get("/", callback=self.visualizeDM)
 
     def visualizeDM(self):
-        tpl = pkg_resources.resource_string(
-            __name__, "web/dm.html"
-        )  # @UndefinedVariable
+        tpl = file_as_string("web/dm.html")
         urlparts = bottle.request.urlparts
         serverUrl = urlparts.scheme + "://" + urlparts.netloc
         return bottle.template(
