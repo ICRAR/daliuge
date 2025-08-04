@@ -1,6 +1,11 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+## v5.6.0
+
+- [Added]  HelloWorld Tutorials and Graph Patterns:  https://github.com/ICRAR/daliuge/pull/347
+- [Changed] Remove final pkg_resources references from code: https://github.com/ICRAR/daliuge/pull/350
+
 ## v5.5.3
 - [Fix] Fix Sessions disappearing in DIM page when restarting Node Manager: https://github.com/ICRAR/daliuge/pull/349
 
