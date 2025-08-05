@@ -81,7 +81,7 @@ Thus some environment variables that may be set in the ``.ini`` file will be ove
 
 The following is a complete example::
 
-    dlg create -a submit -n 1 -s 1 -u -f setonix 
+    dlg remote-submit -a submit -n 1 -s 1 -u -f setonix 
     -L <my_logical_graph>
     -v 5 --remote --submit 
     --config_file setonix.ini --slurm_template setonix.slurm
@@ -93,20 +93,16 @@ Command: dlg config
 ===================
 Help output::
 
-   Usage: daemon [options]
-   
-   Starts a DALiuGE Daemon process
-   
-   Options:
-     -h, --help     show this help message and exit
-     -m, --master   Start this DALiuGE daemon as the master daemon
-     --no-nm        Don't start a NodeDropManager by default
-     --no-zeroconf  Don't enable zeroconf on this DALiuGE daemon
-     -v, --verbose  Become more verbose. The more flags, the more verbose
-     -q, --quiet    Be less verbose. The more flags, the quieter
+    Usage: config [options]
 
-Command: dlg create
-===================
+    Options:
+      -h, --help  show this help message and exit
+      --setup     Setup local '$HOME/.config/dlg' directory to store custom
+                  environment config and slurm scripts
+      -l, --list  List the available configuration for DALiuGE deployment.
+
+Command: dlg remote-submit
+===========================
 
 Help output::
         

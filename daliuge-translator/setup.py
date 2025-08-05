@@ -35,7 +35,7 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # here. If we find the git commit (either via "git" command execution or in a
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
-# by setuptools/pkg_resources or "final" versions.
+# by setuptools or "final" versions.
 
 
 def extract_version():

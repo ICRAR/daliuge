@@ -1288,7 +1288,9 @@ class BranchAppDropTestsBase(object):
         b.addOutput(f)
         b.execute()
         res = pickle.loads(droputils.allDropContents(t))
-        self.assertEqual(value, res)
+        self.assertEqual(value, res)        
+
+
 
     def test_simple_branch(self):
         """Check that simple branch event transmission works"""
