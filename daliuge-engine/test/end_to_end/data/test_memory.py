@@ -52,7 +52,7 @@ TYPE_MAP = {
 
 class TestMemory(unittest.TestCase):
     """
-    Given a dropspec, make sure the ports are loaded correctly.
+    End-to-end testing for MemoryDROPs
     """
 
     def test_memory_types(self):

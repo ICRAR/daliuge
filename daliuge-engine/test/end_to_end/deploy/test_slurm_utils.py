@@ -20,14 +20,16 @@
 #    MA 02111-1307  USA
 #
 
+import pytest
 import unittest
+
 from importlib.resources import files
-from pathlib import Path
 
 import dlg.deploy.configs as deploy_configs
 from dlg.deploy import deployment_utils
 from dlg.deploy.create_dlg_job import process_config
 
+pexpect = pytest.importorskip("dlg.dropmake")
 
 class TestIniConfig(unittest.TestCase):
     """
