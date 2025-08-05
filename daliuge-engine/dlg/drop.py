@@ -433,7 +433,7 @@ class AbstractDROP(EventFirer, EventHandler):
                     "InputOutput",
                     ]
                 ):
-                    return kwargs["applicationArgs"].get(attr_name).value
+                return kwargs["applicationArgs"].get(attr_name).value
             else:
                 return default_value
 

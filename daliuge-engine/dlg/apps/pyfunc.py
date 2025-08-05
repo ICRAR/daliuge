@@ -674,7 +674,7 @@ class PyFuncApp(BarrierAppDROP):
                 if hasattr(self, "input_parser")
                 else None
             )
-            keyPortArgs, posPortArgs = identify_named_ports(
+            keyPortArgs, _ = identify_named_ports(
                 inputs_dict,
                 pargsDict,
                 keyargsDict,
