@@ -26,7 +26,9 @@ Test runtime behaviour of MemoryDROP
 This acts as both a feature and regression test suite.
 """
 import dill
+import pytest
 import unittest
+pexpect = pytest.importorskip("dlg.dropmake")
 
 from importlib.resources import files
 from test.dlg_end_to_end_utils import create_and_run_graph_spec, translate_graph
