@@ -210,7 +210,7 @@ class SlurmClient:
         """ 
         pardict = {}
         pardict["SESSION_ID"] = os.path.split(session_dir)[-1]
-        pardict["MODULES"] = self.modules
+        pardict["MODULES"] = f"\n{self.modules}\n"
         pardict["DLG_ROOT"] = self.dlg_root
         pardict["EXEC_PREFIX"] = self.exec_prefix
         pardict["NUM_NODES"] = str(self._num_nodes)
