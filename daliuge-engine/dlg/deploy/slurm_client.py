@@ -24,6 +24,7 @@ Contains a slurm client which generates slurm scripts from daliuge graphs.
 """
 
 import datetime
+import logging
 import sys
 import os
 import subprocess
@@ -38,6 +39,7 @@ from dlg.deploy.configs import DEFAULT_MON_PORT, DEFAULT_MON_HOST
 from dlg.deploy.deployment_utils import find_numislands, label_job_dur
 from paramiko.ssh_exception import SSHException
 
+LOGGER = logging.getLogger(f"dlg.{__name__}")
 
 class SlurmClient:
     """
@@ -93,13 +95,15 @@ class SlurmClient:
         if config:
             # Do the config from the config file
             try:
-                self.host = config['login_node']
-                self._acc = config['account'] # superceded by slurm_template if present
-                self.dlg_root = config['dlg_root']
-                self.modules = config['modules']
-                self.venv = config['venv'] # superceded by slurm_template if present
-                self.exec_prefix = config["exec_prefix"]
-                self.username = config['user'] if 'user' in config else username
+                self.host = config.get('login_node')
+                # superceded by slurm_template if that is present
+                self._acc = config.get('account')
+                self.dlg_root = config.get('dlg_root')
+                self.modules = config.get('modules')
+                # superceded by slurm_template if that is present
+                self.venv = config.get('venv')
+                self.exec_prefix = config.get("exec_prefix")
+                self.username = config.get('user', username)
                 if not self.username:
                     print("Username not configured in INI file, using local username...")
             except KeyError as e:

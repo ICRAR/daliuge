@@ -148,6 +148,8 @@ class ConfigManager:
                 # print(textwrap.indent(str(config.parent), "\t\t"))
         else:
             print(textwrap.indent("N/a: User-specific directory is not setup.", "\t"))
+            print(textwrap.indent("Use config --setup to create a config template "
+                                  "directory", "\t"))
 
         print("\nDALiuGE Defaults (-f/--facility):")
         print("-----------------------------------")
@@ -201,8 +203,10 @@ def run(_, args):
         "-l", "--list",
         dest="list",
         action="store_true",
-        help="List the available configuration for DALiuGE deployment."
+        help="List the available configuration for DALiuGE deployment.",
+        default=True
     )
+
     (opts, _) = parser.parse_args(sys.argv)
     if opts.setup:
         cfg_manager.setup_user()

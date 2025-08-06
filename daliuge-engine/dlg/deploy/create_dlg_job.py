@@ -26,17 +26,11 @@ parse the log result, and produce the plot
 
 """
 
-import datetime
 import json
 import optparse # pylint: disable=deprecated-module
-import pwd
-import re
-import socket
 import sys
-import time
 import os
 
-from optparse import Values
 from pathlib import Path
 
 from dlg.deploy.configs import (
@@ -225,15 +219,6 @@ def create_experiment_group(parser: optparse.OptionParser):
                       "be rough around the edges.")
 
     group.add_option(
-        "-C",
-        "--configs",
-        dest="configs",
-        action="store_true",
-        help="Display the available configurations and exit",
-        default=False,
-    )
-
-    group.add_option(
         "--config_file",
         dest="config_file",
         type="string",
@@ -329,17 +314,17 @@ def evaluate_graph_options(opts, parser):
 
     if use_local_graph:
         if opts.logical_graph:
-            return _translate_graph(opts.logical_graph)
+            return _translate_graph(parser, opts.logical_graph)
         if opts.physical_graph:
             return opts.physical_graph
 
 
     if opts.github:
         content = github_request(opts.user_org, opts.repo, opts.branch, opts.path)
-        return _translate_graph(opts, content)
+        return _translate_graph(parser, opts, content)
     if opts.gitlab:
         content = gitlab_request(opts.user_org, opts.repo, opts.branch, opts.path)
-        return _translate_graph(opts, content)
+        return _translate_graph(parser, opts, content)
 
     return graph
 
@@ -423,7 +408,7 @@ def create_component_options(parser):
     )
     return group
 
-def _translate_graph(opts, content=""):
+def _translate_graph(parser, opts, content=""):
     if opts.logical_graph:
         graph_file = os.path.basename(opts.logical_graph)
     else:
@@ -443,7 +428,7 @@ def _translate_graph(opts, content=""):
         lg_graph = json.loads(content)
 
     else:
-        print("Incorrect configuration, no graph available to translate")
+        parser.error("Incorrect configuration, no graph available to translate")
         sys.exit(1)
     pgt = pg_generator.unroll(lg_graph, zerorun=opts.zerorun)
     pgt = init_pgt_unroll_repro_data(pgt)
@@ -519,6 +504,7 @@ def run(_, args):
     parser.add_option_group(create_component_options(parser))
     parser.add_option_group(create_remote_graph_group(parser))
     parser.add_option_group(create_local_graph_group(parser))
+    parser.add_option_group(create_experiment_group(parser))
 
     parser.add_option(
         "-c",
@@ -546,16 +532,13 @@ def run(_, args):
         default=None
     )
 
-    parser.add_option_group(create_experiment_group(parser))
+
+
     (opts, _) = parser.parse_args(sys.argv)
     if len(sys.argv) <=1:
         parser.print_help()
         sys.exit(0)
     cfg_manager = ConfigManager(FACILITIES)
-
-    if opts.configs:
-        print(f"Available facilities: {FACILITIES}")
-        parser.print_help()
 
     facility_necessary = True if not opts.config_file else False
     if opts.config_file:
@@ -601,7 +584,8 @@ def run(_, args):
                             log_parser = LogParser(log_dir)
                             log_parser.parse(out_csv=opts.csv_output)
                         except Exception as exp: # pylint: disable=broad-exception-caught
-                            print("Fail to parse {0}: {1}".format(log_dir, exp))
+                            parser.error(
+                                "Fail to parse {0}: {1}".format(log_dir, exp))
         else:
             log_parser = LogParser(opts.log_dir)
             log_parser.parse(out_csv=opts.csv_output)
@@ -611,7 +595,7 @@ def run(_, args):
         if opts.config_file:
             config_path = cfg_manager.load_user_config(ConfigType.ENV, opts.config_file)
             if not config_path:
-                print("Provided --config_file option that does not exist!")
+                parser.error("Provided --config_file option that does not exist!")
                 sys.exit(1)
             config = process_config(config_path) if config_path else None
         else:
@@ -619,7 +603,7 @@ def run(_, args):
         if opts.slurm_template:
             template_path = cfg_manager.load_user_config(ConfigType.SLURM, opts.slurm_template)
             if not template_path:
-                print("Provided --slurm_template option that does not exist!")
+                parser.error("Provided --slurm_template option that does not exist!")
                 sys.exit(1)
             template = process_slurm_template(template_path)  if template_path else None
         else:
