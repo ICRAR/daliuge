@@ -30,6 +30,8 @@ still need to access NGAS from time to time.
 
 import http.client
 import logging
+import urllib.request
+from xml.dom import minidom
 import requests
 from xml.dom.minidom import parseString
 
@@ -120,6 +122,33 @@ def finishArchive(conn, fileId):
             % (fileId, conn.host, conn.port, response.status, response.msg)
         )
 
+def fileIdExists(host:str, port:int, fileId:str, timeout:int=10) -> bool:
+    """Check whether file with ID exists on a NGAS node.
+
+    Args:
+        host (str): DNS name or IP address of NGAS host
+        port (int): Port the NGAS server is listening on
+        fileId (str): The fileId to check
+        timeout (int, optional): Timeout for the NGAS call. Defaults to 10.
+
+    Returns:
+        bool: True if fileId has been found else False
+    """
+    try:
+        _ = fileStatus(host, port, fileId, timeout)
+        return True
+    except ConnectionError:
+        raise
+    except Exception as err:
+        xp = minidom.parseString(err.args[0]['STATUS_ERR']['message'])
+        return False
+        _ = xp.getElementsByTagName("Status")[0].attributes["Message"].value
+        # TODO: do the more explicit checking
+        # message = xp.getElementsByTagName("Status")[0].attributes["Message"].value
+        # if message.startswith("NGAMS_ER_UNAVAIL_FILE"):
+        #     return False
+        # else:
+        #     return False
 
 def fileStatus(host, port, fileId, timeout=10):
     """
@@ -137,8 +166,12 @@ def fileStatus(host, port, fileId, timeout=10):
         raise FileNotFoundError from e
     if conn.status_code != http.HTTPStatus.OK:
         raise Exception(
-            "Error while getting STATUS %s from %s:%d: %d %s"
-            % (fileId, host, port, conn.status_code, conn.text)
+            {"STATUS_ERR":{
+                "code": conn.status_code,
+                "host": host,
+                "port": port,
+                "message": conn.text
+            }}
         )
     dom = parseString(conn.content.decode())
     stat = dict(

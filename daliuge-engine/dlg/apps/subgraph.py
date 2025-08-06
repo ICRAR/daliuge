@@ -23,6 +23,7 @@ import threading
 import time
 import datetime
 
+from dlg.drop import track_current_drop
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.common import get_roots
 from dlg.data.drops.data_base import logger
@@ -147,6 +148,7 @@ class SubGraphLocal(BarrierAppDROP):
         )
         return pg.to_pg_spec(node_list, ret_str=False)
 
+    @track_current_drop
     def run(self):
         """
         Start the required DROPManagers and deploy the subgraph

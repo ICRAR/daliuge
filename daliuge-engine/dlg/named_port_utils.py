@@ -2,7 +2,6 @@ import ast
 import logging
 import collections
 
-from dlg.ddap_protocol import DROPStates
 import numpy as np
 
 from dlg.data.drops.data_base import DataDROP
@@ -13,6 +12,7 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Tuple, Union
 
+from dlg.ddap_protocol import DROPStates
 from dlg.drop import AbstractDROP
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -126,7 +126,6 @@ def identify_named_ports(
         keywordArgs (dict): keyword arguments
         check_len (int): number of of ports to be checked
         mode (str ["inputs"]): mode, used just for logging messages
-        skip_on_input (bool): skip drop if one input is skipped
         parser (function): parser function for this port
         addPositionalToKeyword (bool): Adds a positional argument to the keyword
             argument dictionary. This is useful when you have arguments
@@ -457,13 +456,6 @@ def get_port_reader_function(input_parser: DropParser):
     """
     # Inputs are un-pickled and treated as the arguments of the function
     # Their order must be preserved, so we use an OrderedDict
-    ip = None
-    # if isinstance(input_parser, str):
-    #     parsers = DropParser.__members__
-    #     ip = input_parser.upper()
-    #     ip = parsers[ip] if ip in parsers else None
-    # else:
-    #     ip = input_parser
     ip = resolve_drop_parser(input_parser)
     if ip is DropParser.PICKLE:
         # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))

@@ -116,11 +116,8 @@ class FileDROP(DataDROP, PathBasedDrop):
     def _setupFilePaths(self):
         filepath = self.parameters.get("filepath", None)
         # TODO ADD SUFFIX/PREFIX
-        dirname = None
-        filename = None
 
         if filepath:  # if there is anything provided
-            # TODO do f-string substitution if necessary
             if "/" not in filepath:  # just a name
                 filename = filepath
                 dirname = self.get_dir(".")
@@ -132,8 +129,9 @@ class FileDROP(DataDROP, PathBasedDrop):
             else:
                 filename = os.path.basename(filepath)
                 dirname = os.path.dirname(filepath)
-        if dirname is None:
+        else:
             dirname = "."
+            filename = None
         filename = os.path.expandvars(filename) if filename else None
         dirname = self.sanitize_paths(dirname) if dirname else None
         # We later check if the file exists, but only if the user has specified
@@ -160,7 +158,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         )
         if check and not os.path.isfile(self._path):
             raise InvalidDropException(
-                self, "File does not exist or is not a file: %s" % self._path
+                self, f"File does not exist or is not a file: {self._path}"
             )
 
         self._wio = None
