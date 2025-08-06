@@ -54,6 +54,22 @@ from dlg.dropmake import pg_generator
 
 FACILITIES = ConfigFactory.available()
 
+def process_bool(param: str):
+    """
+    Evaluate the boolean value from a string, given bool('False') is True.
+
+    :param param: The parameter string we want to verify
+    :return:
+    """
+    if isinstance(param, bool):
+        return param
+
+    if param.lower() == 'false':
+        return False
+    elif param.lower() == 'true':
+        return True
+    else:
+        raise ValueError("You have likely misspelled True/False in your .ini config")
 
 def process_config(config_file: str):
     """
@@ -621,11 +637,11 @@ def run(_, args):
             mon_host=opts.mon_host,
             mon_port=opts.mon_port,
             num_islands=int(opts.num_islands),
-            all_nics=bool(opts.all_nics),
+            all_nics=process_bool(opts.all_nics),
             check_with_session=opts.check_with_session,
             physical_graph_template_file=pgt_file,
-            submit=opts.submit,
-            remote=opts.remote,
+            submit=process_bool(opts.submit),
+            remote=process_bool(opts.remote),
             username=opts.username,
             ssh_key=opts.ssh_key,
             config=config,
