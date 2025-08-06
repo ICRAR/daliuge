@@ -1,8 +1,10 @@
 import ast
+import binascii
 import logging
 import collections
 
 from dlg.ddap_protocol import DROPStates
+from dlg.utils import deserialize_data
 import numpy as np
 
 from dlg.data.drops.data_base import DataDROP
@@ -183,6 +185,12 @@ def identify_named_ports(
             elif local_parser:
                 logger.debug("Reading from %s encoded port %s using %s", encoding, key, parser.__repr__())
                 value = local_parser(port_dict[keys[i]]["drop"])
+                try:
+                    value = deserialize_data(value)
+                except Exception:
+                    # If deserialization does not work we just
+                    # stick with the value
+                    pass
                 positionalPortArgs[key].value = value
             logger.debug("Using %s '%s' for port %s", mode, value, key)
             positionalArgs.remove(key)

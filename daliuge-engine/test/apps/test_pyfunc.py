@@ -97,7 +97,6 @@ def _PyFuncApp(oid, uid, f, additional_imports=None, global_parsers= False, **kw
     input_kws = [
         {k: v} for k, v in kwargs.items() if k not in ["input_parser", "output_parser"]
     ]
-    # fcode, fdefaults = pyfunc.serialize_func(f)
     return pyfunc.PyFuncApp(
         oid,
         uid,
@@ -342,22 +341,22 @@ class TestPyFuncApp(unittest.TestCase):
                 "y",
                 "z",
             ]  # neeed to use argument names
-            translate = lambda x: base64.b64encode(pickle.dumps(x))
+            # translate = lambda x: base64.b64encode(pickle.dumps(x))
             logger.debug(f"args: {args}")
             for i in range(n_args):
                 logger.debug(f"adding arg input: {args[i]}")
                 si = arg_names[i]
-                arg_inputs.append(InMemoryDROP(si, si, pydata=translate(args[i])))
+                arg_inputs.append(InMemoryDROP(si, si, pydata={"value":args[i], "type": "int"}))
             i = n_args
             for name, value in kwargs.items():
                 si = name  # use keyword name
                 kwarg_inputs[name] = (
                     si,
-                    InMemoryDROP(si, si, pydata=translate(value)),
+                    InMemoryDROP(si, si, pydata={"value":value, "type": "int"}),
                 )
                 i += 1
 
-            a = InMemoryDROP("a", "a", pydata=translate(1))
+            a = InMemoryDROP("a", "a", pydata={"value":1, "type":"int"})
             output = InMemoryDROP("o", "o")
             kwargs = {inp.uid: inp.oid for inp in arg_inputs}
             kwargs.update({name: vals[0] for name, vals in kwarg_inputs.items()})
