@@ -69,7 +69,7 @@ class DlgDaemon(RestServer):
     and the master manager (default: no) at creation time.
     """
 
-    def __init__(self, master=False, noNM=False, disable_zeroconf=False, verbosity=0):
+    def __init__(self, master=False, dim=False, nm=False, tm=False, disable_zeroconf=False, verbosity=0, daemonise=False, stop=False):
 
         super(DlgDaemon, self).__init__()
 
@@ -79,11 +79,13 @@ class DlgDaemon(RestServer):
         self._nm_proc = None
         self._dim_proc = None
         self._mm_proc = None
+        self._tm_proc = None
 
         # Zeroconf for NM and MM
         self._zeroconf = None if disable_zeroconf else zc.Zeroconf()
         self._nm_info = None
         self._dim_info = None
+        self._tm_info = None
         self._mm_nm_browser = None
         self._mm_dim_browser = None
 
@@ -106,8 +108,18 @@ class DlgDaemon(RestServer):
         # Automatically start those that we need
         if master:
             self.startMM()
-        if not noNM:
+        if dim:
+            if nm:
+                # addrs = utils.get_local_ip_addr()
+                addrs = "127.0.0.1"
+                nm_port = constants.NODE_DEFAULT_REST_PORT
+            self.startDIM(nodes=[f"{addrs}:{nm_port}"])
+        if nm:
             self.startNM()
+        if tm:
+            self.startTM()
+        if stop:
+            self.stop()
 
     def stop(self, timeout=None):
         """
@@ -183,6 +195,9 @@ class DlgDaemon(RestServer):
     def stopMM(self, timeout=10):
         self._stop_manager("_mm_proc", timeout)
 
+    def stopTM(self, timeout=10):
+        self._stop_manager("_tm_proc", timeout)
+
     # Methods to start and stop the individual managers
     def startNM(self):
         tool = get_tool()
@@ -206,7 +221,7 @@ class DlgDaemon(RestServer):
             )
         return
 
-    def startDIM(self, nodes):
+    def startDIM(self, nodes=[]):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
@@ -298,6 +313,15 @@ class DlgDaemon(RestServer):
             logger.info("Zeroconf started")
             return
 
+    def startTM(self):
+        tool = get_tool()
+        args = ["--host", "0.0.0.0"]
+        args += self._verbosity_as_cmdline()
+        logger.info("Starting Translator Manager with args: %s", (" ".join(args)))
+        self._tm_proc = tool.start_process("lgweb", args)
+        logger.info("Started Translator Manager with PID %d", self._tm_proc.pid)
+        return
+
     def _verbosity_as_cmdline(self):
         if self._verbosity > 0:
             return ["-" + "v" * self._verbosity]
@@ -386,18 +410,31 @@ terminating = False
 
 def run_with_cmdline(parser, args):
     parser.add_option(
-        "-m",
-        "--master",
+        "--mm",
         action="store_true",
         dest="master",
-        help="Start this DALiuGE daemon as the master daemon",
+        help="Master Manager control",
         default=False,
     )
     parser.add_option(
-        "--no-nm",
+        "--dim",
         action="store_true",
-        dest="noNM",
-        help="Don't start a NodeDropManager by default",
+        dest="dim",
+        help="DataIsland Manager control",
+        default=False,
+    )
+    parser.add_option(
+        "--nm",
+        action="store_true",
+        dest="nm",
+        help="Node Manager control",
+        default=False,
+    )
+    parser.add_option(
+        "--tm",
+        action="store_true",
+        dest="tm",
+        help="Translator Manager control",
         default=False,
     )
     parser.add_option(
@@ -423,6 +460,22 @@ def run_with_cmdline(parser, args):
         help="Be less verbose. The more flags, the quieter",
         default=0,
     )
+    parser.add_option(
+        "-d",
+        "--daemonise",
+        action="store_true",
+        dest="daemonise",
+        help="daemonise the manager",
+        default=0,
+    )
+    parser.add_option(
+        "-s",
+        "--stop",
+        action="store_true",
+        dest="stop",
+        help="stop the manager(s)",
+        default=0,
+    )
 
     (opts, args) = parser.parse_args(args)
 
@@ -432,7 +485,7 @@ def run_with_cmdline(parser, args):
 
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-    daemon = DlgDaemon(opts.master, opts.noNM, opts.noZC, opts.verbose - opts.quiet)
+    daemon = DlgDaemon(opts.master, opts.dim, opts.nm, opts.tm, opts.noZC, opts.verbose - opts.quiet, opts.daemonise, opts.stop)
 
     # Signal handling, which stops the daemon
     def handle_signal(signalNo, stack_frame):
