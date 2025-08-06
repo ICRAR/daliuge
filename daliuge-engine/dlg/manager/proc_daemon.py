@@ -75,6 +75,7 @@ class DlgDaemon(RestServer):
 
         self._shutting_down = False
         self._verbosity = verbosity
+        self._daemonise = daemonise
         # The three processes we run
         self._nm_proc = None
         self._dim_proc = None
@@ -106,20 +107,31 @@ class DlgDaemon(RestServer):
         app.get("/managers/node", callback=self.rest_getNMInfo)
 
         # Automatically start those that we need
+        if master and dim:
+            self._zeroconf = False
         if master:
             self.startMM()
+        if nm:
+            self.startNM()
         if dim:
+            nodes = []
             if nm:
                 # addrs = utils.get_local_ip_addr()
                 addrs = "127.0.0.1"
                 nm_port = constants.NODE_DEFAULT_REST_PORT
-            self.startDIM(nodes=[f"{addrs}:{nm_port}"])
-        if nm:
-            self.startNM()
+                nodes = [f"{addrs}:{nm_port}"]
+            self.startDIM(nodes=nodes)
         if tm:
             self.startTM()
         if stop:
             self.stop()
+        
+        self.mgr_map = {
+            "_mm_proc": "mm",
+            "_nm_proc": "nm",
+            "_dim_proc": "dim",
+            "_tm_proc": "tm"
+        }
 
     def stop(self, timeout=None):
         """
@@ -127,11 +139,12 @@ class DlgDaemon(RestServer):
         server.
         """
         self._shutting_down = True
-        super(DlgDaemon, self).stop()
         self.stopNM(timeout)
         self.stopDIM(timeout)
         self.stopMM(timeout)
+        self.stopTM(timeout)
         self._stop_zeroconf()
+        super(DlgDaemon, self).stop()
         logger.info("DALiuGE Daemon stopped")
 
     def _stop_zeroconf(self):
@@ -172,14 +185,18 @@ class DlgDaemon(RestServer):
 
     def _stop_manager(self, name, timeout):
         proc = getattr(self, name)
-        logger.debug("Stopping manager %s", name)
-        if proc:
+        logger.info("Stopping %s", self.mgr_map[name].upper())
+        if name != "_tm_proc" and self._daemonise:
+            tool = get_tool()
+            # The tool is starting a process to stop a
+            _ = tool.start_process(self.mgr_map[name], ["-s"])
+        elif proc:
             utils.terminate_or_kill(proc, timeout)
             pid = proc.pid
             setattr(self, name, None)
             return {"terminated": pid}
         else:
-            logger.warning("No %s manager found!", name)
+            logger.warning("No %s manager found!", self.mgr_map[name].upper())
             return {}
 
     def stopNM(self, timeout=10):
@@ -203,9 +220,11 @@ class DlgDaemon(RestServer):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
+        if self._daemonise:
+            args += ['-d']
         logger.info("Starting Node Drop Manager with args: %s", (" ".join(args)))
         self._nm_proc = tool.start_process("nm", args)
-        logger.info("Started Node Drop Manager with PID %d", self._nm_proc.pid)
+        logger.debug("Started Node Drop Manager with PID %d", self._nm_proc.pid)
 
         # Registering the new NodeManager via zeroconf so it gets discovered
         # by the Master Manager
@@ -225,11 +244,13 @@ class DlgDaemon(RestServer):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
+        if self._daemonise:
+            args += ['-d']
         if nodes:
             args += ["--nodes", ",".join(nodes)]
         logger.info("Starting Data Island Drop Manager with args: %s", (" ".join(args)))
         self._dim_proc = tool.start_process("dim", args)
-        logger.info("Started Data Island Drop Manager with PID %d", self._dim_proc.pid)
+        logger.debug("Started Data Island Drop Manager with PID %d", self._dim_proc.pid)
 
         # Registering the new DIM via zeroconf so it gets discovered
         # by the Master Manager
@@ -249,9 +270,11 @@ class DlgDaemon(RestServer):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
+        if self._daemonise:
+            args += ['-d']
         logger.info("Starting Master Drop Manager with args: %s", (" ".join(args)))
         self._mm_proc = tool.start_process("mm", args)
-        logger.info("Started Master Drop Manager with PID %d", self._mm_proc.pid)
+        logger.debug("Started Master Drop Manager with PID %d", self._mm_proc.pid)
 
         # Also subscribe to zeroconf events coming from NodeManagers and feed
         # the Master Manager with the new hosts we find
@@ -317,9 +340,13 @@ class DlgDaemon(RestServer):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
+
+        ## Translator does not support daemonising yet.
+        # if self._daemonise:
+        #     args += ['-d']
         logger.info("Starting Translator Manager with args: %s", (" ".join(args)))
         self._tm_proc = tool.start_process("lgweb", args)
-        logger.info("Started Translator Manager with PID %d", self._tm_proc.pid)
+        logger.debug("Started Translator Manager with PID %d", self._tm_proc.pid)
         return
 
     def _verbosity_as_cmdline(self):
