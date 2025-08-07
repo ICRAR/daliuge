@@ -1,5 +1,4 @@
 import ast
-import binascii
 import logging
 import collections
 
@@ -187,7 +186,7 @@ def identify_named_ports(
                 value = local_parser(port_dict[keys[i]]["drop"])
                 try:
                     value = deserialize_data(value)
-                except Exception:
+                except TypeError:
                     # If deserialization does not work we just
                     # stick with the value
                     pass

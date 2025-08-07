@@ -24,29 +24,54 @@
 Utility functions to enable submitting EAGLE graphs that are hosted on a Git repository. 
 """
 
-import os
+import base64
+import json
+import requests
 import sys
 
-import requests
-
-
-# GitLab API:  curl "https://gitlab.com/api/v4/projects/ska-telescope%2Fsdp%2Fska-sdp-resource-model/repository/files/scripts%2Fexperiment.slurm/raw?ref=main"
-
-# GitHub API: curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh
-
-# https://github.com/ICRAR/EAGLE-graph-repo/blob/master/examples/HelloWorld-Universe.graph
 
 def gitlab_request(user, repo, branch, path):
+    """
+    Constructs a 'get' request using the GitLab API.
+
+    See: https://docs.gitlab.com/api/repository_files/#get-file-from-repository
+
+    GitLab requires URL-encoded paths, so we replace them with the %2F string for the
+    user and path variables.
+
+    :param user: The user or organisation (e.g. ICRAR/ or ska-telescope/sdp).
+    :param repo: The name of the repository the file is in
+    :param branch: The branch we want to get from
+    :param path: The path to the file relative to the base directory of the repository
+    :return:
+    """
     url_enabled_user = user.replace("/", "%2F")
     url_enabled_path = path.replace("/", "%2F")
     r = requests.get(f"https://gitlab.com/api/v4/projects/{url_enabled_user}%2F"
                      f"{repo}/repository/files/{url_enabled_path}/raw?ref"
-                     f"={branch}")
+                     f"={branch}", timeout=15)
     return r.content
 
 def github_request(user, repo, branch, path):
-    r = requests.get(f"https://raw.githubusercontent.com/{user}/{repo}/{branch}/{path}")
+    """
+    Constructs a 'get' request using the GitHub api
+
+    See: https://docs.github.com/en/rest/repos/contents
+
+    The difference here is the response content is itself a JSON dictionary, with the
+    'content' element base64 encoded. We have to decode this first and then return it.
+
+    :param user: The user or organisation (e.g. ICRAR/ or ska-telescope/sdp).
+    :param repo: The name of the repository the file is in
+    :param branch: The branch we want to get from
+    :param path: The path to the file relative to the base directory of the repository
+    :return:
+    """
+
+    r = requests.get(f"https://api.github.com/repos/{user}/{repo}/contents/{path}?branch={branch}",
+                     timeout=15)
     if r.status_code != 200:
         print("Things went wrong!!")
         sys.exit(1)
-    return r.content
+    content = json.loads(r.content)
+    return base64.b64decode(content['content']).decode()

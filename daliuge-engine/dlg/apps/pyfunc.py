@@ -39,7 +39,7 @@ from contextlib import redirect_stdout
 from dlg import drop_loaders
 from dlg.data.path_builder import filepath_from_string
 from dlg.drop import track_current_drop
-from dlg.utils import serialize_data, deserialize_data
+from dlg.utils import deserialize_data
 from dlg.named_port_utils import (
     Argument,
     DropParser,
@@ -649,7 +649,7 @@ class PyFuncApp(BarrierAppDROP):
                 if hasattr(self, "input_parser")
                 else None
             )
-            keyPortArgs, posPortArgs = identify_named_ports(
+            keyPortArgs, _ = identify_named_ports(
                 inputs_dict,
                 pargsDict,
                 keyargsDict,

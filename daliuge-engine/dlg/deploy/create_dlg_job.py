@@ -387,20 +387,6 @@ def create_monitor_options(parser):
     return group
 
 
-def submit_graph(opts):
-    """
-    Run submission procedure for graph
-    :param opts:
-    :return:
-    """
-
-def analyse_graph(opts):
-    """
-    Perform analysis of graph using the LogAnalyser
-    :param opts:
-    :return:
-    """
-
 def create_component_options(parser):
     group = optparse.OptionGroup(parser, "Graph Component options",
                                  "Update component DROPs for testing.")
