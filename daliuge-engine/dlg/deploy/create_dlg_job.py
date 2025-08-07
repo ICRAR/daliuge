@@ -127,7 +127,6 @@ def create_engine_group(parser: optparse.OptionParser):
         dest="log_dir",
         help="The directory of the log file for parsing",
     )
-
     group.add_option(
         # TODO: num_nodes needs to be >= #partitions in PGT, if provided
         "-n",
@@ -223,16 +222,16 @@ def create_slurm_group(parser: optparse.OptionParser):
 
     return group
 
-def create_experiment_group(parser: optparse.OptionParser):
+def create_config_group(parser: optparse.OptionParser):
     """
-    Establish experiment group to separate out experimenatal options
+    Establish configuration group for config-file and template based options.
 
     :param parser: parser that we are updating
     :return: the group for experiments
     """
-    group=optparse.OptionGroup(parser, "Experimental Options",
-                      "Caution: These are not properly tested and likely to"
-                      "be rough around the edges.")
+    group=optparse.OptionGroup(parser, "Remote configuration Options",
+                      "Remote deployment configuration options based on configuration "
+                      "and template files.")
 
     group.add_option(
         "--config_file",
@@ -520,7 +519,7 @@ def run(_, args):
     parser.add_option_group(create_component_options(parser))
     parser.add_option_group(create_remote_graph_group(parser))
     parser.add_option_group(create_local_graph_group(parser))
-    parser.add_option_group(create_experiment_group(parser))
+    parser.add_option_group(create_config_group(parser))
 
     parser.add_option(
         "-c",
