@@ -126,7 +126,7 @@ class ConfigManager:
         filetypes = ["ini", "slurm"]
 
         for ftype in filetypes:
-            configs[ftype] = [cfg for cfg in DLG_CONFIG_DIR.iterdir() if
+            configs[ftype] = [Path(cfg) for cfg in DLG_CONFIG_DIR.iterdir() if
                 ftype in cfg.name]
         return configs
 
@@ -134,18 +134,22 @@ class ConfigManager:
         """
         Present the options available for deployment
         """
-        print("User Configs (~/.config/dlg)")
+        print("User Configs (stored in ~/.config/dlg)")
         print("----------------------------")
         user_configs = self.get_user_configs()
         if user_configs:
             print("Environments (--config_file):")
             for config in user_configs["ini"]:
                 print(textwrap.indent(config.name, "\t"))
+                # print(textwrap.indent(str(config.parent), "\t\t"))
             print("Slurm scripts (--slurm_template):")
             for config in user_configs["slurm"]:
                 print(textwrap.indent(config.name, "\t"))
+                # print(textwrap.indent(str(config.parent), "\t\t"))
         else:
             print(textwrap.indent("N/a: User-specific directory is not setup.", "\t"))
+            print(textwrap.indent("Use config --setup to create a config template "
+                                  "directory", "\t"))
 
         print("\nDALiuGE Defaults (-f/--facility):")
         print("-----------------------------------")
@@ -199,8 +203,10 @@ def run(_, args):
         "-l", "--list",
         dest="list",
         action="store_true",
-        help="List the available configuration for DALiuGE deployment."
+        help="List the available configuration for DALiuGE deployment.",
+        default=True
     )
+
     (opts, _) = parser.parse_args(sys.argv)
     if opts.setup:
         cfg_manager.setup_user()

@@ -3,7 +3,7 @@ import logging
 import importlib.resources
 from urllib.parse import urlparse
 
-from dlg import common, utils
+from dlg import utils
 from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.reproducibility import (
     init_lg_repro_data,

@@ -28,7 +28,10 @@ a 'greet' parameter as input and returns "Hello " + greet.
 """
 import argparse
 
-def hello_world(greet: str):
+import numpy as np
+
+
+def hello_world(greet: str="World"):
     """
      Designed to mimic the functionality of dlg.apps.simple.HelloWorld, which takes
     a 'greet' parameter as input and returns "Hello " + greet.
@@ -36,7 +39,14 @@ def hello_world(greet: str):
     :param greet: The 'item' we are greeting.
     :return: str
     """
-    return f"Hello, {greet}"
+    final_greet = greet
+    if isinstance(greet, list) or isinstance(greet, np.array):
+        if not greet:
+            final_greet = ""
+        else:
+            final_greet =" ".join(g for g in g) if len(greet) > 1 else greet[0]
+
+    return f"Hello, {final_greet}"
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

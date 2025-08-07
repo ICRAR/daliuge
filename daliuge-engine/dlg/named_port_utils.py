@@ -2,6 +2,7 @@ import ast
 import binascii
 import logging
 import collections
+import pickle
 
 from dlg.ddap_protocol import DROPStates
 from dlg.utils import deserialize_data
@@ -187,7 +188,7 @@ def identify_named_ports(
                 value = local_parser(port_dict[keys[i]]["drop"])
                 try:
                     value = deserialize_data(value)
-                except Exception:
+                except (TypeError, AttributeError, binascii.Error, pickle.UnpicklingError):
                     # If deserialization does not work we just
                     # stick with the value
                     pass
