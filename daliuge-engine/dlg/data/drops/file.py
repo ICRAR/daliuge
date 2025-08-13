@@ -111,9 +111,9 @@ class FileDROP(DataDROP, PathBasedDrop):
         FileDROP-specific initialization.
         """
 
-        self._setupFilePaths()
+        self.setupFilePaths()
 
-    def _setupFilePaths(self):
+    def setupFilePaths(self):
         filepath = self.parameters.get("filepath", None)
         # TODO ADD SUFFIX/PREFIX
         dirname = None
@@ -121,21 +121,21 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         if filepath:  # if there is anything provided
             # TODO do f-string substitution if necessary
-            if "/" not in filepath:  # just a name
-                filename = filepath
+            fp = os.path.expandvars(filepath)
+            if "/" not in fp:  # just a name
+                filename = fp
                 dirname = self.get_dir(".")
             # filepath = self.sanitize_paths(self.filepath)
-            elif filepath.endswith("/"):  # just a directory name
+            elif fp.endswith("/"):  # just a directory name
                 self.is_dir = True
                 filename = None
-                dirname = filepath
+                dirname = fp
             else:
-                filename = os.path.basename(filepath)
-                dirname = os.path.dirname(filepath)
+                filename = os.path.basename(fp)
+                dirname = os.path.dirname(fp)
         if dirname is None:
             dirname = "."
-        filename = os.path.expandvars(filename) if filename else None
-        dirname = self.sanitize_paths(dirname) if dirname else None
+
         # We later check if the file exists, but only if the user has specified
         # an absolute dirname/filepath (otherwise it doesn't make sense, since
         # we create our own filenames/dirnames dynamically as necessary
@@ -171,7 +171,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         # if not self._updatedPorts:
         if not self.parameters.get("filepath", None):
             self._map_input_ports_to_params()
-            self._setupFilePaths()
+            self.setupFilePaths()
 
         return FileIO(self._path)
 

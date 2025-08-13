@@ -36,6 +36,8 @@ import re
 import os
 import uuid
 
+from pathlib import Path
+
 NON_FILENAME_CHARACTERS = re.compile(fr":|{os.sep}")
 
 def default_map():
@@ -140,8 +142,13 @@ def filepath_from_string(filename: str, dirname: str = "", **kwargs) -> str:
     elif not filename:
         return filename
 
+    full_filename = os.path.expandvars(filename)
+
     opts.extend(find_dlg_fstrings(filename))
     for fp in opts:
-        filename = filename.replace(f"{{{fp}}}", fstring_map[fp])
+        full_filename = full_filename.replace(f"{{{fp}}}", fstring_map[fp])
 
-    return f"{dirname}/{filename}" if dirname else filename
+    if Path(full_filename).is_absolute():
+        return full_filename
+    else:
+        return f"{dirname}/{full_filename}" if dirname else full_filename
