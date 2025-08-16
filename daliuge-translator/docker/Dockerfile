@@ -12,10 +12,10 @@ LABEL stage=builder
 #     apt-get clean && \
 #     apt install -y gcc python3-venv python3-distutils
 
-RUN service avahi-daemon stop && \
-    service dbus start && \
-    service avahi-daemon start && \
-    avahi-set-host-name dlg-trans
+# RUN service avahi-daemon stop && \
+#     service dbus start && \
+#     service avahi-daemon start && \
+#     avahi-set-host-name dlg-trans
 
 COPY / /daliuge
 

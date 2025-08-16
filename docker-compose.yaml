@@ -1,0 +1,96 @@
+services:
+
+# =============================================================
+#
+#	 TRAEFIK - reverse proxy
+#
+# =============================================================
+
+  traefik:
+    image: traefik:v3.5.0
+    container_name: traefik
+    networks:
+      - dlg-demo
+    command:
+      - "--log.level=DEBUG"
+      - "--api=true"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=true"
+      - "--entrypoints.web.address=:80"
+      - "--ping=true"
+    environment:
+      - DOMAIN=localhost
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.tls.domains[0].main=*.localhost"
+      - "traefik.http.routers.api.rule=Host(`traefik.localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.api.service=dasboard@internal"
+      - "traefik.http.routers.api.service=api@internal"
+    ports:
+      - 80:80
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # So that Traefik can listen to the Docker events
+    restart: always
+
+
+# =============================================================
+#
+#	 DIM
+#
+# =============================================================
+
+  dlg-dim:
+    image: dlg_full
+    container_name: dlg-dim.localhost
+    command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm.localhost", "-vv"]
+    networks:
+      - dlg-demo
+    labels:
+      - "traefik.http.routers.dim.rule=Host(`dlg-dim.localhost`)"
+      - "traefik.http.services.dim.loadbalancer.server.port=8001"
+    volumes:
+      - ~/dlg:/dlg
+
+
+# =============================================================
+#
+#	 NM
+#
+# =============================================================
+
+  dlg-nm:
+    image: dlg_full
+    container_name: dlg-nm.localhost
+    command: ["dlg", "daemon", "--nm", "-vv"]
+    networks:
+      - dlg-demo
+    labels:
+      - "traefik.http.routers.nm.rule=Host(`dlg-nm.localhost`)"
+      - "traefik.http.services.nm.loadbalancer.server.port=8000"
+    volumes:
+      - ~/dlg:/dlg
+
+# =============================================================
+#
+#	 Translator
+#
+# =============================================================
+
+  dlg-tm:
+    image: dlg_full
+    container_name: dlg-tm.localhost
+    command: ["dlg", "daemon", "--tm", "-vv"]
+    networks:
+      - dlg-demo
+    labels:
+      - "traefik.http.routers.tm.rule=Host(`dlg-trans.localhost`)"
+      - "traefik.http.services.tm.loadbalancer.server.port=8084"
+    volumes:
+      - ~/dlg:/dlg
+
+networks:
+  dlg-demo:
+
