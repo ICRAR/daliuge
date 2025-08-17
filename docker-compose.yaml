@@ -43,7 +43,7 @@ services:
 # =============================================================
 
   dlg-dim:
-    image: dlg_full
+    image: dlg_full:latest
     container_name: dlg-dim.localhost
     command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm.localhost", "-vv"]
     networks:
@@ -62,7 +62,7 @@ services:
 # =============================================================
 
   dlg-nm:
-    image: dlg_full
+    image: dlg_full:latest
     container_name: dlg-nm.localhost
     command: ["dlg", "daemon", "--nm", "-vv"]
     networks:
@@ -80,7 +80,7 @@ services:
 # =============================================================
 
   dlg-tm:
-    image: dlg_full
+    image: dlg_full:latest
     container_name: dlg-tm.localhost
     command: ["dlg", "daemon", "--tm", "-vv"]
     networks:

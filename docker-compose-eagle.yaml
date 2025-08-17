@@ -1,0 +1,19 @@
+# =============================================================
+#
+#        EAGLE
+#
+# =============================================================
+services:
+  eagle:
+    image: icrar/eagle.slim
+    container_name: eagle.localhost
+    # command: []
+    networks:
+      - dlg-demo
+    labels:
+      - "traefik.http.routers.eagle.rule=Host(`eagle.localhost`)"
+      - "traefik.http.services.eagle.loadbalancer.server.port=80"
+    volumes:
+      - ~/dlg:/dlg
+
+

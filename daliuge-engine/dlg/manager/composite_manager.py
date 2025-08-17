@@ -265,9 +265,12 @@ class CompositeManager(DROPManager):
         Return: Node
         Raises: ValueError if there is no existing Node added to the CompositeManager
         """
-
-        idx = self._nodes.index(Node(node_str))
-        return self._nodes[idx]
+        if self.use_dmHosts:
+            idx = self._dmHosts.index(Node(node_str))
+            return self._dmHosts[idx]
+        else:
+            idx = self._nodes.index(Node(node_str))
+            return self._nodes[idx]
 
     @property
     def dmPort(self):

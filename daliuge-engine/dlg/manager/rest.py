@@ -667,13 +667,13 @@ class CompositeManagerRestServer(ManagerRestServer):
         return data
 
     @daliuge_aware
-    def getNodeSessionInformation(self, node_str, sessionId):
+    def getNodeSessionInformation(self, node, sessionId):
         try:
-            node = self.dm.get_node_from_json(node_str)
-            with NodeManagerClient(host=node.host, port=node.port) as dm:
+            node_obj = self.dm.get_node_from_json(node)
+            with NodeManagerClient(host=node_obj.host, port=node_obj.port) as dm:
                 return dm.session(sessionId)
         except ValueError as e:
-            raise ValueError(f"{node_str} not in current list of nodes") from e
+            raise ValueError(f"{node} not in current list of nodes") from e
 
     @daliuge_aware
     def getNodeSessionStatus(self, node_str, sessionId):
