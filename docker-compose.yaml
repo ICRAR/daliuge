@@ -43,6 +43,9 @@ services:
 # =============================================================
 
   dlg-dim:
+    build:
+      context: .
+      dockerfile: Dockerfile.full
     image: dlg_full:latest
     container_name: dlg-dim.localhost
     command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm.localhost", "-vv"]

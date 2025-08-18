@@ -26,6 +26,7 @@ from numbers import Number
 import pickle
 import random
 from typing import List, Optional
+import dill
 import requests
 import logging
 import time
@@ -532,8 +533,12 @@ class ArrayGatherApp(BarrierAppDROP):
         for output in outputs:
             for ipt in inputs:
                 value = droputils.allDropContents(ipt)
-                self.value_list.append(pickle.loads(value))
-            output.write(pickle.dumps(self.value_list))
+                try:
+                    # TODO: This really needs to use the encoding but requires a drop data-type/encoding.
+                    self.value_list.append(dill.loads(value))
+                except Exception:
+                    self.value_list.append(value)
+            output.write(dill.dumps(self.value_list))
 
     def run(self):
         self.value_list = []
