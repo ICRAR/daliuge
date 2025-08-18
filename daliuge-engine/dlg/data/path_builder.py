@@ -36,6 +36,8 @@ import re
 import os
 import uuid
 
+from pathlib import Path
+
 NON_FILENAME_CHARACTERS = re.compile(fr":|{os.sep}")
 
 def default_map():
@@ -140,8 +142,19 @@ def filepath_from_string(filename: str, dirname: str = "", **kwargs) -> str:
     elif not filename:
         return filename
 
+    full_filename = os.path.expandvars(filename)
+    full_dirname = os.path.expandvars(dirname)
+
+    if full_filename == filename and "$" in full_filename:
+        raise RuntimeError(f"Environment variable in path {filename} not set!")
+    if full_dirname == dirname and "$" in full_dirname:
+        raise RuntimeError(f"Environment variable in path {dirname} not set!")
+
     opts.extend(find_dlg_fstrings(filename))
     for fp in opts:
-        filename = filename.replace(f"{{{fp}}}", fstring_map[fp])
+        full_filename = full_filename.replace(f"{{{fp}}}", fstring_map[fp])
 
-    return f"{dirname}/{filename}" if dirname else filename
+    if Path(full_filename).is_absolute():
+        return full_filename
+    else:
+        return f"{full_dirname}/{full_filename}" if full_dirname else full_filename
