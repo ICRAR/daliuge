@@ -143,6 +143,12 @@ def filepath_from_string(filename: str, dirname: str = "", **kwargs) -> str:
         return filename
 
     full_filename = os.path.expandvars(filename)
+    full_dirname = os.path.expandvars(dirname)
+
+    if full_filename == filename and "$" in full_filename:
+        raise RuntimeError(f"Environment variable in path {filename} not set!")
+    if full_dirname == dirname and "$" in full_dirname:
+        raise RuntimeError(f"Environment variable in path {dirname} not set!")
 
     opts.extend(find_dlg_fstrings(filename))
     for fp in opts:
@@ -151,4 +157,4 @@ def filepath_from_string(filename: str, dirname: str = "", **kwargs) -> str:
     if Path(full_filename).is_absolute():
         return full_filename
     else:
-        return f"{dirname}/{full_filename}" if dirname else full_filename
+        return f"{full_dirname}/{full_filename}" if full_dirname else full_filename

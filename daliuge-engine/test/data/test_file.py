@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from dlg.data.drops.file import FileDROP
+from dlg.exceptions import InvalidDropException
 
 
 class TestDROPFilepath(unittest.TestCase):
@@ -16,17 +17,16 @@ class TestDROPFilepath(unittest.TestCase):
     """
 
     def test_basic_filepath(self):
-        dir = Path("/tmp/daliuge_tfiles") # see PathBaseDrop.get_dir()
+        fdir = Path("/tmp/daliuge_tfiles") # see PathBaseDrop.get_dir()
         fdrop = FileDROP(uid="A", oid="A", filepath="test.txt")
-        self.assertEqual(dir/"test.txt", Path(fdrop.path))
+        self.assertEqual(fdir/"test.txt", Path(fdrop.path))
 
     def test_basic_dir(self):
-        dir = Path("/tmp/daliuge_tfiles")  # see PathBaseDrop.get_dir()
+        fdir = Path("/tmp/daliuge_tfiles")  # see PathBaseDrop.get_dir()
         fdrop = FileDROP(uid="A", oid="A", filepath="mydir/")
-        self.assertEqual(dir / "mydir", Path(fdrop.dirname))
+        self.assertEqual(fdir / "mydir", Path(fdrop.dirname))
 
     def test_root_dir(self):
-        # dir = Path("/tmp/daliuge_tfiles")  # see PathBaseDrop.get_dir()
         fdrop = FileDROP(uid="A", oid="A", filepath="/mydir/")
         self.assertEqual(Path("/mydir"), Path(fdrop.dirname))
 
@@ -38,11 +38,14 @@ class TestDROPFilepath(unittest.TestCase):
         fdrop = FileDROP(uid="A", oid="A", filepath="$MYDIR/test.txt")
         self.assertEqual(Path("/mydir") / "test.txt", Path(fdrop.path))
 
-        dir = Path("/tmp/daliuge_tfiles")  # see PathBaseDrop.get_dir()
+        fdir = Path("/tmp/daliuge_tfiles")  # see PathBaseDrop.get_dir()
         os.environ["MYDIR"] = "mydir/"
         fdrop = FileDROP(uid="A", oid="A", filepath="$MYDIR")
-        self.assertEqual(dir/"mydir/", Path(fdrop.dirname))
+        self.assertEqual(fdir/"mydir/", Path(fdrop.dirname))
 
         fdrop = FileDROP(uid="A", oid="A", filepath="$MYDIR/test.txt")
-        self.assertEqual(dir/"mydir/test.txt", Path(fdrop.path))
+        self.assertEqual(fdir/"mydir/test.txt", Path(fdrop.path))
 
+    def test_expand_missingenvar(self):
+        self.assertRaises(InvalidDropException, FileDROP, uid="A", oid="A",
+                                                        filepath="$MISSING/test.txt")
