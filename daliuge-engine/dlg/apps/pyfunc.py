@@ -605,10 +605,15 @@ class PyFuncApp(BarrierAppDROP):
                 argument = arg_map[arg]
                 parser = (DropParser(argument.encoding))
                 if parser == DropParser.PATH:
-                    argument.value = filepath_from_string(
-                        argument.value, dirname=output_drop.dirname, uid=output_drop.uid,
-                        humanKey=output_drop.humanKey
-                    )
+                    try:
+                        argument.value = filepath_from_string(
+                            argument.value, dirname=output_drop.dirname, uid=output_drop.uid,
+                            humanKey=output_drop.humanKey
+                        )
+                    except RuntimeError as e:
+                        raise InvalidDropException(
+                            "Path contains unset environment variable", e
+                        )
                     self._output_filepaths[output_uid] = argument.value
                 arg_map[arg] = argument
                 self.parameters[arg] = arg_map[arg].value

@@ -70,6 +70,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
     delete_parent_directory = dlg_bool_param("delete_parent_directory", False)
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
+
     # is_dir = dlg_bool_param("is_dir", False)
 
     # Make sure files are not deleted by default and certainly not if they are
@@ -105,48 +106,47 @@ class FileDROP(DataDROP, PathBasedDrop):
             filepath = self.get_dir(filepath)
         return filepath
 
-
     def initialize(self, **kwargs):
         """
         FileDROP-specific initialization.
         """
 
-        self._setupFilePaths()
+        self.setupFilePaths()
 
-    def _setupFilePaths(self):
+    def setupFilePaths(self):
         filepath = self.parameters.get("filepath", None)
         # TODO ADD SUFFIX/PREFIX
         dirname = None
         filename = None
 
-        if filepath:  # if there is anything provided
-            # TODO do f-string substitution if necessary
-            if "/" not in filepath:  # just a name
-                filename = filepath
+        if filepath:
+            fp = os.path.expandvars(filepath)
+            if fp == filepath and "$" in fp:
+                raise InvalidDropException(
+                    self,
+                    f"{filepath} has unset environment variable!"
+                )
+            if "/" not in fp:  # just a name
+                filename = fp
                 dirname = self.get_dir(".")
-            # filepath = self.sanitize_paths(self.filepath)
-            elif filepath.endswith("/"):  # just a directory name
+            elif fp.endswith("/"):  # just a directory name
                 self.is_dir = True
                 filename = None
-                dirname = filepath
+                dirname = fp
             else:
-                filename = os.path.basename(filepath)
-                dirname = os.path.dirname(filepath)
+                filename = os.path.basename(fp)
+                dirname = os.path.dirname(fp)
         if dirname is None:
             dirname = "."
-        filename = os.path.expandvars(filename) if filename else None
-        dirname = self.sanitize_paths(dirname) if dirname else None
+
         # We later check if the file exists, but only if the user has specified
         # an absolute dirname/filepath (otherwise it doesn't make sense, since
         # we create our own filenames/dirnames dynamically as necessary
-        check = False
-        if isabs(dirname):
-            check = self.check_filepath_exists
+        check = self.check_filepath_exists if isabs(dirname) else False
 
         # Default filename to drop human readable format based on UID
         if filename is None:
             filename = path_builder.base_uid_filename(self.uid, self._humanKey)
-
 
         self.filename = filename
         self.dirname = self.get_dir(dirname)
@@ -160,7 +160,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         )
         if check and not os.path.isfile(self._path):
             raise InvalidDropException(
-                self, "File does not exist or is not a file: %s" % self._path
+                self, "File does not exist or is not a file: {self._path}"
             )
 
         self._wio = None
@@ -171,7 +171,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         # if not self._updatedPorts:
         if not self.parameters.get("filepath", None):
             self._map_input_ports_to_params()
-            self._setupFilePaths()
+            self.setupFilePaths()
 
         return FileIO(self._path)
 
