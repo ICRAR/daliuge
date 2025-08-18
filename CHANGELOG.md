@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v5.6.2
+- [Fixed] Fix environment variable expansion not working: https://github.com/ICRAR/daliuge/pull/356
+
 ## v5.6.1
 - [Fixed] Fix parse_pydata and make MemoryDROP Type consistent: https://github.com/ICRAR/daliuge/pull/354
 
