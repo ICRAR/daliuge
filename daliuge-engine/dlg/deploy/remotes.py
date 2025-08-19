@@ -57,7 +57,7 @@ class Remote(object):
         if len(set(sorted_peers)) != self.size:
             raise RuntimeError("More than one task started per node, cannot continue")
         # convert nodes to IP addresses if hostnames
-        self.sorted_peers = list(map(self._get_ip_from_name(sorted_peers)))
+        self.sorted_peers = list(map(lambda x: self._get_ip_from_name(x), sorted_peers))
         nm_range = self._nm_range()
         if nm_range[0] == nm_range[1]:
             raise RuntimeError(

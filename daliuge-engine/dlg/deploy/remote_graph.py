@@ -68,10 +68,14 @@ def github_request(user, repo, branch, path):
     :return:
     """
 
-    r = requests.get(f"https://api.github.com/repos/{user}/{repo}/contents/{path}?branch={branch}",
+    request_url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}?ref={branch}"
+
+    r = requests.get(request_url,
                      timeout=15)
-    if r.status_code != 200:
-        print("Things went wrong!!")
-        sys.exit(1)
     content = json.loads(r.content)
-    return base64.b64decode(content['content']).decode()
+    decoded_content = base64.b64decode(content['content']).decode()
+    if r.status_code != 200:
+        print(f"Things went wrong with {request_url}!")
+        print(f"{decoded_content}")
+        sys.exit(1)
+    return decoded_content

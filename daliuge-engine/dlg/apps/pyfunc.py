@@ -613,7 +613,7 @@ class PyFuncApp(BarrierAppDROP):
                     except RuntimeError as e:
                         raise InvalidDropException(
                             "Path contains unset environment variable", e
-                        )
+                        ) from e
                     self._output_filepaths[output_uid] = argument.value
                 arg_map[arg] = argument
                 self.parameters[arg] = arg_map[arg].value

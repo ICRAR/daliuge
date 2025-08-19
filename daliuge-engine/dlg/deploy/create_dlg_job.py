@@ -446,7 +446,7 @@ def _translate_graph(parser, opts, content=""):
     pgt_name = pgt_file
     pgt_path = Path(f"/tmp/{pgt_file}")
     with pgt_path.open("w") as o:
-        json.dump((pgt_name, pgt), o)
+        json.dump((pgt_name, pgt), o, indent=2)
         return str(pgt_path)
 
 
@@ -543,12 +543,15 @@ def run(_, args):
 
     facility_necessary = True if not opts.config_file else False
     if opts.config_file:
-        cfg = process_config(opts.config_file)
-        for attr, val in cfg.items():
+        config_path = cfg_manager.load_user_config(ConfigType.ENV, opts.config_file)
+        if not config_path:
+            parser.error("Provided --config_file option that does not exist!")
+            sys.exit(1)
+        config = process_config(str(config_path)) if config_path else {}
+        for attr, val in config.items():
             setattr(opts, attr, val)
-
-    # graph_name = evaluate_graph_options(opts)
-    # sys.exit(0)
+    else:
+        config = None
 
     if not opts.action and (facility_necessary and not opts.facility):
         parser.error("Missing required parameters!")
@@ -592,15 +595,6 @@ def run(_, args):
             log_parser.parse(out_csv=opts.csv_output)
     elif opts.action == "submit":
         pgt_file = evaluate_graph_options(opts, parser)
-
-        if opts.config_file:
-            config_path = cfg_manager.load_user_config(ConfigType.ENV, opts.config_file)
-            if not config_path:
-                parser.error("Provided --config_file option that does not exist!")
-                sys.exit(1)
-            config = process_config(config_path) if config_path else None
-        else:
-            config = None
         if opts.slurm_template:
             template_path = cfg_manager.load_user_config(ConfigType.SLURM, opts.slurm_template)
             if not template_path:
