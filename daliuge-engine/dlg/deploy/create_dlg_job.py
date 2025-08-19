@@ -89,9 +89,8 @@ def process_config(config_file: str):
     all_opts = {}
     parser.read(config_file)
     for s in parser.sections():
-        all_opts.update(dict(parser[s]))
-    all_opts = {key: value for key, value in all_opts.items() if value}
-    return all_opts
+        all_opts |= (dict(parser[s]))
+    return {key: value for key, value in all_opts.items() if value}
 
 def process_slurm_template(template_file: str):
     template = Path(template_file)
@@ -181,6 +180,14 @@ def create_engine_group(parser: optparse.OptionParser):
         dest="verbose_level",
         help="Verbosity level (1-3) of the DIM/NM logging",
         default=1,
+    )
+
+    parser.add_option(
+        "-c",
+        "--csvoutput",
+        action="store",
+        dest="csv_output",
+        help="CSV output file to keep the log analysis result",
     )
 
     return group
@@ -320,27 +327,27 @@ def evaluate_graph_options(opts, parser):
 
     from dlg.deploy.remote_graph import github_request, gitlab_request
 
-    graph = None
     use_remote_graph = opts.github or opts.gitlab
     use_local_graph = opts.logical_graph or opts.physical_graph
 
-    if use_local_graph and use_remote_graph:
-        parser.error("Cannot specify both local and remote graph")
-
+    graph = None
     if use_local_graph:
-        if opts.logical_graph:
-            return _translate_graph(parser, opts.logical_graph)
-        if opts.physical_graph:
-            return opts.physical_graph
-
+        if use_remote_graph:
+            parser.error("Cannot specify both local and remote graph")
+        else:
+            if opts.logical_graph:
+                graph =  _translate_graph(parser, opts.logical_graph)
+            if opts.physical_graph:
+                graph =  opts.physical_graph
 
     if opts.github:
         content = github_request(opts.user_org, opts.repo, opts.branch, opts.path)
-        return _translate_graph(parser, opts, content)
+        graph = _translate_graph(parser, opts, content)
     if opts.gitlab:
         content = gitlab_request(opts.user_org, opts.repo, opts.branch, opts.path)
-        return _translate_graph(parser, opts, content)
+        graph =  _translate_graph(parser, opts, content)
 
+    graph = 'mytest.graph'
     return graph
 
 
@@ -409,6 +416,33 @@ def create_component_options(parser):
     )
     return group
 
+def create_algorithm_options(parser):
+    group = optparse.OptionGroup(parser, "Algorithm options",
+                                 "Algorithm choices for translation and "
+                                 "partitioning.")
+
+    # Algorithm options
+    group.add_option(
+        "-A",
+        "--algorithm",
+        action="store",
+        type="string",
+        dest="algorithm",
+        help="The algorithm to be used for the translation",
+        default="metis",
+    )
+
+    group.add_option(
+        "-O",
+        "--algorithm-parameters",
+        action="store",
+        type="string",
+        dest="algorithm_params",
+        help="Parameters for the translation algorithm",
+    )
+
+    return group
+
 def _translate_graph(parser, opts, content=""):
     if opts.logical_graph:
         graph_file = os.path.basename(opts.logical_graph)
@@ -450,6 +484,109 @@ def _translate_graph(parser, opts, content=""):
         return str(pgt_path)
 
 
+def analyse(opts, parser):
+    """
+    Run the analysis procedure
+
+    :param opts: the optparse Values
+    :param parser: the optparse Parser that we use for error reporting
+    """
+
+    if opts.log_dir is None:
+        # you can specify:
+        # either a single directory
+        if opts.log_root is None:
+            config = ConfigFactory.create_config(
+                facility=opts.facility, user=opts.username
+            )
+            log_root = config.getpar("log_root")
+        else:
+            log_root = opts.log_root
+        if log_root is None or (not os.path.exists(log_root)):
+            parser.error(
+                "Missing or invalid log directory/facility for log analysis"
+            )
+        # or a root log directory
+        else:
+            for log_dir in os.listdir(log_root):
+                log_dir = os.path.join(log_root, log_dir)
+                if os.path.isdir(log_dir):
+                    try:
+                        log_parser = LogParser(log_dir)
+                        log_parser.parse(out_csv=opts.csv_output)
+                    except Exception as exp:  # pylint: disable=broad-exception-caught
+                        parser.error(
+                            "Fail to parse {0}: {1}".format(log_dir, exp))
+    else:
+        log_parser = LogParser(opts.log_dir)
+        log_parser.parse(out_csv=opts.csv_output)
+
+
+def submit(opts, parser):
+    """
+    Run the submit procedure to a remote facility
+
+    :param opts: the optparse Values
+    :param parser: the optparse Parser that we use for error reporting
+    """
+
+    cfg_manager = ConfigManager(FACILITIES)
+
+    if opts.config_file:
+        config_path = cfg_manager.load_user_config(ConfigType.ENV, opts.config_file)
+        if not config_path:
+            parser.error("Provided --config_file option that does not exist!")
+            sys.exit(1)
+        config = process_config(str(config_path)) if config_path else {}
+        for attr, val in config.items():
+            setattr(opts, attr, val)
+    else:
+        config = None
+
+    if opts.github and opts.gitlab:
+        parser.error("Must specify only one of --github or gitlab")
+
+    pgt_file = evaluate_graph_options(opts, parser)
+    if not pgt_file or not Path(pgt_file).exists():
+        parser.error("There was an issue translating the physical graph and no graph "
+                     "file could be found!")
+        sys.exit(1)
+    if opts.slurm_template:
+        template_path = cfg_manager.load_user_config(ConfigType.SLURM, opts.slurm_template)
+        if not template_path:
+            parser.error("Provided --slurm_template option that does not exist!")
+            sys.exit(1)
+        template = process_slurm_template(template_path)  if template_path else None
+    else:
+        template = None
+
+    client = SlurmClient(
+        dlg_root=opts.dlg_root,
+        facility=opts.facility,
+        job_dur=int(opts.job_dur),
+        num_nodes=int(opts.num_nodes),
+        logv=int(opts.verbose_level),
+        zerorun=opts.zerorun,
+        max_threads=int(opts.max_threads),
+        run_proxy=opts.run_proxy,
+        mon_host=opts.mon_host,
+        mon_port=opts.mon_port,
+        num_islands=int(opts.num_islands),
+        all_nics=process_bool(opts.all_nics),
+        check_with_session=opts.check_with_session,
+        physical_graph_template_file=pgt_file,
+        submit=process_bool(opts.submit),
+        remote=process_bool(opts.remote),
+        username=opts.username,
+        ssh_key=opts.ssh_key,
+        config=config,
+        slurm_template=template
+    )
+
+    client.visualise_graph = opts.visualise_graph
+    client.submit_job()
+
+
 def run(_, args):
     parser = optparse.OptionParser(
         usage="\n%prog --action [submit|analyse] -f <facility> [options]\n\n%prog -h for further help"
@@ -463,25 +600,6 @@ def run(_, args):
         choices=["submit", "analyse"],
         dest="action",
         help="**submit** job or **analyse** log",
-    )
-
-    # Algorithm options
-    parser.add_option(
-        "-A",
-        "--algorithm",
-        action="store",
-        type="string",
-        dest="algorithm",
-        help="The algorithm to be used for the translation",
-        default="metis",
-    )
-    parser.add_option(
-        "-O",
-        "--algorithm-parameters",
-        action="store",
-        type="string",
-        dest="algorithm_params",
-        help="Parameters for the translation algorithm",
     )
     parser.add_option(
         "--submit",
@@ -498,7 +616,8 @@ def run(_, args):
         help="If set to True, the job is submitted/created for a remote submission",
         default=False,
     )
-    # Engine options
+
+    parser.add_option_group(create_algorithm_options(parser))
     parser.add_option_group(create_engine_group(parser))
     parser.add_option_group(create_slurm_group(parser))
     parser.add_option_group(create_monitor_options(parser))
@@ -506,14 +625,6 @@ def run(_, args):
     parser.add_option_group(create_remote_graph_group(parser))
     parser.add_option_group(create_local_graph_group(parser))
     parser.add_option_group(create_config_group(parser))
-
-    parser.add_option(
-        "-c",
-        "--csvoutput",
-        action="store",
-        dest="csv_output",
-        help="CSV output file to keep the log analysis result",
-    )
 
     # SSH options
     parser.add_option(
@@ -533,25 +644,12 @@ def run(_, args):
         default=None
     )
 
-
-
     (opts, _) = parser.parse_args(sys.argv)
     if len(sys.argv) <=1:
         parser.print_help()
         sys.exit(0)
-    cfg_manager = ConfigManager(FACILITIES)
 
-    facility_necessary = True if not opts.config_file else False
-    if opts.config_file:
-        config_path = cfg_manager.load_user_config(ConfigType.ENV, opts.config_file)
-        if not config_path:
-            parser.error("Provided --config_file option that does not exist!")
-            sys.exit(1)
-        config = process_config(str(config_path)) if config_path else {}
-        for attr, val in config.items():
-            setattr(opts, attr, val)
-    else:
-        config = None
+    facility_necessary = False if opts.config_file else True
 
     if not opts.action and (facility_necessary and not opts.facility):
         parser.error("Missing required parameters!")
@@ -561,78 +659,13 @@ def run(_, args):
         parser.error(f"Unknown facility provided. Please choose from {FACILITIES}")
         sys.exit(1)
 
-    if opts.github and opts.gitlab:
-        parser.error("Must specify only one of --github or gitlab")
-
     if opts.action == "analyse":
-        if opts.log_dir is None:
-            # you can specify:
-            # either a single directory
-            if opts.log_root is None:
-                config = ConfigFactory.create_config(
-                    facility=opts.facility, user=opts.username
-                )
-                log_root = config.getpar("log_root")
-            else:
-                log_root = opts.log_root
-            if log_root is None or (not os.path.exists(log_root)):
-                parser.error(
-                    "Missing or invalid log directory/facility for log analysis"
-                )
-            # or a root log directory
-            else:
-                for log_dir in os.listdir(log_root):
-                    log_dir = os.path.join(log_root, log_dir)
-                    if os.path.isdir(log_dir):
-                        try:
-                            log_parser = LogParser(log_dir)
-                            log_parser.parse(out_csv=opts.csv_output)
-                        except Exception as exp: # pylint: disable=broad-exception-caught
-                            parser.error(
-                                "Fail to parse {0}: {1}".format(log_dir, exp))
-        else:
-            log_parser = LogParser(opts.log_dir)
-            log_parser.parse(out_csv=opts.csv_output)
+        analyse(opts, parser)
     elif opts.action == "submit":
-        pgt_file = evaluate_graph_options(opts, parser)
-        if opts.slurm_template:
-            template_path = cfg_manager.load_user_config(ConfigType.SLURM, opts.slurm_template)
-            if not template_path:
-                parser.error("Provided --slurm_template option that does not exist!")
-                sys.exit(1)
-            template = process_slurm_template(template_path)  if template_path else None
-        else:
-            template = None
-
-        client = SlurmClient(
-            dlg_root=opts.dlg_root,
-            facility=opts.facility,
-            job_dur=int(opts.job_dur),
-            num_nodes=int(opts.num_nodes),
-            logv=int(opts.verbose_level),
-            zerorun=opts.zerorun,
-            max_threads=int(opts.max_threads),
-            run_proxy=opts.run_proxy,
-            mon_host=opts.mon_host,
-            mon_port=opts.mon_port,
-            num_islands=int(opts.num_islands),
-            all_nics=process_bool(opts.all_nics),
-            check_with_session=opts.check_with_session,
-            physical_graph_template_file=pgt_file,
-            submit=process_bool(opts.submit),
-            remote=process_bool(opts.remote),
-            username=opts.username,
-            ssh_key=opts.ssh_key,
-            config=config,
-            slurm_template=template
-        )
-
-        client.visualise_graph = opts.visualise_graph
-        client.submit_job()
+        submit(opts, parser)
     else:
         parser.print_help()
         parser.error(f"Invalid input from args: {args}!")
-
 
 if __name__ == "__main__":
     run(None, sys.argv[1:])

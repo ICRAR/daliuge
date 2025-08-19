@@ -181,19 +181,19 @@ class LogParser:
     def __init__(self, log_dir):
         self._dim_log_f = None
         if not self.check_log_dir(log_dir):
-            raise Exception("No DIM log found at: {0}".format(log_dir))
+            raise RuntimeError("No DIM log found at: {0}".format(log_dir))
         self._log_dir = log_dir
         self._dim_catchall_pattern = self._construct_catchall_pattern(node_type="dim")
         # self._nm_catchall_pattern = construct_catchall_pattern(node_type="nm")
         self._nm_catchall_pattern = self._construct_catchall_pattern(node_type="name")
 
     def _construct_catchall_pattern(self, node_type):
-        pattern_strs = dim_kl if node_type is "dim" else nm_kl
+        pattern_strs = dim_kl if node_type == "dim" else nm_kl
         patterns = [
             x.format(".*").replace("(", r"\(").replace(")", r"\)") for x in pattern_strs
         ]
-        catchall = "|".join(["(%s)" % (s,) for s in patterns])
-        catchall = ".*(%s).*" % (catchall,)
+        catchall = "|".join([f"{s}" for s in patterns])
+        catchall = f".*{catchall}.*"
         return re.compile(catchall)
 
     def parse(self, out_csv=None):
@@ -203,8 +203,8 @@ class LogParser:
         logb_name = os.path.basename(self._log_dir)
         search_string = re.search("_N[0-9]+_", logb_name)
         if search_string is None:
-            raise Exception("Invalid log directory: {0}".format(self._log_dir))
-        delimit = search_string.group(0)
+            raise RuntimeError("Invalid log directory: {0}".format(self._log_dir))
+        delimit = search_string[0]
         split = logb_name.split(delimit)
         pip_name = split[0]
         do_date = split[1]

@@ -54,7 +54,7 @@ To make deployment more flexible and easier to expand to any facility, we have s
 .. note::
    It is recommended to use the .ini file to use the remote graph support (i.e. GitHub or GitLab access). Otherwise, the command line argument becomes too complex to manage.  
 
-The following configuration is an example deployment that contains all variables necessary to deploy onto a remove system:: 
+The following configuration is an example deployment that contains all variables necessary to deploy onto a remote system::
 
 
    [DEPLOYMENT]
