@@ -114,3 +114,15 @@ class ExclusiveForceDrop(BarrierAppDROP):
     """
     This only exists to make sure we have an exclusive force node in the template palette
     """
+
+##
+# @brief GlobalVariables
+# @details A Global variable store
+# @par EAGLE_START
+# @param category Global
+# @param tag template
+# @par EAGLE_END
+class GlobalDrop(BarrierAppDROP):
+    """
+    This exists to make sure we have a comment in the template palette
+    """
