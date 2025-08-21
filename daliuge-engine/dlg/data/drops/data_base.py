@@ -81,6 +81,7 @@ class InstanceLogHandler(logging.Handler):
             "Message": msg,
         })
 
+
 class DROPLogFilter(logging.Filter):
     def __init__(self, uid: str, humanKey: str):
         super().__init__()
@@ -89,8 +90,7 @@ class DROPLogFilter(logging.Filter):
 
     def filter(self, record):
         uid = getattr(record, "drop_uid", None)
-        return uid == self.uid or uid == self.humanKey
-
+        return uid in [self.uid, self.humanKey]
 
 
 ##
