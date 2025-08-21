@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v5.6.3
+- [Fixed] Revert node_str parameter name in rest.py function definition: https://github.com/ICRAR/daliuge/pull/358
+
 # v5.6.2
 - [Fixed] Fix environment variable expansion not working: https://github.com/ICRAR/daliuge/pull/356
 
