@@ -615,6 +615,7 @@ def main():
         action="store_true",
         dest="co_host_dim",
         help="Start DIM on first NM node",
+        default=True
     )
 
     (options, _) = parser.parse_args()
