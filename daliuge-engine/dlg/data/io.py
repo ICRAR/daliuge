@@ -444,6 +444,57 @@ class FileIO(DataIO):
     def buffer(self) -> bytes:
         return self._desc.read(-1)
 
+class DirectoryIO(DataIO):
+    """
+    A directory-based implementation of DataIO
+    """
+
+    _desc: io.BufferedRWPair
+
+    def __init__(self, directory):
+        super().__init__()
+        self._dirnm = Path(directory)
+
+    def _open(self, **kwargs) -> None:
+        return None
+
+    @overrides
+    def _read(self, count=65536, **kwargs):
+        return None
+
+    @overrides
+    def _write(self, data: str, **kwargs) -> int:
+        if not isinstance(data,str):
+            raise TypeError("Unexpected data passed to DirectoryIO for _write")
+        try:
+            os.mkdir(data)
+            return Path(data)
+        except OSError as e:
+            logger.error("Attempted to make directory %s but failed due to %s",
+                         data, e)
+
+    @overrides
+    def _close(self, **kwargs):
+        pass
+
+    @overrides
+    def _size(self, **kwargs) -> int:
+        return os.path.getsize(self._dirnm)
+
+    def getDirName(self):
+        """
+        Returns the drop filename
+        """
+        return self._dirnm
+
+    @overrides
+    def exists(self) -> bool:
+        return self._dirnm.exists()
+
+    @overrides
+    def delete(self):
+        os.unlink(self._dirnm)
+
 
 def total_dir_size(path):
     """
