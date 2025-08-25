@@ -36,6 +36,7 @@ from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
 from dlg.apps.branch import BranchAppDrop
 from dlg.drop import track_current_drop
@@ -198,6 +199,9 @@ class CopyApp(BarrierAppDROP):
         if isinstance(inputDrop, ContainerDROP):
             for child in inputDrop.children:
                 self.copyRecursive(child)
+        elif isinstance(inputDrop, DirectoryDROP):
+            for outputDrop in self.outputs:
+                droputils.copyDirectoryContents(inputDrop,outputDrop)
         else:
             for outputDrop in self.outputs:
                 droputils.copyDropContents(inputDrop, outputDrop, bufsize=self.bufsize)
@@ -355,7 +359,7 @@ class AverageArraysApp(BarrierAppDROP):
     methods = ["mean", "median"]
     method = dlg_string_param("method", methods[0])
 
-    def __init__(self, oid, uid, **kwargs):
+    def __init__(self, oid, **kwargs):
         super().__init__(oid, kwargs)
         self.marray = []
 
