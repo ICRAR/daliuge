@@ -813,6 +813,34 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
 
     return input_node, output_node
 
+def extract_globals(logical_graph: dict):
+    """
+    Extract and remove the
+    :param logical_graph:
+    :return:
+    """
+
+    global_nodes = []
+    for node in logical_graph["nodeDataArray"]:
+        if node["category"] == "Global":
+            global_nodes.append(node)
+
+    # Remove all globals from graph
+    for gn in global_nodes:
+        logical_graph["nodeDataArray"].remove(gn)
+
+    global_map = {}
+    for gn in global_nodes:
+        for fields in gn["fields"]:
+            global_map[fields["name"]] = fields["value"]
+
+    for node in logical_graph["nodeDataArray"]:
+        for field in node['fields']:
+            for gn, gv in global_map.items():
+                if isinstance(field['value'], str) and f"{{{gn}}}" in field["value"]:
+                        field['value'] = field['value'].replace(f"{{{gn}}}", gv)
+
+    return logical_graph
 
 def convert_subgraphs(lgo: dict) -> dict:
     """
