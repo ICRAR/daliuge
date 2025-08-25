@@ -31,7 +31,7 @@ from dlg.data.drops.container import ContainerDROP
 from dlg.apps.app_base import AppDROP
 
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
-from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.apps.simple import RandomArrayApp
 
 
@@ -102,14 +102,14 @@ class TestGraphLoader(unittest.TestCase):
             {
                 "oid": "B",
                 "categoryType": "Container",
-                "dropclass": "dlg.data.drops.DirectoryContainer",
+                "dropclass": "dlg.data.drops.DirectoryDROP",
                 "children": ["A"],
                 "dirname": ".",
             },
         ]
         a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
         b = a.parent
-        self.assertIsInstance(b, DirectoryContainer)
+        self.assertIsInstance(b, DirectoryDROP)
 
     def test_consumer(self):
         dropSpecList = [

@@ -42,7 +42,7 @@ from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
-from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
@@ -747,9 +747,9 @@ class TestDROP(unittest.TestCase):
             f.write(b" ")
         assertFiles(True, True, tempDir=tempDir)
 
-    def test_directoryContainer(self):
+    def test_DirectoryDROP(self):
         """
-        A small, simple test for the DirectoryContainer DROP that checks it allows
+        A small, simple test for the DirectoryDROP that checks it allows
         only valid children to be added
         """
 
@@ -761,12 +761,13 @@ class TestDROP(unittest.TestCase):
             os.makedirs(dirname2)
 
         # DROPs involved
+        # TODO Refactor this as we know longer use it like this
         a = FileDROP("a", "a", filepath=f"{dirname}/")
         b = FileDROP("b", "b", filepath=f"{dirname}/")
         c = FileDROP("c", "c", filepath=f"{dirname2}/")
         d = FileDROP("d", "d", filepath=f"{dirname2}/")
-        cont1 = DirectoryContainer("e", "e", dirname=dirname)
-        cont2 = DirectoryContainer("f", "f", dirname=dirname2)
+        cont1 = DirectoryDROP("e", "e", dirname=dirname)
+        cont2 = DirectoryDROP("f", "f", dirname=dirname2)
 
         # Paths are absolutely reported
         self.assertEqual(
