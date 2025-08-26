@@ -112,7 +112,7 @@ def cmdwrap(cmdname, group, desc, f):
                 module = importlib.import_module(modname)
                 try:
                     return getattr(module, fname)(*args, **kwargs)
-                except TypeError:
+                except TypeError as e:
                     return getattr(module, fname)()
 
         f = Importer()
