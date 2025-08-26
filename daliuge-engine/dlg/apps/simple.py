@@ -345,8 +345,6 @@ class AverageArraysApp(BarrierAppDROP):
     method:  string <['mean']|'median'>, use mean or median as method.
     """
 
-    from numpy import mean, median
-
     component_meta = dlg_component(
         "AverageArraysApp",
         "Average Array App.",
@@ -359,8 +357,8 @@ class AverageArraysApp(BarrierAppDROP):
     methods = ["mean", "median"]
     method = dlg_string_param("method", methods[0])
 
-    def __init__(self, oid, **kwargs):
-        super().__init__(oid, kwargs)
+    def initialize(self, **kwargs):
+        super(AverageArraysApp, self).initialize(**kwargs)
         self.marray = []
 
     def run(self):
