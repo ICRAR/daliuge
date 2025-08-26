@@ -463,15 +463,16 @@ class DirectoryIO(DataIO):
         return None
 
     @overrides
-    def _write(self, data: str, **kwargs) -> int:
+    def _write(self, data, **kwargs) -> int:
         if not isinstance(data,str):
             raise TypeError("Unexpected data passed to DirectoryIO for _write")
         try:
             os.mkdir(data)
-            return Path(data)
+            return os.path.getsize(data)
         except OSError as e:
             logger.error("Attempted to make directory %s but failed due to %s",
                          data, e)
+            return 0
 
     @overrides
     def _close(self, **kwargs):
