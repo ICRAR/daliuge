@@ -71,8 +71,8 @@ class TestHelperFunctions(unittest.TestCase):
 
     def test_find_dlg_strings_badinput(self):
         fn = 57
-        self.assertRaises(TypeError, find_dlg_fstrings(fn))
+        self.assertListEqual([], find_dlg_fstrings(fn))
 
         fn = None
-        self.assertRaises(TypeError, find_dlg_fstrings(fn))
+        self.assertListEqual([], find_dlg_fstrings(fn))
 

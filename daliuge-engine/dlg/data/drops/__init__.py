@@ -26,7 +26,7 @@ are based on the :class:`DataDROP`.
 """
 
 __all__ = [
-    "DirectoryContainer",
+    "DirectoryDROP",
     "FileDROP",
     "InMemoryDROP",
     "SharedMemoryDROP",
@@ -39,7 +39,7 @@ __all__ = [
     "NullDROP",
 ]
 
-from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops.file import FileDROP
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from dlg.data.drops.ngas import NgasDROP

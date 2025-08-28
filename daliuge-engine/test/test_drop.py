@@ -42,7 +42,7 @@ from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
-from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException
@@ -747,10 +747,9 @@ class TestDROP(unittest.TestCase):
             f.write(b" ")
         assertFiles(True, True, tempDir=tempDir)
 
-    def test_directoryContainer(self):
+    def test_DirectoryDROP(self):
         """
-        A small, simple test for the DirectoryContainer DROP that checks it allows
-        only valid children to be added
+        A small, simple test for the DirectoryDROP
         """
 
         # Prepare our playground
@@ -760,13 +759,8 @@ class TestDROP(unittest.TestCase):
         if not os.path.exists(dirname2):
             os.makedirs(dirname2)
 
-        # DROPs involved
-        a = FileDROP("a", "a", filepath=f"{dirname}/")
-        b = FileDROP("b", "b", filepath=f"{dirname}/")
-        c = FileDROP("c", "c", filepath=f"{dirname2}/")
-        d = FileDROP("d", "d", filepath=f"{dirname2}/")
-        cont1 = DirectoryContainer("e", "e", dirname=dirname)
-        cont2 = DirectoryContainer("f", "f", dirname=dirname2)
+        cont1 = DirectoryDROP("e", "e", dirname=dirname)
+        cont2 = DirectoryDROP("f", "f", dirname=dirname2)
 
         # Paths are absolutely reported
         self.assertEqual(
@@ -777,20 +771,8 @@ class TestDROP(unittest.TestCase):
             os.path.realpath(cont2.path),
         )
 
-        # Certain children-to-be are rejected
-        self.assertRaises(TypeError, cont1.addChild, NullDROP("g", "g"))
-        self.assertRaises(TypeError, cont1.addChild, InMemoryDROP("h", "h"))
-        self.assertRaises(TypeError, cont1.addChild, ContainerDROP("i", "i"))
-        self.assertRaises(Exception, cont1.addChild, c)
-        self.assertRaises(Exception, cont1.addChild, d)
-        self.assertRaises(Exception, cont2.addChild, a)
-        self.assertRaises(Exception, cont2.addChild, b)
-
-        # These children are correct
-        cont1.addChild(a)
-        cont1.addChild(b)
-        cont2.addChild(c)
-        cont2.addChild(d)
+        self.assertTrue(cont1.exists())
+        self.assertTrue(cont2.exists())
 
         # Revert to previous state
         shutil.rmtree(dirname, True)
