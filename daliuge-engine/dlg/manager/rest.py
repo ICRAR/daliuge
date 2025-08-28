@@ -667,40 +667,40 @@ class CompositeManagerRestServer(ManagerRestServer):
         return data
 
     @daliuge_aware
-    def getNodeSessionInformation(self, node_str, sessionId):
+    def getNodeSessionInformation(self, node: str, sessionId):
         try:
-            node = self.dm.get_node_from_json(node_str)
-            with NodeManagerClient(host=node.host, port=node.port) as dm:
+            n = Node(self.dm.get_node_from_json(node))
+            with NodeManagerClient(host=n.host, port=n.port) as dm:
                 return dm.session(sessionId)
         except ValueError as e:
-            raise ValueError(f"{node_str} not in current list of nodes") from e
+            raise ValueError(f"{n} not in current list of nodes") from e
 
     @daliuge_aware
-    def getNodeSessionStatus(self, node_str, sessionId):
+    def getNodeSessionStatus(self, node: str, sessionId):
         try:
-            node = self.dm.get_node_from_json(node_str)
-            with NodeManagerClient(host=node.host, port=node.port) as dm:
+            n = Node(self.dm.get_node_from_json(node))
+            with NodeManagerClient(host=n, port=n.port) as dm:
                 return dm.session_status(sessionId)
         except ValueError as e:
-            raise ValueError(f"{node_str} not in current list of nodes") from e
+            raise ValueError(f"{node} not in current list of nodes") from e
 
     @daliuge_aware
-    def getNodeGraph(self, node_str, sessionId):
+    def getNodeGraph(self, node: str, sessionId):
         try:
-            node = self.dm.get_node_from_json(node_str)
-            with NodeManagerClient(host=node.host, port=node.port) as dm:
+            n = Node(self.dm.get_node_from_json(node))
+            with NodeManagerClient(host=n.host, port=n.port) as dm:
                 return dm.graph(sessionId)
         except ValueError as e:
-            raise ValueError(f"{node_str} not in current list of nodes") from e
+            raise ValueError(f"{node} not in current list of nodes") from e
 
     @daliuge_aware
-    def getNodeGraphStatus(self, node_str, sessionId):
+    def getNodeGraphStatus(self, node: str, sessionId):
         try:
-            node = self.dm.get_node_from_json(node_str)
-            with NodeManagerClient(host=node.host, port=node.port) as dm:
+            n = Node(self.dm.get_node_from_json(node))
+            with NodeManagerClient(host=n.host, port=n.port) as dm:
                 return dm.graph_status(sessionId)
         except ValueError as e:
-            raise ValueError(f"{node_str} not in current list of nodes") from e
+            raise ValueError(f"{node} not in current list of nodes") from e
 
     # ===========================================================================
     # non-REST methods

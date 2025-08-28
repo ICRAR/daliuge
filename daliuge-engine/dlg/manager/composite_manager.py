@@ -259,15 +259,15 @@ class CompositeManager(DROPManager):
         else:
             self._nodes.remove(node)
 
-    def get_node_from_json(self, node_str):
+    def get_node_from_json(self, node):
         """
         Given a node str, return the Node we have stored
         Return: Node
         Raises: ValueError if there is no existing Node added to the CompositeManager
         """
 
-        idx = self._nodes.index(Node(node_str))
-        return self._nodes[idx]
+        idx = self.nodes.index(node)
+        return self.nodes[idx]
 
     @property
     def dmPort(self):

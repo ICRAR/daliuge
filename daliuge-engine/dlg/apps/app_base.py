@@ -73,47 +73,6 @@ def run_on_daemon_thread(func: Callable, *args, **kwargs) -> Future:
 
 _SYNC_DROP_RUNNER = SyncDropRunner()
 
-class InstanceLogHandler(logging.Handler):
-    """Custom handler to store logs in-memory per object instance."""
-    def __init__(self, log_storage):
-        super().__init__()
-        self.log_storage = log_storage
-
-    def emit(self, record):
-        """Store log messages in the instance's log storage.
-
-         :param record: The log string we want to add to the log storage
-
-         .. note: We are not interested in actually emitting the log;
-             we are just interested in extracting and storing Record metadata
-        """
-
-        exc = f"{str(record.exc_text)}" if record.exc_text else ""
-        # msg = str(record.message).replace("\n", "<br>")
-        msg = (f"<pre>{record.message.encode('utf-8').decode('unicode_escape')}\n"
-               f"{exc}</pre>")
-        try:
-            rec_time = record.asctime
-        except AttributeError:
-            rec_time = ""
-        self.log_storage.append({ "time":rec_time,
-            "Level": record.levelname,
-            "Module": record.name,
-            "Function/Method": record.funcName,
-            "Line #": record.lineno,
-            "Message": msg,
-        })
-
-class DROPLogFilter(logging.Filter):
-    def __init__(self, uid: str, humanKey: str):
-        super().__init__()
-        self.uid = uid
-        self.humanKey = humanKey
-
-    def filter(self, record):
-        uid = getattr(record, "drop_uid", None)
-        return uid == self.uid or uid == self.humanKey
-
 
 
 # ===============================================================================
@@ -182,22 +141,6 @@ class AppDROP(ContainerDROP):
 
         # by default run drops synchronously
         self._drop_runner: DropRunner = _SYNC_DROP_RUNNER
-
-        self.log_storage = []
-
-        self.logger = logging.getLogger(f"{__class__}.{self.uid}")
-        instance_handler = InstanceLogHandler(self.log_storage)
-        instance_handler.addFilter(DROPLogFilter(self.uid, self._humanKey))
-        fmt = ("%(asctime)-15s [%(levelname)5.5s] "
-               "%(name)s#%(funcName)s:%(lineno)s %(message)s")
-        fmt = logging.Formatter(fmt)
-        instance_handler.setFormatter(fmt)
-
-        # Attach instance-specific handler
-        logging.root.addHandler(instance_handler)
-
-        # Ensure logs still propagate to the root logger
-        logger.propagate = True
 
     @track_current_drop
     def addInput(self, inputDrop, back=True):
@@ -384,13 +327,6 @@ class AppDROP(ContainerDROP):
     @drop_runner.setter
     def drop_runner(self, runner):
         self._drop_runner = runner
-
-    def getLogs(self):
-        """
-        :return: Return the logs stored in the logging handler
-        """
-
-        return self.log_storage
 
 
 class InputFiredAppDROP(AppDROP):
