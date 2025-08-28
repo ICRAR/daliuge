@@ -455,7 +455,7 @@ def total_dir_size(path):
     :return: size in int
     """
     total_size = 0
-    for dirpath, dirnames, filenames in os.walk(path):
+    for dirpath, _, filenames in os.walk(path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
             # skip if it is symbolic link
