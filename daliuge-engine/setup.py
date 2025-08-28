@@ -161,6 +161,7 @@ install_requires = [
     "psutil",
     "python-daemon",
     "pyzmq == 25.1.1",  # Python 25.1.1 is minimal install that supports Python 3.12
+    "requests",
     "scp",
     "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need

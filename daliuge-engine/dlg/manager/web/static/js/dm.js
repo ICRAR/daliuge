@@ -642,9 +642,7 @@ function _addNode(g, doSpec, url) {
     oid_date = doSpec.oid.split("_")[0];
 	human_readable_id = oid_date + "_" + doSpec.humanReadableKey.toString()
 	html += '<span style="font-size: 13px;">' + human_readable_id + '</span>';
-	if (doSpec.categoryType != "Data") {
-	    html += '<span style="font-size: 13px;">' + link + '</span>';
-	}
+	html += '<span style="font-size: 13px;">' + link + '</span>';
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",
