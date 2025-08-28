@@ -24,9 +24,7 @@ import os
 import shutil
 
 from dlg.data.drops.data_base import PathBasedDrop, DataDROP
-from dlg.data import path_builder
-# from dlg.data.drops.container import ContainerDROP
-from dlg.exceptions import InvalidDropException, InvalidRelationshipException
+from dlg.exceptions import InvalidDropException
 from dlg.meta import dlg_bool_param
 from dlg.data.io import DirectoryIO
 
@@ -36,7 +34,7 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # TODO: This needs some more work
 ##
 # @brief Directory
-# @details A DataDROP that represents a filesystem directory. 
+# @details A DataDROP that represents a filesystem directory.
 # @par EAGLE_START
 # @param category Data
 # @param tag daliuge
@@ -53,10 +51,10 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # @par EAGLE_END
 class DirectoryDROP(PathBasedDrop, DataDROP):
     """
-    A DataDROP that represents a filesystem directory. 
+    A DataDROP that represents a filesystem directory.
 
     This is used as a proxy for directories on the system, and does not automatically
-    append an arbitrary filename to the directory if it does not exist. 
+    append an arbitrary filename to the directory if it does not exist.
     """
 
     check_exists = dlg_bool_param("check_exists", True)
@@ -79,7 +77,7 @@ class DirectoryDROP(PathBasedDrop, DataDROP):
         self._path = self.get_dir(directory)
 
 
-    def getIO(self): 
+    def getIO(self):
         """
         Return DirectoryIO object
         """
