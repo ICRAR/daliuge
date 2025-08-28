@@ -444,6 +444,27 @@ class FileIO(DataIO):
     def buffer(self) -> bytes:
         return self._desc.read(-1)
 
+
+def total_dir_size(path):
+    """
+    Get total sum of all files in the directory.
+
+    Taken from https://stackoverflow.com/a/1392549
+
+    :param path: directory path we want the size of
+    :return: size in int
+    """
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+
+    return total_size
+
+
 class DirectoryIO(DataIO):
     """
     A directory-based implementation of DataIO
@@ -467,8 +488,8 @@ class DirectoryIO(DataIO):
         if not isinstance(data,str):
             raise TypeError("Unexpected data passed to DirectoryIO for _write")
         try:
-            os.mkdir(data)
-            return os.path.getsize(data)
+            os.makedirs(data, exist_ok=True)
+            return total_dir_size(data)
         except OSError as e:
             logger.error("Attempted to make directory %s but failed due to %s",
                          data, e)
