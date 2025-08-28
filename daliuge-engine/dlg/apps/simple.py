@@ -52,7 +52,7 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
-from dlg.exceptions import DaliugeException
+from dlg.exceptions import DaliugeException, InvalidDropException
 from dlg.rpc import DropProxy
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -201,7 +201,13 @@ class CopyApp(BarrierAppDROP):
                 self.copyRecursive(child)
         elif isinstance(inputDrop, DirectoryDROP):
             for outputDrop in self.outputs:
-                droputils.copyDirectoryContents(inputDrop,outputDrop)
+                if isinstance(outputDrop, DirectoryDROP):
+                    droputils.copyDirectoryContents(inputDrop,outputDrop)
+                else:
+                    raise InvalidDropException(
+                        self,
+                        "Can't copy directory to non-DirectoryDROP"
+                    )
         else:
             for outputDrop in self.outputs:
                 droputils.copyDropContents(inputDrop, outputDrop, bufsize=self.bufsize)
