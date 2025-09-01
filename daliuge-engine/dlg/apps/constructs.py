@@ -119,10 +119,10 @@ class ExclusiveForceDrop(BarrierAppDROP):
 # @brief GlobalVariables
 # @details A Global variable store
 # @par EAGLE_START
-# @param category Global
+# @param category EnvironmentVariables
 # @param tag template
 # @par EAGLE_END
-class GlobalDrop(BarrierAppDROP):
+class GlobalVariableDrop(BarrierAppDROP):
     """
     This exists to make sure we have a comment in the template palette
     """

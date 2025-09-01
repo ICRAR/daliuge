@@ -65,7 +65,7 @@ def _filter_parameters(parameters: dict):
 # @details A set of environment variables, wholly specified in EAGLE and accessible to all drops.
 # @par EAGLE_START
 # @param category EnvironmentVariables
-# @param tag daliuge
+# @param tag deprecated
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param dropclass dlg.data.drops.environmentvar_drop.EnvironmentVarDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name environmentvar_drop/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
