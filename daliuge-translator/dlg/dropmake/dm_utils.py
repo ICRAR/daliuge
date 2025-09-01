@@ -305,11 +305,6 @@ def convert_mkn(lgo):
         for mok in mkn_output_keys:
             n_products_map[mok] = new_id
 
-        #        del node_split_n["inputApplicationName"]
-        #        del node_split_n["outputApplicationName"]
-        #        del node_split_n["outputAppFields"]
-        # del node_split_n['intputAppFields']
-
         new_field_kn = {
             "name": "num_of_copies",
             "value": "%d" % (N),
@@ -815,14 +810,23 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
 
 def extract_globals(logical_graph: dict):
     """
-    Extract and remove the
+    Extract variables defined in the GlobalVariableDROP and replace them across the
+    graph. Once all globals are extracted/replaced, we remove the GlobalVariableDrop from
+    the Logical Graph.
+
     :param logical_graph:
     :return:
     """
+    type_converter = {
+        "Integer": int,
+        "Float": float,
+        "String": str,
+        "Boolean": lambda x: x.lower() in ("true", "1")
+    }
 
     global_nodes = []
     for node in logical_graph["nodeDataArray"]:
-        if node["category"] == "Global":
+        if node["category"] == "EnvironmentVariables":
             global_nodes.append(node)
 
     # Remove all globals from graph
@@ -832,13 +836,21 @@ def extract_globals(logical_graph: dict):
     global_map = {}
     for gn in global_nodes:
         for fields in gn["fields"]:
-            global_map[fields["name"]] = fields["value"]
+            global_map[fields["name"]] = {
+                'value': fields["value"],
+                'type': fields['type']
+            }
 
     for node in logical_graph["nodeDataArray"]:
         for field in node['fields']:
             for gn, gv in global_map.items():
                 if isinstance(field['value'], str) and f"{{{gn}}}" in field["value"]:
-                        field['value'] = field['value'].replace(f"{{{gn}}}", gv)
+                    converter = type_converter[gv['type']]
+                    field['type'] = gv['type']
+                    field['value'] = converter(field['value'].replace(
+                        f"{{{gn}}}", str(gv['value'])
+                    ))
+
 
     return logical_graph
 
