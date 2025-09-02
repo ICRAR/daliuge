@@ -788,6 +788,7 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
         "fields": "inputAppFields",
         "inputApp": True,
     }
+
     input_node = _create_from_node(
         subgraph_node, subgraph_node["inputApplicationType"], input_app_args
     )
