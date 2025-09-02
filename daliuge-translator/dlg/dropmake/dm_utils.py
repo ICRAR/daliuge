@@ -851,8 +851,8 @@ def extract_globals(logical_graph: dict):
                         f"{{{gn}}}", str(gv['value'])
                     ))
 
-
     return logical_graph
+
 
 def convert_subgraphs(lgo: dict) -> dict:
     """
