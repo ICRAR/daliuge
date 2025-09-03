@@ -27,7 +27,7 @@ from dlg.data import path_builder
 from dlg.data.io import FileIO
 from dlg.ddap_protocol import DROPStates
 from .data_base import DataDROP, PathBasedDrop, logger, track_current_drop
-from dlg.exceptions import InvalidDropException
+from dlg.exceptions import InvalidPathException
 from dlg.meta import dlg_bool_param
 from dlg.utils import isabs
 from typing import Union
@@ -121,7 +121,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         if filepath:
             fp = os.path.expandvars(filepath)
             if fp == filepath and "$" in fp:
-                raise InvalidDropException(
+                raise InvalidPathException(
                     self,
                     f"{filepath} has unset environment variable!"
                 )
@@ -158,7 +158,7 @@ class FileDROP(DataDROP, PathBasedDrop):
             self._uid, self._path, check, os.path.isfile(self._path)
         )
         if check and not os.path.isfile(self._path):
-            raise InvalidDropException(
+            raise InvalidPathException(
                 self, "File does not exist or is not a file: {self._path}"
             )
 

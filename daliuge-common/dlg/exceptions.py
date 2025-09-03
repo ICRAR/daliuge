@@ -66,12 +66,17 @@ class IncompleteDROPSpec(InvalidDropException):
 
 class BadModuleException(InvalidDropException):
     """
-    Test
+    Raise when attempting to import a module that is not importable
     """
 
 class InvalidEncodingException(InvalidDropException):
     """
-    Test
+    Raise when the encoding for a particular DROP does not match the encoding of the data
+    """
+
+class InvalidPathException(InvalidDropException):
+    """
+    A path has been defined for a DROP that does not exist or is invalid
     """
 
 class InvalidDROPState(DROPException):
