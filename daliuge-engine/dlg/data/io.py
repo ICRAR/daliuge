@@ -304,6 +304,9 @@ class MemoryIO(DataIO):
         # TODO: This may also be an issue
         return self._buf.getbuffer() if hasattr(self._buf,  "getbuffer") else self._buf.getvalue()
 
+    @property
+    def buftype(self):
+        return type(self._buf)
 
 # pylint: disable=possibly-used-before-assignment
 class SharedMemoryIO(DataIO):
@@ -720,7 +723,7 @@ class NgasLiteIO(DataIO):
         return len(data)
 
     def exists(self) -> bool:
-        raise NotImplementedError("This method is not supported by this class")
+        return ngaslite.fileIdExists(self._ngasSrv, self._ngasPort, self._fileId)
 
     def fileStatus(self):
         logger.debug("Getting status of file %s", self._fileId)
@@ -729,6 +732,10 @@ class NgasLiteIO(DataIO):
     @overrides
     def delete(self):
         pass  # We never delete stuff from NGAS
+
+    @overrides
+    def _size(self, **kwargs) -> int:
+        return self._writtenDataSize
 
 
 def IOForURL(url):

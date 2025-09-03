@@ -176,12 +176,13 @@ class CopyApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
+    @track_current_drop
     def run(self):
         logger.debug("Using buffer size %d", self.bufsize)
         logger.info(
             "Copying data from inputs %s to outputs %s",
-            [x.name for x in self.inputs],
-            [x.name for x in self.outputs],
+            [(getattr(x, "path", "") or x.name) for x in self.inputs],
+            [(getattr(x, "path", "") or x.name) for x in self.outputs],
         )
         self.copyAll()
         logger.info(
@@ -287,7 +288,6 @@ class RandomArrayApp(BarrierAppDROP):
         super(RandomArrayApp, self).initialize(**kwargs)
         self._keep_array = keep_array
 
-
     @track_current_drop
     def run(self):
         self._run()
@@ -366,6 +366,7 @@ class AverageArraysApp(BarrierAppDROP):
         super(AverageArraysApp, self).initialize(**kwargs)
         self.marray = []
 
+    @track_current_drop
     def run(self):
         # At least one output should have been added
 
@@ -447,6 +448,7 @@ class GenericGatherApp(BarrierAppDROP):
                 value = droputils.allDropContents(ipt)
                 output.write(value)
 
+    @track_current_drop
     def run(self):
         self.readWriteData()
 
@@ -543,6 +545,7 @@ class ArrayGatherApp(BarrierAppDROP):
                 self.value_list.append(pickle.loads(value))
             output.write(pickle.dumps(self.value_list))
 
+    @track_current_drop
     def run(self):
         self.value_list = []
         self.readWriteData()
@@ -600,6 +603,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
     function: str = dlg_string_param("function", "sum")  # type: ignore
     reduce_axes: list = dlg_list_param("reduce_axes", "None")  # type: ignore
 
+    @track_current_drop
     def run(self):
         if len(self.inputs) < 1:
             raise Exception(f"At least one input should have been added to {self}")
@@ -684,6 +688,7 @@ class HelloWorldApp(BarrierAppDROP):
 
     greet = dlg_string_param("greet", "World")
 
+    @track_current_drop
     def run(self):
         ins = self.inputs
         # if no inputs use the parameter else use the input
@@ -693,10 +698,10 @@ class HelloWorldApp(BarrierAppDROP):
             raise Exception("Only one input expected for %r" % self)
         else:  # the input is expected to be a vector. We'll use the first element
             try:
-                phrase = str(pickle.loads(droputils.allDropContents(ins[0]))[0])
-            except _pickle.UnpicklingError:
-                phrase = str(droputils.allDropContents(ins[0]), encoding="utf-8")
-            self.greeting = f"Hello {phrase}"
+                phrase = pickle.loads(droputils.allDropContents(ins[0]))[0]
+            except (_pickle.UnpicklingError, TypeError):
+                phrase = droputils.allDropContents(ins[0])
+            self.greeting = f"Hello, {phrase}"
         logger.debug("Greeting is %s", self.greeting)
 
         outs = self.outputs
@@ -741,6 +746,7 @@ class UrlRetrieveApp(BarrierAppDROP):
 
     url = dlg_string_param("url", "")
 
+    @track_current_drop
     def run(self):
         try:
             logger.info("Accessing URL %s", self.url)
@@ -861,6 +867,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
     num_of_copies: int = dlg_int_param("num_of_copies", 1)
     scatter_axes: List[int] = dlg_list_param("scatter_axes", "[0]")
 
+    @track_current_drop
     def run(self):
         if len(self.inputs) * self.num_of_copies != len(self.outputs):
             raise DaliugeException(
@@ -899,6 +906,7 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
         self.result = self._popArg(kwargs, "result", True)
         BranchAppDrop.initialize(self, **kwargs)
 
+    @track_current_drop
     def run(self):
         pass
 
@@ -1043,6 +1051,7 @@ class PickOne(BarrierAppDROP):
                 output.len = len(d)
             output.write(d)
 
+    @track_current_drop
     def run(self):
         value, rest = self.readData()
         self.writeData(value, rest)
@@ -1091,6 +1100,7 @@ class ListAppendThrashingApp(BarrierAppDROP):
         self.marray = []
         super(ListAppendThrashingApp, self).initialize(**kwargs)
 
+    @track_current_drop
     def run(self):
         # At least one output should have been added
         outs = self.outputs

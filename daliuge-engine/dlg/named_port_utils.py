@@ -467,12 +467,6 @@ def get_port_reader_function(input_parser: DropParser):
     # Inputs are un-pickled and treated as the arguments of the function
     # Their order must be preserved, so we use an OrderedDict
     ip = None
-    # if isinstance(input_parser, str):
-    #     parsers = DropParser.__members__
-    #     ip = input_parser.upper()
-    #     ip = parsers[ip] if ip in parsers else None
-    # else:
-    #     ip = input_parser
     ip = resolve_drop_parser(input_parser)
     if ip is DropParser.PICKLE:
         # all_contents = lambda x: pickle.loads(droputils.allDropContents(x))

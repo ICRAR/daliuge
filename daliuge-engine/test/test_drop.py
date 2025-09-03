@@ -45,9 +45,12 @@ from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
-from dlg.exceptions import InvalidDropException
+from dlg.exceptions import InvalidDropException, ErrorManagerCaughtException, \
+    InvalidDROPState
 from dlg.apps.simple import Branch
 from dlg.apps.simple import NullBarrierApp, SleepAndCopyApp
+
+from test.dlg_engine_testutils import run_errormanagement_exception_test
 
 try:
     from crc32c import crc32c
@@ -820,28 +823,27 @@ class TestDROP(unittest.TestCase):
                 pass
 
         # No n_effective_inputs given
-        self.assertRaises(InvalidDropException, InputFiredAppDROP, "a", "a")
+        cause = InvalidDropException
+        run_errormanagement_exception_test(self, InputFiredAppDROP,
+                                           cause, "a", "a")
         # Invalid values
-        self.assertRaises(
-            InvalidDropException,
-            InputFiredAppDROP,
-            "a",
-            "a",
-            n_effective_inputs=-2,
+        run_errormanagement_exception_test(
+            self, InputFiredAppDROP,
+            cause,
+            "a", "a", n_effective_inputs=-2
         )
-        self.assertRaises(
-            InvalidDropException,
-            InputFiredAppDROP,
-            "a",
-            "a",
-            n_effective_inputs=0,
+
+        run_errormanagement_exception_test(
+            self, InputFiredAppDROP,
+            cause,
+            "a", "a", n_effective_inputs=0
         )
 
         # More effective inputs than inputs
         a = InMemoryDROP("b", "b")
         b = InputFiredAppDROP("a", "a", n_effective_inputs=2)
         b.addInput(a)
-        self.assertRaises(Exception, a.setCompleted)
+        self.assertRaises(RuntimeError, a.setCompleted)
 
         # 2 effective inputs, 4 outputs. Trigger 2 inputs and make sure the
         # app has run

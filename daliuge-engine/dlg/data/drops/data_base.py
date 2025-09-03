@@ -65,7 +65,7 @@ class InstanceLogHandler(logging.Handler):
              we are just interested in extracting and storing Record metadata
         """
 
-        exc = f"{str(record.exc_text)}" if record.exc_text else ""
+        exc = f"{str(record.exc_text)}" if record and record.exc_text else ""
         # msg = str(record.message).replace("\n", "<br>")
         msg = (f"<pre>{record.message.encode('utf-8').decode('unicode_escape')}\n"
                f"{exc}</pre>")
@@ -423,7 +423,7 @@ class DataDROP(AbstractDROP):
         try:
             dropInputPorts = self.parameters["producers"]
         except KeyError:
-            logging.debug("No producers available for drop: %s", self.uid)
+            logger.debug("No producers available for drop: %s", self.uid)
             return
 
         producerPortValueMap = {}  # Map Producer UIDs to a portname
@@ -437,7 +437,7 @@ class DataDROP(AbstractDROP):
                 try:
                     key = list(param.keys())[0]
                 except AttributeError:
-                    logging.debug("Producer %s does not have named ports", p.uid)
+                    logger.debug("Producer %s does not have named ports", p.uid)
                     continue
                 portName = param[key]
                 portValue = ""
@@ -449,7 +449,7 @@ class DataDROP(AbstractDROP):
             try:
                 port.items()
             except AttributeError:
-                logging.debug("Producer %s does not have named ports", port.uid)
+                logger.debug("Producer %s does not have named ports", port.uid)
                 continue
             for uid, input_port_name in port.items():
                 try:
@@ -458,7 +458,7 @@ class DataDROP(AbstractDROP):
                         finalDropPortMap[input_port_name] = producerPortValueMap[uid][
                             ouput_port_name]
                 except KeyError:
-                    logging.warning("%s not available.", input_port_name)
+                    logger.warning("%s not available.", input_port_name)
 
         for portname in finalDropPortMap:
             if portname in self.parameters:

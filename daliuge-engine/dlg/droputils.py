@@ -33,6 +33,7 @@ import shutil
 import threading
 import traceback
 
+import dlg.exceptions as ex
 from dlg.ddap_protocol import DROPStates
 from dlg.data.io import IOForURL, OpenMode
 from dlg import common
@@ -129,15 +130,18 @@ def allDropContents(drop, bufsize=65536) -> bytes:
     Returns all the data contained in a given DROP
     """
     buf = io.BytesIO()
-    if hasattr(drop,"buf") and isinstance(drop.buf, io.StringIO):
+    if hasattr(drop,"_buf") and isinstance(getattr(drop, '_buf'), io.StringIO):
         buf = io.StringIO()
     desc = drop.open()
 
     while True:
-        data = drop.read(desc, bufsize)
-        if not data:
-            break
-        buf.write(data)
+        try:
+            data = drop.read(desc, bufsize)
+            if not data:
+                break
+            buf.write(data)
+        except (TypeError, ValueError, UnicodeDecodeError) as e:
+            raise ex.InvalidEncodingException(drop, f'Encoding error: {e}') from e
     drop.close(desc)
     return buf.getvalue()
 
@@ -155,10 +159,11 @@ def copyDropContents(source: "DataDROP", target: "DataDROP", bufsize: int = 6553
     """
     Manually copies data from one DROP into another, in bufsize steps
     """
-    logger.debug("Copying from %s to %s", repr(source), repr(target))
+    logger.debug("Copying from %s to %s", (getattr(source, "path", "") or source.name), 
+                 (getattr(target, "path", "") or target.name))
     sdesc = source.open()
     buf = source.read(sdesc, bufsize)
-    logger.debug("Read %d bytes from %s", len(buf), repr(source))
+    logger.debug("Using buffersize of %d bytes", len(buf))
     st = time.time()
     ssize = source.size if source.size is not None else -1
     logger.debug("Source size: %s; Source checksum: %s", ssize, source.checksum)
@@ -180,7 +185,7 @@ def copyDropContents(source: "DataDROP", target: "DataDROP", bufsize: int = 6553
             ofl = True
         buf = source.read(sdesc, bufsize)
     dur = time.time() - st
-    logger.debug(
+    logger.info(
         "Wrote %d Bytes of %d to %s; rate %.2f MB/s",
         tot_w,
         ssize,

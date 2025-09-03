@@ -49,7 +49,7 @@ from dlg.named_port_utils import (
     resolve_drop_parser,
 )
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.exceptions import InvalidDropException
+from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException
 from dlg.meta import (
     dlg_string_param,
     dlg_dict_param,
@@ -66,7 +66,7 @@ MAX_IMPORT_RECURSION = 100
 
 def import_using_name(app, fname, curr_depth):
     if curr_depth > MAX_IMPORT_RECURSION:
-        raise InvalidDropException(
+        raise BadModuleException(
             app, "Problem importing module %s, search exceeded recursion limit" % fname
         )
 
@@ -82,7 +82,7 @@ def import_using_name(app, fname, curr_depth):
             return b[fname]
         else:
             msg = "%s is not builtin and does not contain a module name" % fname
-            raise InvalidDropException(app, msg)
+            raise BadModuleException(app, msg)
     elif parts[0] in b.keys():
         return b[parts[0]]
     else:
@@ -93,7 +93,7 @@ def import_using_name(app, fname, curr_depth):
             try:
                 mod = importlib.import_module(parts[0], __name__)
             except ImportError as e:
-                raise InvalidDropException(
+                raise BadModuleException(
                     app,
                     "Error when loading module %s: %s" % (parts[0], str(e)),
                 ) from e
@@ -115,7 +115,7 @@ def import_using_name(app, fname, curr_depth):
                         mod = import_using_name(app, fname, curr_depth=curr_depth+1)
                         break
                     except Exception as e: # pylint: disable=broad-exception-caught
-                        raise InvalidDropException(
+                        raise BadModuleException(
                             app, "Problem importing module %s, %s" % (mod, e)
                         ) from e
             logger.debug("Loaded module: %s", mod)
@@ -282,7 +282,6 @@ class PyFuncApp(BarrierAppDROP):
         ):
             self.func_defaults = self.func_defaults["kwargs"]
         # we came all this way, now assume that any resulting dict is correct
-        # self.func_defaults = self.func_defaults or self.fn_defaults
         if not isinstance(self.func_defaults, dict):
             logger.error(
                 "Wrong format or type for function defaults for %s: %r, %r",
@@ -611,7 +610,7 @@ class PyFuncApp(BarrierAppDROP):
                             humanKey=output_drop.humanKey
                         )
                     except RuntimeError as e:
-                        raise InvalidDropException(
+                        raise InvalidPathException(
                             "Path contains unset environment variable", e
                         ) from e
                     self._output_filepaths[output_uid] = argument.value
@@ -708,6 +707,7 @@ class PyFuncApp(BarrierAppDROP):
         self.func_name = self.func.__qualname__
         return
 
+
     @track_current_drop
     def initialize(self, **kwargs):
         """
@@ -747,7 +747,7 @@ class PyFuncApp(BarrierAppDROP):
             self._applicationArgs)  # number of additional arguments provided
 
         if not self.func_name and not self.func_code and not self.func:
-            raise InvalidDropException(
+            raise IncompleteDROPSpec(
                 self, "No function specified (either via name, code or function object)"
             )
         if self.func:
@@ -764,13 +764,13 @@ class PyFuncApp(BarrierAppDROP):
         else:
             self.initialize_with_func_code()
 
-        logger.info("Args summary for %s", self.func_name)
-        logger.info("Args: %s", self.argnames)
-        logger.info("Args defaults:  %s", self.fn_defaults)
-        logger.info("Args pos/kw: %s", list(self.poskw.keys()))
-        logger.info("Args keyword only: %s", list(self.kwonly.keys()))
-        logger.info("VarArgs allowed:  %s", self.varargs)
-        logger.info("VarKwds allowed:  %s", self.varkw)
+        logger.debug("Args summary for %s", self.func_name)
+        logger.debug("Args: %s", self.argnames)
+        logger.debug("Args defaults:  %s", self.fn_defaults)
+        logger.debug("Args pos/kw: %s", list(self.poskw.keys()))
+        logger.debug("Args keyword only: %s", list(self.kwonly.keys()))
+        logger.debug("VarArgs allowed:  %s", self.varargs)
+        logger.debug("VarKwds allowed:  %s", self.varkw)
 
         # Mapping between argument name and input drop uids
         logger.debug("Input mapping provided: %s", self.func_arg_mapping)
@@ -803,6 +803,7 @@ class PyFuncApp(BarrierAppDROP):
 
         """
         self._run()
+        logger.user("Confirm the operator exception works.")
         logger.debug("This object: %s, %s", self, self._humanKey)
         funcargs = {}
         # Keyword arguments are made up of the default values plus the inputs
@@ -834,8 +835,8 @@ class PyFuncApp(BarrierAppDROP):
                 and "self" in funcargs):
             funcargs.pop("self")
 
-        logger.info("Running %s", self.func_name)
-        logger.debug("Arguments: *%s **%s", pargs, funcargs)
+        logger.user("Running %s", self.func_name)
+        logger.user("Arguments: *%s **%s", pargs, funcargs)
 
         # 4. prepare for execution
         # we capture and log whatever is produced on STDOUT
@@ -855,12 +856,13 @@ class PyFuncApp(BarrierAppDROP):
             else:
                 self.result = self.func(*pargs, **funcargs)
 
-        logger.info(
-            "Captured output from function app '%s: %s'",
-            self.func_name, capture.getvalue()
-        )
-        logger.debug("Returned result from %s: %s", self.func_name, self.result)
-        logger.debug("Finished execution of %s.", self.func_name)
+        logger.user("Returned result from %s: %s", self.func_name, self.result)
+        if capture.getvalue():
+            msg = f"STDOUT/STDERR output from function: '{self.func_name}': {capture.getvalue()}"
+        else:
+            msg = f"No STDOUT/STDERR output from function: '{self.func_name}'"
+        logger.user(msg)
+        logger.debug("Finished execution of %s", self.func_name)
 
         # 6. Process results
         # Depending on how many outputs we have we treat our result
