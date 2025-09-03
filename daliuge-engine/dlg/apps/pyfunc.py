@@ -49,7 +49,7 @@ from dlg.named_port_utils import (
     resolve_drop_parser,
 )
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.exceptions import BadModuleException, IncompleteDROPSpec
+from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException
 from dlg.meta import (
     dlg_string_param,
     dlg_dict_param,
@@ -610,7 +610,7 @@ class PyFuncApp(BarrierAppDROP):
                             humanKey=output_drop.humanKey
                         )
                     except RuntimeError as e:
-                        raise InvalidDropException(
+                        raise InvalidPathException(
                             "Path contains unset environment variable", e
                         ) from e
                     self._output_filepaths[output_uid] = argument.value
@@ -862,7 +862,7 @@ class PyFuncApp(BarrierAppDROP):
         else:
             msg = f"No STDOUT/STDERR output from function: '{self.func_name}'"
         logger.user(msg)
-        logger.debug(f"Finished execution of {self.func_name}.")
+        logger.debug("Finished execution of %s", self.func_name)
 
         # 6. Process results
         # Depending on how many outputs we have we treat our result

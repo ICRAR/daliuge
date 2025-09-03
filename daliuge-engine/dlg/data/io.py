@@ -659,6 +659,10 @@ class NgasLiteIO(DataIO):
     def delete(self):
         pass  # We never delete stuff from NGAS
 
+    @overrides
+    def _size(self, **kwargs) -> int:
+        return self._writtenDataSize
+
 
 def IOForURL(url):
     """

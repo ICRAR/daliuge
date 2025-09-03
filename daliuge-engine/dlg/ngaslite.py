@@ -30,8 +30,6 @@ still need to access NGAS from time to time.
 
 import http.client
 import logging
-import urllib.request
-from xml.dom import minidom
 import requests
 from xml.dom.minidom import parseString
 
@@ -137,18 +135,8 @@ def fileIdExists(host:str, port:int, fileId:str, timeout:int=10) -> bool:
     try:
         _ = fileStatus(host, port, fileId, timeout)
         return True
-    except ConnectionError:
-        raise
-    except Exception as err:
-        xp = minidom.parseString(err.args[0]['STATUS_ERR']['message'])
-        return False
-        _ = xp.getElementsByTagName("Status")[0].attributes["Message"].value
-        # TODO: do the more explicit checking
-        # message = xp.getElementsByTagName("Status")[0].attributes["Message"].value
-        # if message.startswith("NGAMS_ER_UNAVAIL_FILE"):
-        #     return False
-        # else:
-        #     return False
+    except ConnectionError as e:
+        raise e
 
 def fileStatus(host, port, fileId, timeout=10):
     """
@@ -165,7 +153,7 @@ def fileStatus(host, port, fileId, timeout=10):
     except ConnectionError as e:
         raise FileNotFoundError from e
     if conn.status_code != http.HTTPStatus.OK:
-        raise Exception(
+        raise RuntimeError(
             {"STATUS_ERR":{
                 "code": conn.status_code,
                 "host": host,
