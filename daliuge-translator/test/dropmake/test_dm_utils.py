@@ -27,8 +27,8 @@ Test the dropmake.dm_utils functionality
 import json
 import copy
 import unittest
-from dlg.dropmake.dm_utils import convert_construct, convert_subgraphs
-import daliuge_tests.dropmake as test_graphs
+from dlg.dropmake.dm_utils import convert_construct, convert_subgraphs, extract_globals
+import daliuge_tests.translator as test_graphs
 
 try:
     from importlib.resources import files, as_file
@@ -42,13 +42,24 @@ LINKS = "linkDataArray"
 def get_lg_fname(lg_name):
     return str(files(test_graphs) / f"logical_graphs/{lg_name}")
 
+def getFieldFromNode(node, field_name):
+    """
+    Return the field from the node that matches the field name
+    :param node: The dictionary spec for the node
+    :param field_name: The name of the field we want
+    :return: The field dictionary
+    """
+
+    return next(
+        (field for field in node['fields'] if field['name'] == field_name),
+        None
+    )
 
 def getNodeFromKey(lgo, key):
     for node in lgo[NODES]:
         if node["id"] == key:
             return node
     return None
-
 
 def getConstructNodeFromCategory(lgo, category):
     """
@@ -163,3 +174,63 @@ class TestConvertScatterGatherConstruct(unittest.TestCase):
         nGatherApp = getNodeFromKey(lg, nGatherKey)
         self.assertEqual(nGatherKey, nGatherApp["id"])
         self.assertEqual("PythonApp", nGatherApp["category"])
+
+class TestGlobals(unittest.TestCase):
+    """
+    Confirm that we successfully remove the GlobalVariablesDrop and apply its
+    changes.
+    """
+
+    def test_extract_string_globals(self):
+        fname = get_lg_fname("HelloWorld_Global.graph")
+        with open(fname, "r") as fp:
+            lg = json.load(fp)
+        self.assertEqual(3, len(lg[NODES]))
+        self.assertEqual(1, len(lg[LINKS]))
+        lg = extract_globals(lg)
+        self.assertEqual(2, len(lg[NODES]))
+        self.assertEqual(1, len(lg[LINKS]))
+        lgn = None
+        for node in lg['nodeDataArray']:
+            if node['category'] == 'PythonApp':
+                lgn = node
+        greet = getFieldFromNode(lgn, 'greet')
+        self.assertEqual("Test case global", greet['value'])
+
+    def test_extract_integer_globals(self):
+        fname = get_lg_fname("ArrayLoop_Global.graph")
+        with open(fname, "r") as fp:
+            lg = json.load(fp)
+        self.assertEqual(9, len(lg[NODES]))
+        self.assertEqual(7, len(lg[LINKS]))
+
+        nScatterConstruct = getConstructNodeFromCategory(lg, "Scatter")
+        nScatterKey = nScatterConstruct["id"]
+        nScatterApp = getNodeFromKey(lg, nScatterKey)
+        num_of_copies = getFieldFromNode(nScatterApp, 'num_of_copies')
+        self.assertEqual("{num_copies}", num_of_copies['value'])
+
+        nLoopConstruct = getConstructNodeFromCategory(lg, "Loop")
+        nLoopKey = nLoopConstruct["id"]
+        nLoopApp = getNodeFromKey(lg, nLoopKey)
+        num_of_iter = getFieldFromNode(nLoopApp, 'num_of_iter')
+        self.assertEqual("{num_loops}", num_of_iter['value'])
+
+
+        lg = extract_globals(lg)
+        self.assertEqual(8, len(lg[NODES]))
+        self.assertEqual(7, len(lg[LINKS]))
+
+        nScatterConstruct = getConstructNodeFromCategory(lg, "Scatter")
+        nScatterKey = nScatterConstruct["id"]
+
+        nScatterApp = getNodeFromKey(lg, nScatterKey)
+        self.assertEqual(nScatterKey, nScatterApp["id"])
+        num_of_copies = getFieldFromNode(nScatterApp, 'num_of_copies')
+        self.assertEqual(10, num_of_copies['value'])
+
+        nLoopConstruct = getConstructNodeFromCategory(lg, "Loop")
+        nLoopKey = nLoopConstruct["id"]
+        nLoopApp = getNodeFromKey(lg, nLoopKey)
+        num_of_iter = getFieldFromNode(nLoopApp, 'num_of_iter')
+        self.assertEqual(2, num_of_iter['value'])

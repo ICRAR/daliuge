@@ -258,20 +258,6 @@ Shrunk memory will be truncated, grown blocks will contain a copy of the old dat
 As mentioned previously, if DALiuGE is configured to utilise multiple cores, there is no need to specifically use SharedMemoryDROPs, InMemoryDROPs will be switched automatically.
 However, if the need arises, one can specifically use SharedMemoryDROPs.
 
-Environment Variables
-^^^^^^^^^^^^^^^^^^^^^
-Often, several workflow components rely on shared global configuration values, usually stored in
-imaginatively named configuration files.
-DALiuGE supports this approach, of course, but offers additional, more transparent options.
-The EnvironmentVarDROP is a simple key-value store accessible at runtime by all drops in a workflow.
-One can include multiple ``EnivronmentVarDROP``s in a single workflow, **but each variable store must have a unique name**.
-In a logical graph, reference environment variables as component or application parameters with the following syntax:
-``${EnvironmentVarDROP_Name}.{Variable_name}``
-The translator and engine handle parsing and filling of these parameters automatically.
-Variables beginning with ``$DLG_``, such as ``$DLG_ROOT`` are an exception which are handled seperately.
-These variables come from the deployment themselves and are fetched from the deployment environment at runtime.
-
-One may also access these variables individually at runtime using the ``get_environment_variable(key)`` function, which accepts a key in the syntax mentioned above, returning ``None`` if the variable store or key does not exist.
 
 
 .. |lgt| replace:: *logical graph template*

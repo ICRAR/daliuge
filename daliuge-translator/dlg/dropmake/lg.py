@@ -47,6 +47,7 @@ from dlg.dropmake.dm_utils import (
     GInvalidLink,
     GInvalidNode,
     load_lg,
+    extract_globals
 )
 from dlg.dropmake.definition_classes import Categories
 from dlg.dropmake.lg_node import LGNode
@@ -87,6 +88,7 @@ class LG:
             lg = apply_active_configuration(lg)
 
         if LG_VER_EAGLE == lgver:
+            lg = extract_globals(lg)
             lg = convert_fields(lg)
             lg = convert_construct(lg)
             lg = convert_subgraphs(lg)

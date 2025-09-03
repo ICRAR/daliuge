@@ -25,7 +25,7 @@ try:
 except ModuleNotFoundError:
     from importlib_resources import files
 
-import daliuge_tests.dropmake as test_graphs
+import daliuge_tests.translator as test_graphs
 
 
 def get_lg_fpath(test_type, f_name):

@@ -42,7 +42,6 @@ from .drop import (
 
 from dlg.data.drops import InMemoryDROP, SharedMemoryDROP, FileDROP, NgasDROP
 from dlg.data.drops.data_base import NullDROP
-from dlg.data.drops.environmentvar_drop import EnvironmentVarDROP
 from dlg.data.drops.parset_drop import ParameterSetDROP
 from dlg.data.drops.container import ContainerDROP
 from dlg.exceptions import InvalidGraphException
@@ -337,7 +336,6 @@ def _createData(dropSpec, dryRun=False, session_id=None):
             "null": NullDROP,
             "json": JsonDROP,
             "ParameterSet": ParameterSetDROP,
-            "EnvironmentVariables": EnvironmentVarDROP,
         }
 
         try:

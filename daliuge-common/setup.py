@@ -66,15 +66,15 @@ install_requires = [
     "pyzmq==25.1.1",
     "pydantic>=2.5",
     "boto3",
-    "phonenumbers",
-    "mailchecker",
-    "ftfy",
+    "phonenumbers", #
+    "mailchecker", #
+    "ftfy", #
     "toml",
     "pyyaml",
-    "beautifulsoup4",
-    "openpyxl",
-    "xlrd",
-    "xmltodict",
+    "beautifulsoup4", #
+    "openpyxl", #
+    "xlrd", #
+    "xmltodict", #
     "python-benedict[all]",
     "pylint",
 ]

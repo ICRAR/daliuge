@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from dlg.data.drops.file import FileDROP
-from dlg.exceptions import InvalidDropException
+from dlg.exceptions import ErrorManagerCaughtException
 
 
 class TestDROPFilepath(unittest.TestCase):
@@ -47,5 +47,5 @@ class TestDROPFilepath(unittest.TestCase):
         self.assertEqual(fdir/"mydir/test.txt", Path(fdrop.path))
 
     def test_expand_missingenvar(self):
-        self.assertRaises(InvalidDropException, FileDROP, uid="A", oid="A",
+        self.assertRaises(ErrorManagerCaughtException, FileDROP, uid="A", oid="A",
                                                         filepath="$MISSING/test.txt")

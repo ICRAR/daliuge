@@ -152,10 +152,12 @@ class DataLifecycleManagerBackgroundTask(threading.Thread):
         ev = self._dlm.finishedEvent
         dlm = self._dlm
         p = self._period
-        while True:
-            if ev.wait(p):
-                break
+        orig_level = logger.getEffectiveLevel()
+        while not ev.wait(p):
+            logging.getLogger("dlg").setLevel(logging.INFO) # don't want repeating logs
             self.doTask(dlm)
+            logging.getLogger("dlg").setLevel(orig_level) # 
+
 
 
 class DROPChecker(DataLifecycleManagerBackgroundTask):

@@ -45,7 +45,6 @@ class Categories:
     PLASMA = "Plasma"
     PLASMAFLIGHT = "PlasmaFlight"
     PARSET = "ParameterSet"
-    ENVIRONMENTVARS = "EnvironmentVariables"
 
     MKN = "MKN"
     SCATTER = "Scatter"
@@ -83,7 +82,6 @@ DATA_TYPES = [
     Categories.PLASMA,
     Categories.PLASMAFLIGHT,
     Categories.PARSET,
-    Categories.ENVIRONMENTVARS,
     Categories.START,
     Categories.END,
 ]

@@ -30,11 +30,12 @@ class DaliugeException(Exception):
     The parent of all exceptions thrown by Daliuge
     """
 
+class ErrorManagerCaughtException(DaliugeException):
+    """
+    Raise this as part of managing known exceptions during DALiuGE Runtime.
+    """
 
-class InvalidDropException(DaliugeException):
-    """
-    An exception thrown when a Drop is created with a set of invalid arguments.
-    """
+class DROPException(DaliugeException):
 
     def __init__(self, drop, reason):
         DaliugeException.__init__(self, drop, reason)
@@ -44,7 +45,7 @@ class InvalidDropException(DaliugeException):
             self.oid = drop.oid
             self.uid = drop.uid
         self.reason = reason
-        self.msg = "InvalidDropException <Drop %s / %s>: %s" % (
+        self.msg = "DROPException <Drop %s / %s>: %s" % (
             self.uid,
             self.oid,
             self.reason,
@@ -53,15 +54,60 @@ class InvalidDropException(DaliugeException):
     def __str__(self, *args, **kwargs):
         return self.msg
 
+class InvalidDropException(DaliugeException):
+    """
+    An exception thrown when a Drop is created with a set of invalid arguments.
+    """
 
-class InvalidRelationshipException(DaliugeException):
+class IncompleteDROPSpec(InvalidDropException):
+    """
+    Raise when expected information is expected from the graph spec but does not exist
+    """
+
+class BadModuleException(InvalidDropException):
+    """
+    Raise when attempting to import a module that is not importable
+    """
+
+class InvalidEncodingException(InvalidDropException):
+    """
+    Raise when the encoding for a particular DROP does not match the encoding of the data
+    """
+
+class InvalidPathException(InvalidDropException):
+    """
+    A path has been defined for a DROP that does not exist or is invalid
+    """
+
+class InvalidDROPState(DROPException):
+    """
+    DROP has entered or attempted to enter a state it is not allowed to be.
+    """
+
+class BashAppRuntimeError(DROPException):
+    """
+    The BashShellApp has reported an error.
+    """
+
+class InvalidGraphException(DaliugeException):
+    """
+    An exception thrown when an invalid graph, or part of a graph, is given to
+    Daliuge.
+    """
+
+class IncompleteGraphError(InvalidGraphException):
+    """
+    Graph is missing data 
+    """
+
+class InvalidRelationshipException(InvalidGraphException):
     """
     An exception thrown when a relationship between two Drops has been
     instructed but is invalid in nature.
     """
 
     def __init__(self, rel, reason):
-        DaliugeException.__init__(self, rel, reason)
+        InvalidGraphException.__init__(self, rel, reason)
         self.rel = rel
         self.reason = reason
         self.msg = "InvalidRelationshipException <%r>: %s" % (self.rel, self.reason)
@@ -69,12 +115,6 @@ class InvalidRelationshipException(DaliugeException):
     def __str__(self, *args, **kwargs):
         return self.msg
 
-
-class InvalidGraphException(DaliugeException):
-    """
-    An exception thrown when an invalid graph, or part of a graph, is given to
-    Daliuge.
-    """
 
 class DropChecksumException(DaliugeException):
     """
@@ -100,56 +140,52 @@ class NoDropException(DaliugeException):
         self._reason = reason
 
     def __str__(self):
-        ret = "NoDropException <drop_uid: %s>" % (self._drop_uid)
+        ret = f"NoDropException <drop_uid: {self._drop_uid}>"
         if self._reason:
-            ret += ". Reason: %s" % (self._reason)
+            ret += f". Reason: {self._reason}"
         return ret
 
-
-class NoSessionException(DaliugeException):
+class SessionException(DaliugeException):
     """
-    An exception thrown when a session ID is pointing to a non-existing session
+    Broad exception class for DALiuGE sessions
     """
-
     def __init__(self, session_id, reason=None):
-        DaliugeException.__init__(self, session_id, reason)
         self._session_id = session_id
         self._reason = reason
 
     def __str__(self):
-        ret = "NoSessionException <session_id: %s>" % (self._session_id)
+        ret = f"SessionException <session_id: {self._session_id}>"
         if self._reason:
-            ret += ". Reason: %s" % (self._reason)
+            ret += f". Reason: {self._reason}"
         return ret
+
 
     @property
     def session_id(self):
         return self._session_id
 
+class NoSessionException(SessionException):
+    """
+    An exception thrown when a session ID is pointing to a non-existing session
+    """
 
-class SessionAlreadyExistsException(DaliugeException):
+class SessionInterruptError(SessionException):
+    """
+    Raise when a session is cancled prematurely.
+    """
+
+class InvalidSessionException(SessionException):
+    """
+    Test
+    """
+
+class SessionAlreadyExistsException(SessionException):
     """
     An exception thrown when a session ID is pointing to an existing session
     but is meant to be used as the ID of a new session.
     """
 
-    def __init__(self, session_id, reason=None):
-        DaliugeException.__init__(self, session_id, reason)
-        self._session_id = session_id
-        self._reason = reason
-
-    def __str__(self):
-        ret = "SessionAlreadyExistsException <session_id: %s>" % (self._session_id)
-        if self._reason:
-            ret += ". Reason: %s" % (self._reason)
-        return ret
-
-    @property
-    def session_id(self):
-        return self._session_id
-
-
-class InvalidSessionState(DaliugeException):
+class InvalidSessionState(SessionException):
     """
     An exception thrown when an operation is requested on a session that is not
     in the expected state for that operation.
@@ -161,3 +197,5 @@ class SubManagerException(DaliugeException):
     An exception thrown by composite drop managers when there was an error
     invoking one of their underlying drop managers.
     """
+
+

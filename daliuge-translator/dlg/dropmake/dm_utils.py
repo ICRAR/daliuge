@@ -305,11 +305,6 @@ def convert_mkn(lgo):
         for mok in mkn_output_keys:
             n_products_map[mok] = new_id
 
-        #        del node_split_n["inputApplicationName"]
-        #        del node_split_n["outputApplicationName"]
-        #        del node_split_n["outputAppFields"]
-        # del node_split_n['intputAppFields']
-
         new_field_kn = {
             "name": "num_of_copies",
             "value": "%d" % (N),
@@ -793,6 +788,7 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
         "fields": "inputAppFields",
         "inputApp": True,
     }
+
     input_node = _create_from_node(
         subgraph_node, subgraph_node["inputApplicationType"], input_app_args
     )
@@ -812,6 +808,55 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
     )
 
     return input_node, output_node
+
+def extract_globals(logical_graph: dict):
+    """
+    Extract variables defined in the GlobalVariableDROP and replace them across the
+    graph. Once all globals are extracted/replaced, we remove the GlobalVariableDrop from
+    the Logical Graph.
+
+    :param logical_graph:
+    :return:
+    """
+    type_converter = {
+        "Integer": int,
+        "Float": float,
+        "String": str,
+        "Boolean": lambda x: x.lower() in ("true", "1")
+    }
+
+    global_nodes = [
+        node
+        for node in logical_graph["nodeDataArray"]
+        if node["category"] == "EnvironmentVariables"
+    ]
+
+    # Remove all globals from graph
+    for gn in global_nodes:
+        logical_graph["nodeDataArray"].remove(gn)
+
+    global_map = {}
+    for gn in global_nodes:
+        for fields in gn["fields"]:
+            global_map[fields["name"]] = {
+                'value': fields["value"],
+                'type': fields['type']
+            }
+
+    for node in logical_graph["nodeDataArray"]:
+        for field in node['fields']:
+            for gn, gv in global_map.items():
+                if isinstance(field['value'], str) and f"{{{gn}}}" in field["value"]:
+                    if gv['type'] in type_converter:
+                        converter = type_converter[gv['type']]
+                    else:
+                        raise ValueError(f"Unknown field type '{gv['type']}' in globals")
+                    field['type'] = gv['type']
+                    field['value'] = converter(field['value'].replace(
+                        f"{{{gn}}}", str(gv['value'])
+                    ))
+
+    return logical_graph
 
 
 def convert_subgraphs(lgo: dict) -> dict:

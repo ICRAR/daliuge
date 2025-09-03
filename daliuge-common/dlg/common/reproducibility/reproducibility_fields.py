@@ -146,8 +146,6 @@ def lg_block_fields(
         data["flight_path"] = FieldOps.STORE
     elif category_type == "ParameterSet":
         pass
-    elif category_type == "EnvironmentVariables":
-        pass
     elif category_type == "MKN":
         data["m"] = FieldOps.STORE
         data["k"] = FieldOps.STORE

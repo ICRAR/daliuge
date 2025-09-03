@@ -7,7 +7,7 @@ as `daliuge_tests`).
 ## How to access
 ```python
 from importlib.resources import files
-import daliuge_tests.dropmake as test_graphs
+import daliuge_tests.translator as test_graphs
 
 files(test_graphs)
 ```

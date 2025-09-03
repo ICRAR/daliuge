@@ -34,11 +34,11 @@ import time
 
 from inspect import signature
 
-from dlg import utils, droputils
+from dlg import droputils, utils
+from dlg.apps.app_base import BarrierAppDROP
 from dlg.common import dropdict
 from dlg.data.drops.memory import parse_pydata
 from dlg.ddap_protocol import DROPStates
-from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
 
 logger = logging.getLogger(f"dlg.{__name__}")

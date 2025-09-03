@@ -23,7 +23,7 @@
 import json
 import os
 import unittest
-import daliuge_tests.dropmake as test_graphs
+import daliuge_tests.translator as test_graphs
 from dlg.dropmake import pg_generator
 
 from importlib.resources import files

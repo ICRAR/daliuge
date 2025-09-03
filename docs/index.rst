@@ -30,6 +30,7 @@ Graph Patterns
    scatter
    branch
    subgraph
+   globals
 
 Engine Fundamentals
 -----------------------
@@ -46,6 +47,9 @@ Advanced DALiuGE Methods
 ------------------------
 :doc:`/advanced/delayed` |br| 
 
+Debugging
+---------
+:doc:`/debugging/errors` |br|
 
 API Documentation
 -----------------
@@ -73,6 +77,7 @@ API Documentation
    graph_patterns/branch
    graph_patterns/scatter
    graph_patterns/subgraph
+   graph_patterns/globals
 
 .. toctree::
    :maxdepth: 2
@@ -98,6 +103,13 @@ API Documentation
    cli/cli_engine
    cli/cli_translator
    cli/cli_remote
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Debugging
+
+   debugging/errors
 
 .. toctree::
    :caption: Reference
