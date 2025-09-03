@@ -825,10 +825,11 @@ def extract_globals(logical_graph: dict):
         "Boolean": lambda x: x.lower() in ("true", "1")
     }
 
-    global_nodes = []
-    for node in logical_graph["nodeDataArray"]:
-        if node["category"] == "EnvironmentVariables":
-            global_nodes.append(node)
+    global_nodes = [
+        node
+        for node in logical_graph["nodeDataArray"]
+        if node["category"] == "EnvironmentVariables"
+    ]
 
     # Remove all globals from graph
     for gn in global_nodes:
@@ -846,7 +847,10 @@ def extract_globals(logical_graph: dict):
         for field in node['fields']:
             for gn, gv in global_map.items():
                 if isinstance(field['value'], str) and f"{{{gn}}}" in field["value"]:
-                    converter = type_converter[gv['type']]
+                    if gv['type'] in type_converter:
+                        converter = type_converter[gv['type']]
+                    else:
+                        raise ValueError(f"Unknown field type '{gv['type']}' in globals")
                     field['type'] = gv['type']
                     field['value'] = converter(field['value'].replace(
                         f"{{{gn}}}", str(gv['value'])
