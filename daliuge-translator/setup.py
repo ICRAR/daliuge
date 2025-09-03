@@ -35,7 +35,7 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # here. If we find the git commit (either via "git" command execution or in a
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
-# by setuptools/pkg_resources or "final" versions.
+# by setuptools or "final" versions.
 
 
 def extract_version():
@@ -130,8 +130,8 @@ extra_requires = {
     "test": [
         "pytest",
         # Toggle comments below if adding new test graphs
-        "eagle-test-graphs==0.1.9",
-        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@branch-name",
+        "eagle-test-graphs==0.1.20",
+        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-510",
         "np-merklelib",
         "parameterized>=0.9.0",
         "ruamel.yaml==0.16.0",

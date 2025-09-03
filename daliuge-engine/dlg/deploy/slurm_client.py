@@ -24,6 +24,7 @@ Contains a slurm client which generates slurm scripts from daliuge graphs.
 """
 
 import datetime
+import logging
 import sys
 import os
 import subprocess
@@ -38,6 +39,7 @@ from dlg.deploy.configs import DEFAULT_MON_PORT, DEFAULT_MON_HOST
 from dlg.deploy.deployment_utils import find_numislands, label_job_dur
 from paramiko.ssh_exception import SSHException
 
+LOGGER = logging.getLogger(f"dlg.{__name__}")
 
 class SlurmClient:
     """
@@ -92,15 +94,22 @@ class SlurmClient:
 
         if config:
             # Do the config from the config file
-            self.host = config['login_node']
-            self._acc = config['account'] # superceded by slurm_template if present
-            self.dlg_root = config['dlg_root']
-            self.modules = config['modules']
-            self.venv = config['venv'] # superceded by slurm_template if present
-            self.exec_prefix = config["exec_prefix"]
-            self.username = config['user'] if 'user' in config else username
-            if not self.username:
-                print("Username not configured in INI file, using local username...")
+            try:
+                self.host = config.get('login_node')
+                # superceded by slurm_template if that is present
+                self._acc = config.get('account')
+                self.dlg_root = config.get('dlg_root')
+                self.modules = config.get('modules')
+                # superceded by slurm_template if that is present
+                self.venv = config.get('venv')
+                self.exec_prefix = config.get("exec_prefix")
+                self.username = config.get('user', username)
+                if not self.username:
+                    print("Username not configured in INI file, using local username...")
+            except KeyError as e:
+                print(f"Missing {str(e)} entry in .ini, please review your configuration "
+                      f"setup.")
+                sys.exit(1)
         else:
             # Setup SLURM environment variables using config
             config = ConfigFactory.create_config(facility=facility, user=username)
@@ -201,7 +210,7 @@ class SlurmClient:
         """ 
         pardict = {}
         pardict["SESSION_ID"] = os.path.split(session_dir)[-1]
-        pardict["MODULES"] = self.modules
+        pardict["MODULES"] = f"\n{self.modules}\n"
         pardict["DLG_ROOT"] = self.dlg_root
         pardict["EXEC_PREFIX"] = self.exec_prefix
         pardict["NUM_NODES"] = str(self._num_nodes)
@@ -282,9 +291,9 @@ class SlurmClient:
         elif not self._remote:
             # locally fallback to env var
             if os.environ["DLG_ROOT"]:
-                dlg_root = os.environ["DLG_ROOT"]
+                self.dlg_root = os.environ["DLG_ROOT"]
             else:
-                dlg_root = f"{os.environ['HOME']}.dlg"
+                self.dlg_root = f"{os.environ['HOME']}.dlg"
         session_dir =  self.session_dir
         if not self._remote and not os.path.exists(session_dir):
             os.makedirs(session_dir)

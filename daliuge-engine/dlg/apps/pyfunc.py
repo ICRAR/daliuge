@@ -39,7 +39,7 @@ from contextlib import redirect_stdout
 from dlg import drop_loaders
 from dlg.data.path_builder import filepath_from_string
 from dlg.drop import track_current_drop
-from dlg.utils import serialize_data, deserialize_data
+from dlg.utils import deserialize_data
 from dlg.named_port_utils import (
     Argument,
     DropParser,
@@ -63,31 +63,6 @@ from dlg.pyext import pyext
 logger = logging.getLogger(f"dlg.{__name__}")
 
 MAX_IMPORT_RECURSION = 100
-
-def serialize_func(f, serialize=True):
-    if isinstance(f, str):
-        parts = f.split(".")
-        f = getattr(importlib.import_module(".".join(parts[:-1])), parts[-1])
-
-    fser = base64.b64encode(dill.dumps(f)).decode() if serialize else f
-    # fser = inspect.getsource(f)
-    fdefaults = {"args": [], "kwargs": {}}
-    adefaults = {"args": [], "kwargs": {}}
-    a = inspect.getfullargspec(f)
-    if a.defaults:
-        fdefaults["kwargs"] = dict(
-            zip(
-                a.args[-len(a.defaults):],
-                [serialize_data(d) for d in a.defaults],
-            )
-        )
-        adefaults["kwargs"] = dict(
-            zip(a.args[-len(a.defaults):], [d for d in a.defaults])
-        )
-    logger.debug("Introspection of function %s: %s", f, a)
-    logger.debug("Defaults for function %r: %r", f, adefaults)
-    return fser, fdefaults
-
 
 def import_using_name(app, fname, curr_depth):
     if curr_depth > MAX_IMPORT_RECURSION:
@@ -629,10 +604,15 @@ class PyFuncApp(BarrierAppDROP):
                 argument = arg_map[arg]
                 parser = (DropParser(argument.encoding))
                 if parser == DropParser.PATH:
-                    argument.value = filepath_from_string(
-                        argument.value, dirname=output_drop.dirname, uid=output_drop.uid,
-                        humanKey=output_drop.humanKey
-                    )
+                    try:
+                        argument.value = filepath_from_string(
+                            argument.value, dirname=output_drop.dirname, uid=output_drop.uid,
+                            humanKey=output_drop.humanKey
+                        )
+                    except RuntimeError as e:
+                        raise InvalidDropException(
+                            "Path contains unset environment variable", e
+                        ) from e
                     self._output_filepaths[output_uid] = argument.value
                 arg_map[arg] = argument
                 self.parameters[arg] = arg_map[arg].value
@@ -673,7 +653,7 @@ class PyFuncApp(BarrierAppDROP):
                 if hasattr(self, "input_parser")
                 else None
             )
-            keyPortArgs, posPortArgs = identify_named_ports(
+            keyPortArgs, _ = identify_named_ports(
                 inputs_dict,
                 pargsDict,
                 keyargsDict,

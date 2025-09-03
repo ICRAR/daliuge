@@ -23,6 +23,7 @@
 Module containing miscellaneous utility classes and functions.
 """
 import base64
+import inspect
 import dill
 import errno
 import functools
@@ -537,6 +538,31 @@ def serialize_data(d):
 def deserialize_data(d):
     # return dill.loads(d)
     return dill.loads(base64.b64decode(d.encode("utf8")))
+
+
+def serialize_func(f, serialize=True):
+    if isinstance(f, str):
+        parts = f.split(".")
+        f = getattr(importlib.import_module(".".join(parts[:-1])), parts[-1])
+
+    fser = base64.b64encode(dill.dumps(f)).decode() if serialize else f
+    # fser = inspect.getsource(f)
+    fdefaults = {"args": [], "kwargs": {}}
+    adefaults = {"args": [], "kwargs": {}}
+    a = inspect.getfullargspec(f)
+    if a.defaults:
+        fdefaults["kwargs"] = dict(
+            zip(
+                a.args[-len(a.defaults):],
+                [serialize_data(d) for d in a.defaults],
+            )
+        )
+        adefaults["kwargs"] = dict(
+            zip(a.args[-len(a.defaults):], [d for d in a.defaults])
+        )
+    logger.debug("Introspection of function %s: %s", f, a)
+    logger.debug("Defaults for function %r: %r", f, adefaults)
+    return fser, fdefaults
 
 
 def truncateUidToKey(uid: str) -> str:

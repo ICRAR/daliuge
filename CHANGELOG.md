@@ -1,8 +1,29 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v5.6.3
+- [Fixed] Revert node_str parameter name in rest.py function definition: https://github.com/ICRAR/daliuge/pull/358
+
+# v5.6.2
+- [Fixed] Fix environment variable expansion not working: https://github.com/ICRAR/daliuge/pull/356
+
+## v5.6.1
+- [Fixed] Fix parse_pydata and make MemoryDROP Type consistent: https://github.com/ICRAR/daliuge/pull/354
+
+## v5.6.0
+
+- [Added]  HelloWorld Tutorials and Graph Patterns:  https://github.com/ICRAR/daliuge/pull/347
+- [Changed] Remove final pkg_resources references from code: https://github.com/ICRAR/daliuge/pull/350
+
+## v5.5.3
+- [Fixed] Fix Sessions disappearing in DIM page when restarting Node Manager: https://github.com/ICRAR/daliuge/pull/349
+
+## v5.5.2
+- [Fixed] Address issue #315 to make `dlg` remote deployment CLI more clear: https://github.com/ICRAR/daliuge/pull/342
+- [Fixed] Fix multi-input  AppDROP failing after Branch False condition: https://github.com/ICRAR/daliuge/pull/346
+
 ## v5.5.1
-- [Fix] Update `urllib3` to resolve Dependabot security issue: https://github.com/ICRAR/daliuge/pull/345
+- [Fixed] Update `urllib3` to resolve Dependabot security issue: https://github.com/ICRAR/daliuge/pull/345
 
 ## v5.5.0
 

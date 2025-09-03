@@ -18,7 +18,7 @@ Configuration
 ^^^^^^^^^^^^^
 
 .. warning::
-    Custom environment configuration is in 'Beta' at the moment and there may still be rough edges. Please consider `submitting an issue <https://github.com/ICRAR/daliuge/issues/new/choose>`_ if you identify one. 
+    Custom environment configuration is in 'beta' at the moment and there may still be rough edges. Please consider `submitting an issue <https://github.com/ICRAR/daliuge/issues/new/choose>`_ if you identify one. 
 
 Remote deploment setup occurs from your local DALiuGE installtion. 
 
@@ -81,7 +81,7 @@ Thus some environment variables that may be set in the ``.ini`` file will be ove
 
 The following is a complete example::
 
-    dlg create -a submit -n 1 -s 1 -u -f setonix 
+    dlg remote-submit -a submit 
     -L <my_logical_graph>
     -v 5 --remote --submit 
     --config_file setonix.ini --slurm_template setonix.slurm
@@ -93,20 +93,16 @@ Command: dlg config
 ===================
 Help output::
 
-   Usage: daemon [options]
-   
-   Starts a DALiuGE Daemon process
-   
-   Options:
-     -h, --help     show this help message and exit
-     -m, --master   Start this DALiuGE daemon as the master daemon
-     --no-nm        Don't start a NodeDropManager by default
-     --no-zeroconf  Don't enable zeroconf on this DALiuGE daemon
-     -v, --verbose  Become more verbose. The more flags, the more verbose
-     -q, --quiet    Be less verbose. The more flags, the quieter
+    Usage: config [options]
 
-Command: dlg create
-===================
+    Options:
+      -h, --help  show this help message and exit
+      --setup     Setup local '$HOME/.config/dlg' directory to store custom
+                  environment config and slurm scripts
+      -l, --list  List the available configuration for DALiuGE deployment.
+
+Command: dlg remote-submit
+===========================
 
 Help output::
         
@@ -118,67 +114,98 @@ Help output::
     Options:
       -h, --help            show this help message and exit
       -a ACTION, --action=ACTION
-                            1 - create/submit job, 2 - analyse log
-      -l LOG_ROOT, --log-root=LOG_ROOT
-                            The root directory of the log file
-      -d LOG_DIR, --log-dir=LOG_DIR
-                            The directory of the log file for parsing
-      -L LOGICAL_GRAPH, --logical-graph=LOGICAL_GRAPH
-                            The filename of the logical graph to deploy
+                            **submit** job or **analyse** log
       -A ALGORITHM, --algorithm=ALGORITHM
                             The algorithm to be used for the translation
       -O ALGORITHM_PARAMS, --algorithm-parameters=ALGORITHM_PARAMS
                             Parameters for the translation algorithm
-      -P PHYSICAL_GRAPH, --physical-graph=PHYSICAL_GRAPH
-                            The filename of the physical graph (template) to
-                            deploy
-      -t JOB_DUR, --job-dur=JOB_DUR
-                            job duration in minutes
-      -n NUM_NODES, --num_nodes=NUM_NODES
-                            number of compute nodes requested
-      -i, --visualise_graph
-                            Whether to visualise graph (poll status)
-      -p, --run_proxy       Whether to attach proxy server for real-time
-                            monitoring
-      -m MON_HOST, --monitor_host=MON_HOST
-                            Monitor host IP (optional)
-      -o MON_PORT, --monitor_port=MON_PORT
-                            The port to bind DALiuGE monitor
-      -v VERBOSE_LEVEL, --verbose-level=VERBOSE_LEVEL
-                            Verbosity level (1-3) of the DIM/NM logging
-      -c CSV_OUTPUT, --csvoutput=CSV_OUTPUT
-                            CSV output file to keep the log analysis result
-      -z, --zerorun         Generate a physical graph that takes no time to run
-      -y, --sleepncopy      Whether include COPY in the default Component drop
-      -T MAX_THREADS, --max-threads=MAX_THREADS
-                            Max thread pool size used for executing drops. 0
-                            (default) means no pool.
-      -s NUM_ISLANDS, --num_islands=NUM_ISLANDS
-                            The number of Data Islands
-      -u, --all_nics        Listen on all NICs for a node manager
-      -S, --check_with_session
-                            Check for node managers' availability by
-                            creating/destroy a session
-      -f FACILITY, --facility=FACILITY
-                            The facility for which to create a submission job
-                            Valid options: ['galaxy_mwa', 'galaxy_askap',
-                            'magnus', 'galaxy', 'setonix', 'shao', 'hyades',
-                            'ood', 'ood_cloud']
       --submit              If set to False, the job is not submitted, but the
                             script is generated
       --remote              If set to True, the job is submitted/created for a
                             remote submission
-      -D DLG_ROOT, --dlg_root=DLG_ROOT
-                            Overwrite the DLG_ROOT directory provided by the
-                            config
-      -C, --configs         Display the available configurations and exit
+      -c CSV_OUTPUT, --csvoutput=CSV_OUTPUT
+                            CSV output file to keep the log analysis result
       -U USERNAME, --username=USERNAME
                             Remote username, if different from local
       --ssh_key=SSH_KEY     Path to ssh private key
 
-      Experimental Options:
-        Caution: These are not properly tested and likely tobe rough around
-        the edges.
+      Engine options:
+        DALiuGE engine configuration and runtime options
+
+        -l LOG_ROOT, --log-root=LOG_ROOT
+                            The root directory of the log file
+        -d LOG_DIR, --log-dir=LOG_DIR
+                            The directory of the log file for parsing
+        -n NUM_NODES, --num_nodes=NUM_NODES
+                            Number of compute nodes requested
+        -s NUM_ISLANDS, --num_islands=NUM_ISLANDS
+                            The number of Data Islands
+        -u, --all_nics      Listen on all NICs for a node manager
+        -S, --check_with_session
+                            Check for node managers' availability by
+                            creating/destroy a session
+        -D DLG_ROOT, --dlg_root=DLG_ROOT
+                            Overwrite the DLG_ROOT directory provided by the
+                            config
+        -v VERBOSE_LEVEL, --verbose-level=VERBOSE_LEVEL
+                            Verbosity level (1-3) of the DIM/NM logging
+
+      Slurm options:
+        Slurm job script options. Note: These will be overwritten if using
+        --slurm_template
+
+        -T MAX_THREADS, --max-threads=MAX_THREADS
+                            Max thread pool size used for executing drops. 0
+                            (default) means no pool.
+        -f FACILITY, --facility=FACILITY
+                            The facility for which to create a submission job
+                            Valid options: ['galaxy_mwa', 'galaxy_askap',
+                            'magnus', 'galaxy', 'setonix', 'shao', 'hyades',
+                            'ood', 'ood_cloud']
+        -t JOB_DUR, --job-dur=JOB_DUR
+                            job duration in minutes
+
+      Monitor proxy options:
+        Start and configure the monitoring proxy.
+
+        -p, --run_proxy     Whether to attach proxy server for real-time
+                            monitoring
+        -m MON_HOST, --monitor_host=MON_HOST
+                            Monitor host IP (optional)
+        -o MON_PORT, --monitor_port=MON_PORT
+                            The port to bind DALiuGE monitor
+        -i, --visualise_graph
+                            Whether to visualise graph (poll status)
+
+      Graph Component options:
+        Update component DROPs for testing.
+
+        -z, --zerorun       Generate a physical graph that takes no time to run
+        -y, --sleepncopy    Whether include COPY in the default Component drop
+
+      Remote graph options:
+        Options for graphs stored in remote repositories. Currently supported:
+        GitHub, GitLab
+
+        --github            Access graph from remote repository
+        --gitlab            Access graph from remote repository
+        --user_org=USER_ORG
+        --repo=REPO         
+        --branch=BRANCH     
+        --path=PATH         
+
+      Local graph options:
+        Options for locally stored graphs
+
+        -L LOGICAL_GRAPH, --logical-graph=LOGICAL_GRAPH
+                            The filename of the logical graph to deploy
+        -P PHYSICAL_GRAPH, --physical-graph=PHYSICAL_GRAPH
+                            The filename of the physical graph (template) to
+                            deploy
+
+      Remote configuration Options:
+        Remote deployment configuration options based on configuration and
+        template files.
 
         --config_file=CONFIG_FILE
                             Use INI configuration file.

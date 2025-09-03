@@ -348,11 +348,18 @@ class NodeManagerBase(DROPManager):
         logger.info("Created session %s", sessionId)
 
     def getSessionStatus(self, sessionId):
-        self._check_session_id(sessionId)
+        try:
+            self._check_session_id(sessionId)
+        except NoSessionException:
+            return None
+
         return self.sessions[sessionId].status
 
     def getSessionReproStatus(self, sessionId):
         return self.sessions[sessionId].reprostatus
+
+    def getSessionDir(self, sessionId):
+        return {"dir" : self.sessions[sessionId].sessionDir}
 
     def getGraphReproData(self, sessionId):
         return self.sessions[sessionId].graphreprodata
@@ -444,7 +451,10 @@ class NodeManagerBase(DROPManager):
         return list(self.sessions.keys())
 
     def getGraphSize(self, sessionId):
-        self._check_session_id(sessionId)
+        try:
+            self._check_session_id(sessionId)
+        except NoSessionException:
+            return 0
         session = self.sessions[sessionId]
         return len(session.graph)
 

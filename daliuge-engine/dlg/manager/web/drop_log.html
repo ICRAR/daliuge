@@ -109,7 +109,10 @@
 
 <script>
     $(document).ready(function() {
-        var table = $('#logentries').DataTable();
+        var table = $('#logentries').DataTable({
+            scrollX: false,
+            paging: false
+        });
 
         // Get unique values for the column (City)
         table.column({{filter_index}}).data().unique().sort().each(function(d, j) {

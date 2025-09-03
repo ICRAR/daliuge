@@ -208,6 +208,7 @@ class ManagerRestServer(RestServer):
         # The non-REST mappings that serve HTML-related content
         app.route("/static/<filepath:path>", callback=self.server_static)
         app.get("/session", callback=self.visualizeSession)
+        app.route("/api/sessions/<sessionId>/dir", callback=self._getSessionDir)
         app.route("/api/sessions/<sessionId>/graph/drop/<dropId>",
                   callback=self._getDropStatus)
         app.route("/sessions/<sessionId>/graph/drop/<dropId>",
@@ -276,10 +277,12 @@ class ManagerRestServer(RestServer):
         status = self.dm.getSessionStatus(sessionId)
         try:
             graphDict = self.dm.getGraph(sessionId)
+            directory = self.dm.getSessionDir(sessionId)
         except KeyError:  # Pristine state sessions don't have a graph, yet.
             graphDict = {}
             status = 0
-        return {"status": status, "graph": graphDict}
+            directory = ""
+        return {"status": status, "graph": graphDict, "dir":directory}
 
     @daliuge_aware
     def getSessionReproStatus(self, sessionId):
@@ -370,6 +373,9 @@ class ManagerRestServer(RestServer):
         staticRoot = Path(__file__).parent / "web/static"
         return bottle.static_file(filepath, root=staticRoot)
 
+    def _getSessionDir(self, sessionId):
+        return self.dm.getSessionDir(sessionId)
+
     def visualizeSession(self):
         params = bottle.request.params
         sessionId = params["sessionId"] if "sessionId" in params else ""
@@ -385,6 +391,7 @@ class ManagerRestServer(RestServer):
             viewMode=viewMode,
             serverUrl=serverUrl,
             dmType=self.dm.__class__.__name__,
+            sessionDir=sessionId
         )
 
     def _getDropStatus(self, sessionId, dropId):
@@ -405,7 +412,6 @@ class ManagerRestServer(RestServer):
         else:
             columns = []
             filter_column_index=0
-
 
         tpl = file_as_string("web/drop_log.html")
         return bottle.template(
@@ -661,40 +667,40 @@ class CompositeManagerRestServer(ManagerRestServer):
         return data
 
     @daliuge_aware
-    def getNodeSessionInformation(self, node_str, sessionId):
+    def getNodeSessionInformation(self, node: str, sessionId):
         try:
-            node = self.dm.get_node_from_json(node_str)
-            with NodeManagerClient(host=node.host, port=node.port) as dm:
+            n = Node(self.dm.get_node_from_json(node))
+            with NodeManagerClient(host=n.host, port=n.port) as dm:
                 return dm.session(sessionId)
         except ValueError as e:
-            raise ValueError(f"{node_str} not in current list of nodes") from e
+            raise ValueError(f"{n} not in current list of nodes") from e
 
     @daliuge_aware
-    def getNodeSessionStatus(self, node_str, sessionId):
+    def getNodeSessionStatus(self, node: str, sessionId):
         try:
-            node = self.dm.get_node_from_json(node_str)
-            with NodeManagerClient(host=node.host, port=node.port) as dm:
+            n = Node(self.dm.get_node_from_json(node))
+            with NodeManagerClient(host=n, port=n.port) as dm:
                 return dm.session_status(sessionId)
         except ValueError as e:
-            raise ValueError(f"{node_str} not in current list of nodes") from e
+            raise ValueError(f"{node} not in current list of nodes") from e
 
     @daliuge_aware
-    def getNodeGraph(self, node_str, sessionId):
+    def getNodeGraph(self, node: str, sessionId):
         try:
-            node = self.dm.get_node_from_json(node_str)
-            with NodeManagerClient(host=node.host, port=node.port) as dm:
+            n = Node(self.dm.get_node_from_json(node))
+            with NodeManagerClient(host=n.host, port=n.port) as dm:
                 return dm.graph(sessionId)
         except ValueError as e:
-            raise ValueError(f"{node_str} not in current list of nodes") from e
+            raise ValueError(f"{node} not in current list of nodes") from e
 
     @daliuge_aware
-    def getNodeGraphStatus(self, node_str, sessionId):
+    def getNodeGraphStatus(self, node: str, sessionId):
         try:
-            node = self.dm.get_node_from_json(node_str)
-            with NodeManagerClient(host=node.host, port=node.port) as dm:
+            n = Node(self.dm.get_node_from_json(node))
+            with NodeManagerClient(host=n.host, port=n.port) as dm:
                 return dm.graph_status(sessionId)
         except ValueError as e:
-            raise ValueError(f"{node_str} not in current list of nodes") from e
+            raise ValueError(f"{node} not in current list of nodes") from e
 
     # ===========================================================================
     # non-REST methods
@@ -821,6 +827,7 @@ class MasterManagerRestServer(CompositeManagerRestServer):
     def _getAllCMNodes(self):
         nodes = []
         for host in self.dm.dmHosts:
-            with DataIslandManagerClient(host=host.host, port=host.port) as dm:
+            h = Node(host)
+            with DataIslandManagerClient(host=h.host, port=h.port) as dm:
                 nodes += dm.nodes()
         return [str(n) for n in nodes]
