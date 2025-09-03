@@ -50,11 +50,10 @@ def getFieldFromNode(node, field_name):
     :return: The field dictionary
     """
 
-    for field in node['fields']:
-        if field['name'] == field_name:
-            return field
-
-    return None
+    return next(
+        (field for field in node['fields'] if field['name'] == field_name),
+        None
+    )
 
 def getNodeFromKey(lgo, key):
     for node in lgo[NODES]:
