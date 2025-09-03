@@ -80,6 +80,20 @@ class ErrorCode(Enum):
     These changes will need to be added to the EAGLE graph. 
     """
 
+    PATH_ERROR = auto()
+    """
+    There was an issue with the path set for this DROP, which may becaused by the 
+    following: 
+    
+        - The file does not exist and/or you have set check_filepath_exists to be 
+        True.
+        - The directory does not exist at runtime
+        - An environment variable that is being referred to has not been set and cannot 
+        be expanded
+        
+    Please review the DataDROP parameter values for this DROP.    
+    """
+
     BASH_COMMAND_FAILED = auto()
     """
     There was an issue running your BashShellApp DROP. This may be caused by: 
@@ -163,6 +177,7 @@ EXCEPTION_MAP = {
     ex.InvalidDropException: ErrorCode.DROP_ERROR,
     ex.BadModuleException: ErrorCode.BAD_IMPORT,
     ex.InvalidEncodingException: ErrorCode.ENCODING_ERROR,
+    ex.InvalidPathException: ErrorCode.PATH_ERROR,
     ex.IncompleteDROPSpec: ErrorCode.INCOMPLETE_DROP_SPEC,
     ex.BashAppRuntimeError: ErrorCode.BASH_COMMAND_FAILED,
     ex.InvalidGraphException: ErrorCode.GRAPH_ERROR,
