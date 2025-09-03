@@ -86,10 +86,10 @@ class ErrorCode(Enum):
     following: 
     
         - The file does not exist and/or you have set check_filepath_exists to be 
-        True.
+          True.
         - The directory does not exist at runtime
         - An environment variable that is being referred to has not been set and cannot 
-        be expanded
+          be expanded
         
     Please review the DataDROP parameter values for this DROP.    
     """
