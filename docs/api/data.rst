@@ -16,9 +16,9 @@ dlg.data.drops.data_base
 .. automodule:: dlg.data.drops.data_base
         :members:
 
-dlg.data.drops.directorycontainer
+dlg.data.drops.directory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: dlg.data.drops.directorycontainer
+.. automodule:: dlg.data.drops.directory
         :members:
 
 dlg.data.drops.file

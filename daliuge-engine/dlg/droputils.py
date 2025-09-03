@@ -29,6 +29,7 @@ import io
 import time
 import logging
 import re
+import shutil
 import threading
 import traceback
 
@@ -140,6 +141,15 @@ def allDropContents(drop, bufsize=65536) -> bytes:
     drop.close(desc)
     return buf.getvalue()
 
+def copyDirectoryContents(source: "DirectoryDROP", target: "DirectoryDROP"):
+    """
+    Manually copy one directory to another
+    :param source:
+    :param target:
+    :return:
+    """
+    logger.debug("Copying from %s to %s", repr(source), repr(target))
+    shutil.copytree(source.path, target.path, dirs_exist_ok=True)
 
 def copyDropContents(source: "DataDROP", target: "DataDROP", bufsize: int = 65536):
     """

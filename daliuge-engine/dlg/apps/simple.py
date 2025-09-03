@@ -35,6 +35,7 @@ from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
 from dlg.apps.branch import BranchAppDrop
 from dlg.drop import track_current_drop
@@ -50,7 +51,7 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
-from dlg.exceptions import DaliugeException
+from dlg.exceptions import DaliugeException, InvalidDropException
 from dlg.rpc import DropProxy
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -197,6 +198,15 @@ class CopyApp(BarrierAppDROP):
         if isinstance(inputDrop, ContainerDROP):
             for child in inputDrop.children:
                 self.copyRecursive(child)
+        elif isinstance(inputDrop, DirectoryDROP):
+            for outputDrop in self.outputs:
+                if isinstance(outputDrop, DirectoryDROP):
+                    droputils.copyDirectoryContents(inputDrop,outputDrop)
+                else:
+                    raise InvalidDropException(
+                        self,
+                        "Can't copy directory to non-DirectoryDROP"
+                    )
         else:
             for outputDrop in self.outputs:
                 droputils.copyDropContents(inputDrop, outputDrop, bufsize=self.bufsize)
@@ -340,8 +350,6 @@ class AverageArraysApp(BarrierAppDROP):
     method:  string <['mean']|'median'>, use mean or median as method.
     """
 
-    from numpy import mean, median
-
     component_meta = dlg_component(
         "AverageArraysApp",
         "Average Array App.",
@@ -354,8 +362,8 @@ class AverageArraysApp(BarrierAppDROP):
     methods = ["mean", "median"]
     method = dlg_string_param("method", methods[0])
 
-    def __init__(self, oid, uid, **kwargs):
-        super().__init__(oid, kwargs)
+    def initialize(self, **kwargs):
+        super(AverageArraysApp, self).initialize(**kwargs)
         self.marray = []
 
     def run(self):

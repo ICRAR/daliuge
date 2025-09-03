@@ -35,6 +35,8 @@ class TestTool(ManagerStarter, unittest.TestCase):
         """Checks that all dlg commands have a help"""
         tool._load_commands()
         for group, commands in tool.commands.items():
+            if group == 'zpalette': # Ignore palette gen as this is a separate program
+                continue
             for cmd in commands['commands']:
                 p = tool.start_process(
                     cmd, ["-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE

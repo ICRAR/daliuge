@@ -25,7 +25,7 @@ import uuid
 import threading
 
 from dlg.data.drops.memory import InMemoryDROP
-from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.directory import DirectoryDROP
 
 from .chilesdo import Split, Clean, SourceFlux
 
@@ -99,7 +99,7 @@ if __name__ == "__main__":
             casapy_path=CASAPY,
         )
 
-        image_out = DirectoryContainer(
+        image_out = DirectoryDROP(
             uuid.uuid1(), uuid.uuid1(), dirname=CUBE_OUT + CUBE_NAME, check_exists=False
         )
         cl.addOutput(image_out)
@@ -107,8 +107,8 @@ if __name__ == "__main__":
         flux.addOutput(flux_out)
 
         for v in VIS:
-            vis_in = DirectoryContainer(uuid.uuid1(), uuid.uuid1(), dirname=v[0])
-            split_out = DirectoryContainer(
+            vis_in = DirectoryDROP(uuid.uuid1(), uuid.uuid1(), dirname=v[0])
+            split_out = DirectoryDROP(
                 uuid.uuid1(), uuid.uuid1(), dirname=v[1], check_exists=False
             )
 
