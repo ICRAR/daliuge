@@ -30,6 +30,7 @@ Graph Patterns
    scatter
    branch
    subgraph
+   globals
 
 Engine Fundamentals
 -----------------------
@@ -73,6 +74,7 @@ API Documentation
    graph_patterns/branch
    graph_patterns/scatter
    graph_patterns/subgraph
+   graph_patterns/globals
 
 .. toctree::
    :maxdepth: 2
