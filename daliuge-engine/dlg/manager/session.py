@@ -67,7 +67,7 @@ class SessionStates:
     any given point of time.
     """
 
-    PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED, CANCELLED = range(6)
+    PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED, CANCELLED, FAILED = range(7)
 
 
 class LeavesCompletionListener(object):
@@ -599,6 +599,8 @@ class Session(object):
             ]
             if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.setCompleted()
+            if drop.status == DROPStates.ERROR:
+                self.status = SessionStates.FAILED
 
     @track_current_session
     def end(self):
@@ -616,6 +618,7 @@ class Session(object):
             SessionStates.RUNNING,
             SessionStates.FINISHED,
             SessionStates.CANCELLED,
+            SessionStates.FAILED
         ):
             raise InvalidSessionState(
                 "The session is currently not running, cannot get graph status"
