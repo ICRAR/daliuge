@@ -47,8 +47,9 @@ services:
       context: .
       dockerfile: Dockerfile.full
     image: dlg_full:latest
+    user: ${MY_UID}:${MY_GID}
     container_name: dlg-dim.localhost
-    command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm.localhost", "-vv"]
+    command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm1.localhost,dlg-nm2.localhost"]
     networks:
       - dlg-demo
     labels:
@@ -56,25 +57,51 @@ services:
       - "traefik.http.services.dim.loadbalancer.server.port=8001"
     volumes:
       - ~/dlg:/dlg
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
 
 
 # =============================================================
 #
-#	 NM
+#	 NM1
 #
 # =============================================================
 
-  dlg-nm:
+  dlg-nm1:
     image: dlg_full:latest
-    container_name: dlg-nm.localhost
-    command: ["dlg", "daemon", "--nm", "-vv"]
+    container_name: dlg-nm1.localhost
+    user: ${MY_UID}:${MY_GID}
+    command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
       - dlg-demo
     labels:
-      - "traefik.http.routers.nm.rule=Host(`dlg-nm.localhost`)"
-      - "traefik.http.services.nm.loadbalancer.server.port=8000"
+      - "traefik.http.routers.nm1.rule=Host(`dlg-nm1.localhost`)"
+      - "traefik.http.services.nm1.loadbalancer.server.port=8000"
     volumes:
       - ~/dlg:/dlg
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+
+# =============================================================
+#
+#	 NM2
+#
+# =============================================================
+
+  dlg-nm2:
+    image: dlg_full:latest
+    container_name: dlg-nm2.localhost
+    user: ${MY_UID}:${MY_GID}
+    command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
+    networks:
+      - dlg-demo
+    labels:
+      - "traefik.http.routers.nm2.rule=Host(`dlg-nm2.localhost`)"
+      - "traefik.http.services.nm2.loadbalancer.server.port=8000"
+    volumes:
+      - ~/dlg:/dlg
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
 
 # =============================================================
 #
@@ -85,7 +112,8 @@ services:
   dlg-tm:
     image: dlg_full:latest
     container_name: dlg-tm.localhost
-    command: ["dlg", "daemon", "--tm", "-vv"]
+    user: ${MY_UID}:${MY_GID}
+    command: ["dlg", "daemon", "--tm"]
     networks:
       - dlg-demo
     labels:
@@ -93,6 +121,8 @@ services:
       - "traefik.http.services.tm.loadbalancer.server.port=8084"
     volumes:
       - ~/dlg:/dlg
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
 
 networks:
   dlg-demo:

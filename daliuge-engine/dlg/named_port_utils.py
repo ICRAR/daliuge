@@ -181,7 +181,7 @@ def identify_named_ports(
                 value = positionalPortArgs[key].value
                 logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
             elif local_parser:
-                logger.debug("Reading from %s encoded port %s using %s", encoding, key, parser.__repr__())
+                logger.debug("Reading from %s encoded port %s using %s", encoding, key, local_parser.__repr__())
                 value = local_parser(port_dict[keys[i]]["drop"])
                 positionalPortArgs[key].value = value
             logger.debug("Using %s '%s' for port %s", mode, value, key)

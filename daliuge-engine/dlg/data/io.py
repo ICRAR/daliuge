@@ -329,16 +329,28 @@ class SharedMemoryIO(DataIO):
     @overrides
     def _write(self, data, **kwargs) -> int:
         total_size = len(data) + self._written
-        if total_size > self._buf.size:
-            self._buf.resize(total_size)
-            self._buf.buf[self._written : total_size] = data
-            self._written = total_size
-        else:
-            self._buf.buf[self._written : total_size] = data
-            self._written = total_size
-            self._buf.resize(total_size)
-            # It may be inefficient to resize many times, but assuming data is written 'once' this is
-            # might be tolerable and guarantees that the size of the underlying buffer is tight.
+        if isinstance(self._desc, io.BytesIO) and isinstance(data, str):
+            data = bytes(data, encoding="utf8")
+        elif isinstance(self._desc, io.StringIO) and isinstance(data, bytes):
+            data = b2s(base64.b64encode(data))
+        elif isinstance(data, memoryview):
+            data = bytes(data)
+        try:
+            if total_size > self._buf.size:
+                self._buf.resize(total_size)
+                self._buf.buf[self._written : total_size] = data
+                self._written = total_size
+            else:
+                self._buf.buf[self._written : total_size] = data
+                self._written = total_size
+                self._buf.resize(total_size)
+                # It may be inefficient to resize many times, but assuming data is written 'once' this is
+                # might be tolerable and guarantees that the size of the underlying buffer is tight.
+        except Exception:
+            logger.debug("Writing of data failed: %s", data)
+            raise
+        return len(data)
+
         return len(data)
 
     @overrides

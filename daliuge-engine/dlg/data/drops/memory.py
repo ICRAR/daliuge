@@ -205,6 +205,10 @@ class InMemoryDROP(DataDROP):
             return MemoryIO(self._buf)
 
     @property
+    def buf(self):
+        return self._buf
+
+    @property
     def dataURL(self) -> str:
         hostname = os.uname()[1]
         return "mem://%s/%d/%d" % (hostname, os.getpid(), id(self._buf))
@@ -270,24 +274,32 @@ class SharedMemoryDROP(DataDROP):
     def initialize(self, **kwargs):
         args = []
         pydata = None
+        # pdict = {}
+        pdict = {"type": "raw"}  # initialize this value to enforce BytesIO
+        self.data_type = pdict["type"]
+        field_names = (
+            [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
+        )
         if "pydata" in kwargs and not (
-            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
-        ):  # means that is was passed directly
+            "fields" in kwargs and "pydata" in field_names
+        ):  # means that is was passed directly (e.g. from tests)
             pydata = kwargs.pop("pydata")
-            logger.debug("pydata value provided: %s", pydata)
-            try:  # test whether given value is valid
-                _ = dill.loads(base64.b64decode(pydata.encode("latin1")))
-                pydata = base64.b64decode(pydata.encode("latin1"))
-            except PickleError:
-                pydata = None
-                logger.warning("Unable to load using pickle, default to None")
-            except binascii.Error:
-                pydata = None
-                logger.warning("Unable to load using base64, defaulting to None")
-        elif "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]:
-            pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
-        args.append(pydata)
-        self._buf = io.BytesIO(*args)
+            pdict["value"] = pydata
+            pydata = parse_pydata(pdict)
+        elif "fields" in kwargs and "pydata" in field_names:
+            data_pos = field_names.index("pydata")
+            pdict = kwargs["fields"][data_pos]
+            pydata = parse_pydata(pdict)
+        if pdict and pdict["type"].lower() in ["str","string"]:
+            self.data_type =  "String" if pydata else "raw"
+        else:
+            self.data_type = pdict["type"] if pdict else ""
+        if pydata:
+            args.append(pydata)
+            logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
+        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(
+            dill.loads(*args)) # pylint: disable = no-value-for-parameter
+        self.size = len(pydata) if pydata else 0
 
     def getIO(self):
         if sys.version_info >= (3, 8):
