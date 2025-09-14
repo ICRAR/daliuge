@@ -70,7 +70,8 @@ services:
   dlg-nm1:
     image: dlg_full:latest
     container_name: dlg-nm1.localhost
-    user: ${MY_UID}:${MY_GID}
+    hostname: dlg-nm1.localhost
+    user: "${UID}:${GID}"
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
       - dlg-demo
@@ -91,6 +92,7 @@ services:
   dlg-nm2:
     image: dlg_full:latest
     container_name: dlg-nm2.localhost
+    hostname: dlg-nm2.localhost
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
