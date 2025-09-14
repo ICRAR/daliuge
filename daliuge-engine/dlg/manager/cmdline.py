@@ -382,7 +382,7 @@ def setupLogging(opts):
     if opts.dmAcronym != "NM":
         logfile = os.path.join(logdir, "dlg%s.log" % (opts.dmAcronym))
     else:
-        hostname = socket.gethostname()
+        hostname = socket.gethostname().split('.')[0]
         logfile = os.path.join(logdir, "dlg%s.%s.log" % (opts.dmAcronym, hostname))
     fileHandler = logging.FileHandler(logfile)
     fileHandler.setFormatter(fmt)
