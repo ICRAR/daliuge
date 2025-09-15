@@ -617,6 +617,8 @@ class Session(object):
             ]
             if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.skip()
+            if drop.status == DROPStates.ERROR:
+                self.status = SessionStates.FAILED
 
     def getGraphStatus(self):
         if self.status not in (

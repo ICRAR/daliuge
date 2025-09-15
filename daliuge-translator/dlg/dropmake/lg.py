@@ -36,18 +36,16 @@ import time
 from itertools import product
 import numpy as np
 
-from dlg.common import CategoryType, dropdict
+import dlg.dropmake.schema as dlg_schema
 
+from dlg.common import CategoryType, dropdict
 from dlg.dropmake.dm_utils import (
     LG_APPREF,
     getNodesKeyDict,
-    get_lg_ver_type,
     convert_construct,
     convert_fields,
     convert_mkn,
     convert_subgraphs,
-    LG_VER_EAGLE,
-    LG_VER_EAGLE_CONVERTED,
     GraphException,
     GInvalidLink,
     GInvalidNode,
@@ -84,21 +82,20 @@ class LG:
         # input drops list and output drops list
         self._gather_cache = {}
 
-        lgver = get_lg_ver_type(lg)
+        lgver = dlg_schema.get_lg_ver_type(lg)
         logger.info("Loading graph: %s", lg["modelData"]["filePath"])
         logger.info("Found LG version: %s", lgver)
 
         if apply_config:
             lg = apply_active_configuration(lg)
 
-        if LG_VER_EAGLE == lgver:
-            # lg = convert_mkn(lg)
+        if lgver == dlg_schema.LG_VER_EAGLE:
             lg = convert_fields(lg)
             lg = convert_construct(lg)
             lg = convert_subgraphs(lg)
-        elif LG_VER_EAGLE_CONVERTED == lgver:
+        elif lgver == dlg_schema.LG_VER_EAGLE_CONVERTED:
             lg = convert_construct(lg)
-        elif LG_APPREF == lgver:
+        elif lgver == dlg_schema.LG_APPREF:
             lg = convert_fields(lg)
         # This ensures that future schema version mods are catched early
         else:
@@ -111,10 +108,11 @@ class LG:
         self._start_list = []
         self._lgn_list = []
         stream_output_ports = {}  # key - port_id, value - construct key
-        for jd in lg["nodeDataArray"]:
-            lgn = LGNode(jd, ssid)
-            parentId = lgn.jd.get('parentId')
 
+        for jd in lg["nodeDataArray"]:
+            lgn = LGNode(jd, ssid=ssid)
+            self._done_dict[lgn.id] = lgn
+            parentId = lgn.jd.get('parentId')
             if lgn.is_group:
                 for wn in self._group_q[lgn.id]:
                     wn.group = lgn
@@ -130,7 +128,6 @@ class LG:
                 else:
                     self._group_q[grp_id].append(lgn)
 
-            self._done_dict[lgn.id] = lgn
             self._lgn_list.append(lgn)
 
             node_ouput_ports = jd.get("outputPorts", {})
@@ -140,9 +137,11 @@ class LG:
                 for name, out_port in node_ouput_ports.items():
                     if name.lower().endswith("stream"):
                         stream_output_ports[out_port["Id"]] = jd["id"]
-        # Need to go through the list again, since done_dict and group_q is recursive
+
+        # Need to go through the list again, since grouping requires traversing all the
+        # nodes
         for lgn in self._lgn_list:
-            if lgn.is_start_node and lgn.category not in [
+            if lgn.is_start and lgn.category not in [
                 Categories.COMMENT,
                 Categories.DESCRIPTION,
             ]:

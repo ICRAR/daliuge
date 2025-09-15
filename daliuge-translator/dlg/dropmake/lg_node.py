@@ -48,7 +48,7 @@ logger = logging.getLogger(f"dlg.{__name__}")
 
 
 class LGNode:
-    def __init__(self, jd, group_q, done_dict, ssid):
+    def __init__(self, jd, ssid):
         """
         jd: json_dict (dict)
         group_q: group queue (defaultdict)
@@ -57,7 +57,7 @@ class LGNode:
         """
         self.id = jd["id"]  # node ID
         self.jd = jd  # JSON TODO: this should be removed
-        self.group_q = group_q  # the group hierarchy queue
+        # self.group_q = group_q  # the group hierarchy queue
         self.group = None  # used if node belongs to group
         self._children = []  # list of LGNode objects, children of this node
         self._ssid = ssid  # session ID
@@ -77,23 +77,9 @@ class LGNode:
 
         if "isGroup" in jd and jd["isGroup"] is True:
             self.is_group = True
-        #     for wn in group_q[self.id]:
-        #         wn.group = self
-        #         self.add_child(wn)
-        #     group_q.pop(self.id)  # not thread safe
         else:
             self.is_group = False
-        #
-        # if "parentId" in jd:
-        #     grp_id = jd["parentId"]
-        #     if grp_id in done_dict:
-        #         grp_nd = done_dict[grp_id]
-        #         self.group = grp_nd
-        #         grp_nd.add_child(self)
-        #     else:
-        #         group_q[grp_id].append(self)
 
-        done_dict[self.id] = self
         self.subgraph = jd["subgraph"] if "subgraph" in jd else None
         self.happy = False
         self.loop_ctx = None
