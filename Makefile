@@ -1,7 +1,8 @@
 .ONESHELL:
 ENV_PREFIX=$(shell python -c "if __import__('pathlib').Path('.venv/bin/pip').exists(): print('%s/'% __import__('pathlib').Path('.venv/bin').absolute())")
 USING_POETRY=$(shell grep "tool.poetry" pyproject.toml && echo "yes")
-
+MY_GID=$(shell id -g)
+MY_UID=$(shell id -u) 
 .PHONY: help
 help:             ## Show the help.
 	@echo "Usage: make <target>"
@@ -29,17 +30,18 @@ local:            ## Install the project using local enviroment
 .PHONY: docker-install
 docker-install:	  ## Install using docker containers
 	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
-	@  docker build -f docker/Dockerfile.full --tag dlg_full .
+	@docker build -f docker/Dockerfile.full --tag icrar/dlg_full .
 
 .PHONY: docker-run
 docker-run:	  ## Install using docker containers
 	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
-	@  MY_GID=$(GID) MY_UID=$(UID) docker compose -f docker/docker-compose.yaml up -d
+	@echo "MY_UID: $(MY_UID)"
+	@MY_GID=$(MY_GID) MY_UID=$(MY_UID) docker compose -f docker/docker-compose.yaml up -d
 
 .PHONY: docker-stop
 docker-stop:	  ## Install using docker containers
 	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
-	@  MY_GID=$(GID) MY_UID=$(UID) docker compose -f docker/docker-compose.yaml down
+	@MY_GID=$(MY_GID) MY_UID=$(MY_UID) docker compose -f docker/docker-compose.yaml down
 
 .PHONY: lint
 lint:             ## Run pylint

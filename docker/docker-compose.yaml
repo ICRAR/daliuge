@@ -26,7 +26,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.api.tls.domains[0].main=*.localhost"
       - "traefik.http.routers.api.rule=Host(`traefik.localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-      - "traefik.http.routers.api.service=dasboard@internal"
+      - "traefik.http.routers.api.service=dashboard@internal"
       - "traefik.http.routers.api.service=api@internal"
     ports:
       - 80:80
@@ -46,10 +46,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.full
-    image: dlg_full:latest
+    image: icrar/dlg_full:latest
     user: ${MY_UID}:${MY_GID}
     container_name: dlg-dim
-    hostname: dlg-dim
+    hostname: dlg-dim.localhost
     command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm1.localhost,dlg-nm2.localhost"]
     networks:
       - dlg-demo
@@ -69,9 +69,9 @@ services:
 # =============================================================
 
   dlg-nm1:
-    image: dlg_full:latest
+    image: icrar/dlg_full:latest
     container_name: dlg-nm1
-    hostname: dlg-nm1
+    hostname: dlg-nm1.localhost
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
@@ -91,9 +91,9 @@ services:
 # =============================================================
 
   dlg-nm2:
-    image: dlg_full:latest
+    image: icrar/dlg_full:latest
     container_name: dlg-nm2
-    hostname: dlg-nm2
+    hostname: dlg-nm2.localhost
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
@@ -113,9 +113,9 @@ services:
 # =============================================================
 
   dlg-tm:
-    image: dlg_full:latest
+    image: icrar/dlg_full:latest
     container_name: dlg-tm
-    hostname: dlg-tm
+    hostname: dlg-tm.localhost
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "daemon", "--tm"]
     networks:

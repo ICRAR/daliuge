@@ -11,7 +11,7 @@ LABEL build=$BUILD_ID
 RUN service avahi-daemon stop && \
     service dbus start && \
     service avahi-daemon start && \
-    avahi-set-host-name dlg-trans
+    avahi-set-host-name dlg-tm
 COPY / /daliuge
 RUN . /dlg/bin/activate && \
     cd /daliuge && \

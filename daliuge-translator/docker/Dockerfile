@@ -15,7 +15,7 @@ LABEL stage=builder
 # RUN service avahi-daemon stop && \
 #     service dbus start && \
 #     service avahi-daemon start && \
-#     avahi-set-host-name dlg-trans
+#     avahi-set-host-name dlg-tm
 
 COPY / /daliuge
 

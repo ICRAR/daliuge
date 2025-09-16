@@ -2,7 +2,6 @@
 # the final image low.
 
 # First stage build and cleanup
-#FROM python:3.8-slim
 FROM ubuntu:22.04
 ARG BUILD_ID
 LABEL stage=builder
