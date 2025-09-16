@@ -35,4 +35,4 @@ ENV VIRTUAL_ENV=/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 EXPOSE 8084
-CMD [ "dlg", "lgweb", "-vv", "-d", "/daliuge/test/dropmake", "-t", "/tmp" ]
+CMD [ "dlg", "tm", "-vv", "-d", "/daliuge/test/dropmake", "-t", "/tmp" ]

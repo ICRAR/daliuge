@@ -345,7 +345,7 @@ class DlgDaemon(RestServer):
         # if self._daemonise:
         #     args += ['-d']
         logger.info("Starting Translator Manager with args: %s", (" ".join(args)))
-        self._tm_proc = tool.start_process("lgweb", args)
+        self._tm_proc = tool.start_process("TM", args)
         logger.debug("Started Translator Manager with PID %d", self._tm_proc.pid)
         return
 

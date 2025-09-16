@@ -558,7 +558,7 @@ def register_commands():
         "translator",
         "Commands for unrolling and partitioning graphs using the dlg translator.")
     tool.cmdwrap(
-        "lgweb", translator_group,
+        "tm", translator_group,
         "A Web server for the Logical Graph Editor",
         "dlg.dropmake.web.translator_rest:run",
     )

@@ -32,13 +32,13 @@ dlg nm -w . -v --no-dlm -l $tmpdir -w $tmpdir &
 nm_pid=$!
 dlg dim -v -N localhost -l $tmpdir -w $tmpdir &
 dim_pid=$!
-dlg lgweb -d $tmpdir -t $tmpdir -v &
-lgweb_pid=$!
-echo "Started nm/dim/lgweb under $tmpdir with PIDs: $nm_pid/$dim_pid/$lgweb_pid"
+dlg tm -d $tmpdir -t $tmpdir -v &
+tm_pid=$!
+echo "Started nm/dim/tm under $tmpdir with PIDs: $nm_pid/$dim_pid/$tm_pid"
 
 shutdown_dlg() {
-	try kill $lgweb_pid
-	try wait $lgweb_pid
+	try kill $tm_pid
+	try wait $tm_pid
 	try kill $dim_pid
 	try wait $dim_pid
 	try kill $nm_pid
