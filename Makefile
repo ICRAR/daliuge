@@ -29,21 +29,17 @@ local:            ## Install the project using local enviroment
 .PHONY: docker-install
 docker-install:	  ## Install using docker containers
 	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
-	@  cd daliuge-common && ./build_common.sh dev && cd ..
-	@  cd daliuge-engine && ./build_engine.sh devall && cd ..
-	@  cd daliuge-translator && ./build_translator.sh devall && cd ..
+	@  docker build -f docker/Dockerfile.full --tag dlg_full .
 
 .PHONY: docker-run
 docker-run:	  ## Install using docker containers
 	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
-	@  cd daliuge-engine && ./run_engine.sh dev && cd ..
-	@  cd daliuge-translator && ./run_translator.sh dev && cd ..
+	@  MY_GID=$(GID) MY_UID=$(UID) docker compose -f docker/docker-compose.yaml up -d
 
 .PHONY: docker-stop
 docker-stop:	  ## Install using docker containers
 	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
-	@  cd daliuge-engine && ./stop_engine.sh docker && cd ..
-	@  cd daliuge-translator && ./stop_translator.sh && cd ..
+	@  MY_GID=$(GID) MY_UID=$(UID) docker compose -f docker/docker-compose.yaml down
 
 .PHONY: lint
 lint:             ## Run pylint
