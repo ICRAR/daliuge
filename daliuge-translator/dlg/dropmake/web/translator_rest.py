@@ -1202,7 +1202,7 @@ def run(_, args):
             logdir = options.logdir
             utils.createDirIfMissing(logdir)
             hostname = socket.gethostname().split('.')[0]
-            logfile = os.path.join(logdir, f"dlgTR.{hostname}.log")
+            logfile = os.path.join(logdir, f"dlgTM.{hostname}.log")
             fileHandler = logging.FileHandler(logfile)
             fileHandler.setFormatter(fmt)
             logging.root.addHandler(fileHandler)

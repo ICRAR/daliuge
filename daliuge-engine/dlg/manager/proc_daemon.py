@@ -465,6 +465,15 @@ def run_with_cmdline(parser, args):
         default=False,
     )
     parser.add_option(
+        "-H",
+        "--host",
+        action="store",
+        type="string",
+        dest="host",
+        help="The host to bind this instance on",
+        default="localhost",
+    )
+    parser.add_option(
         "--no-zeroconf",
         action="store_true",
         dest="noZC",
