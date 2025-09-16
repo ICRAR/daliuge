@@ -114,14 +114,14 @@ services:
 
   dlg-tm:
     image: dlg_full:latest
-    container_name: dlg-trans
-    hostname: dlg-trans
+    container_name: dlg-tm
+    hostname: dlg-tm
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "daemon", "--tm"]
     networks:
       - dlg-demo
     labels:
-      - "traefik.http.routers.tm.rule=Host(`dlg-trans.localhost`)"
+      - "traefik.http.routers.tm.rule=Host(`dlg-tm.localhost`)"
       - "traefik.http.services.tm.loadbalancer.server.port=8084"
     volumes:
       - ~/dlg:/dlg
