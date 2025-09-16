@@ -379,11 +379,8 @@ def setupLogging(opts):
     # This is the logfile we'll use from now on
     logdir = opts.logdir
     utils.createDirIfMissing(logdir)
-    if opts.dmAcronym != "NM":
-        logfile = os.path.join(logdir, "dlg%s.log" % (opts.dmAcronym))
-    else:
-        hostname = socket.gethostname().split('.')[0]
-        logfile = os.path.join(logdir, "dlg%s.%s.log" % (opts.dmAcronym, hostname))
+    hostname = socket.gethostname().split('.')[0]
+    logfile = os.path.join(logdir, "dlg%s.%s.log" % (opts.dmAcronym, hostname))
     fileHandler = logging.FileHandler(logfile)
     fileHandler.setFormatter(fmt)
     logging.root.addHandler(fileHandler)

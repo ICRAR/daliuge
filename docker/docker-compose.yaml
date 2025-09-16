@@ -48,7 +48,8 @@ services:
       dockerfile: Dockerfile.full
     image: dlg_full:latest
     user: ${MY_UID}:${MY_GID}
-    container_name: dlg-dim.localhost
+    container_name: dlg-dim
+    hostname: dlg-dim
     command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm1.localhost,dlg-nm2.localhost"]
     networks:
       - dlg-demo
@@ -69,8 +70,8 @@ services:
 
   dlg-nm1:
     image: dlg_full:latest
-    container_name: dlg-nm1.localhost
-    hostname: dlg-nm1.localhost
+    container_name: dlg-nm1
+    hostname: dlg-nm1
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
@@ -91,8 +92,8 @@ services:
 
   dlg-nm2:
     image: dlg_full:latest
-    container_name: dlg-nm2.localhost
-    hostname: dlg-nm2.localhost
+    container_name: dlg-nm2
+    hostname: dlg-nm2
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
@@ -113,7 +114,8 @@ services:
 
   dlg-tm:
     image: dlg_full:latest
-    container_name: dlg-tm.localhost
+    container_name: dlg-trans
+    hostname: dlg-trans
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "daemon", "--tm"]
     networks:
