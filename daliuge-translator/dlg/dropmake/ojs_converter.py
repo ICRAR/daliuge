@@ -30,6 +30,7 @@ Abbreviation reference:
 
 """
 import copy
+import uuid
 
 import dlg.dropmake.schema as sc
 
@@ -41,6 +42,40 @@ def node_list_to_dict(nodes):
     :return:
     """
 
+    deprecated_node_attributes = [
+        "color",
+        "comment",
+        "drawOrderHint",
+        "inputAppFields",
+        "inputApplicationComment",
+        "inputApplicationDescription",
+        "inputApplicationName",
+        "inputApplicationType",
+        "isGroup",
+        "outputAppFields",
+        "outputApplicationComment",
+        "outputApplicationDescription",
+        "outputApplicationName",
+        "outputApplicationType",
+    ]
+
+    required_node_attributes = {
+        "parentId": None,
+        "embedId": None
+    }
+
+    nd = {}
+    for node in nodes:
+        fields = field_list_to_dict(node[sc.FIELDS])
+        n = {k: v for k, v in node.items() if k not in deprecated_node_attributes}
+        for rna, v in required_node_attributes.items():
+            if rna not in n:
+                n[rna] = v # Set default required node attribues
+        nd[node["id"]] = n
+        nd[node["id"]][sc.FIELDS] = fields
+
+    return nd
+
 def edge_list_to_dict(edges):
     """
     Edges are derived from the linkDataArray, and contain each individual port-port
@@ -49,19 +84,46 @@ def edge_list_to_dict(edges):
     Given LGs have parallel edges (multiple ports-port connections), we
     have individual IDs for these connects.
 
-    :param edges:
+    :param edges: the OJS edges derived from parameter
     :return:
     """
 
+    v4edges = {}
+    for edge in edges:
+        id = str(uuid.uuid4())
+        v4edges[id] = {
+            "id": id,
+            sc.V4_DEST_NODE: edge[sc.OJS_DEST_NODE],
+            sc.V4_SRC_NODE: edge[sc.OJS_SRC_NODE],
+            sc.V4_DEST_PORT: edge[sc.OJS_DEST_PORT],
+            sc.V4_SRC_PORT: edge[sc.OJS_SRC_PORT],
+            sc.V4_LOOP_AWARE: edge[sc.OJS_LOOP_AWARE],
+            sc.CLOSES_LOOP: edge[sc.CLOSES_LOOP]
+        }
+
+    return v4edges
 
 def field_list_to_dict(fields):
     """
-    Fields are nice and simple: we just need to extract IDs and move them
-    into the new dictionary
+    Fields are nice and simple: we just need to extract IDs from the existing
+    dictionary and use them as keys.
 
     :param fields:
     :return:
     """
+
+    deprecated_params_replacements = ['Parameter', 'Argument']
+
+    v4field = {}
+    for field in  fields:
+        v4field[field["id"]] = {k: v for k, v in field.items()}
+        # Add edges
+        v4field[field["id"]]["edgeIds"] = []
+        # Remove deprecated 'parametersuffix'
+        for param in deprecated_params_replacements:
+            pt = v4field[field["id"]]["parameterType"]
+            v4field[field["id"]]["parameterType"] = pt.replace(param, '')
+    return v4field
 
 
 def convert_ojs_to_v4(ojs_graph: dict):
@@ -74,6 +136,12 @@ def convert_ojs_to_v4(ojs_graph: dict):
 
     The modelData of the OJS graph is copied directly across and unmodified.
 
+    Converstion happens in the following order:
+
+    - Fields, which are subsets of nodes
+    - Nodes
+    - Edges
+
     :param ojs_graph: the OJS-versioned graph we are convering to the newer format.
     :return:
     """
@@ -84,9 +152,14 @@ def convert_ojs_to_v4(ojs_graph: dict):
 
     lgo = {
         sc.MODEL_DATA: {k: v for k, v in ojs_graph[sc.MODEL_DATA].items()},
+        sc.GRAPH_CONFIG: {k:v for k, v in ojs_graph[sc.GRAPH_CONFIG].items()},
+        sc.ACTIVE_CONFIG:  ojs_graph[sc.ACTIVE_CONFIG] if ojs_graph[sc.ACTIVE_CONFIG]
+        else "",
         sc.V4_EDGES: {},
         sc.V4_NODES: {}
     }
 
-    lgo[sc.V4_NODES] = edge_list_to_dict(ojs_graph[sc.OJS_EDGES])
     lgo[sc.V4_NODES] = node_list_to_dict(ojs_graph[sc.OJS_NODES])
+    lgo[sc.V4_NODES] = edge_list_to_dict(ojs_graph[sc.OJS_EDGES])
+
+    return lgo

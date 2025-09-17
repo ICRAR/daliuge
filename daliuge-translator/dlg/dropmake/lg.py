@@ -174,6 +174,9 @@ class LG:
         self._drop_dict = collections.defaultdict(list)
         self._reprodata = lg.get("reprodata", {})
 
+    def _ojs_init_(self):
+        pass
+
     def validate_link(self, src, tgt):
         # print("validate_link()", src.id, src.is_scatter(), tgt.id, tgt.is_scatter())
         if src.is_scatter or tgt.is_scatter:

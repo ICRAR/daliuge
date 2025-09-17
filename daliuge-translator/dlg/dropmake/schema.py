@@ -29,6 +29,7 @@ LG_V4 = 4
 LG_APPREF = "AppRef"
 
 
+
 # GRAPH ATTRIBUTES
 OJS_EDGES = "linkDataArray"
 OJS_NODES = "nodeDataArray"
@@ -36,6 +37,7 @@ OJS_DEST_NODE = "to"
 OJS_SRC_NODE = "from"
 OJS_DEST_PORT = "toPort"
 OJS_SRC_PORT = "fromPort"
+OJS_LOOP_AWARE = "loop_aware"
 
 V4_EDGES = "edges"
 V4_NODES = "nodes"
@@ -43,11 +45,14 @@ V4_DEST_NODE = "destNodeId"
 V4_SRC_NODE = "srcNodeId"
 V4_DEST_PORT = "destPortId"
 V4_SRC_PORT= "srcPortId"
-
+V4_LOOP_AWARE = "loopAware"
+# Common
 MODEL_DATA = "modelData"
 CLOSES_LOOP = "closesLoop"
-LOOP_AWARE = "loopAware"
+
 FIELDS = "fields"
+GRAPH_CONFIG = "graphConfigurations"
+ACTIVE_CONFIG = "activeGraphConfigId"
 
 def get_lg_ver_type(lgo):
     """
