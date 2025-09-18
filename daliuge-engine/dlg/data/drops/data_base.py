@@ -507,7 +507,7 @@ class PathBasedDrop(object):
 
     _path: str = None
 
-    def get_dir(self, dirname):
+    def get_dir(self, dirname, create_if_missing=True):
         """
         dirname will be based on the current working directory
         If we have a session, it goes into the path as well
@@ -531,7 +531,8 @@ class PathBasedDrop(object):
 
         the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
         logger.debug("Path used for drop: %s", the_dir)
-        createDirIfMissing(the_dir)
+        if create_if_missing:
+            createDirIfMissing(the_dir)
         return the_dir
 
     @property

@@ -23,7 +23,7 @@
 import unittest
 import datetime
 from dlg.data.path_builder import (find_dlg_fstrings, filepath_from_string,
-                                    base_uid_filename)
+                                   base_uid_pathname)
 
 
 class TestPathBuilders(unittest.TestCase):
@@ -37,11 +37,11 @@ class TestPathBuilders(unittest.TestCase):
         """
         Using the baseUID Generator with the humanreadable key
         """
-        res = base_uid_filename("", "")
+        res = base_uid_pathname("", "")
         self.assertEqual(None, res)
-        res = base_uid_filename(123456, None)
+        res = base_uid_pathname(123456, None)
         self.assertEqual("123456_", res)
-        res = base_uid_filename("123456_abcdef", "0/1")
+        res = base_uid_pathname("123456_abcdef", "0/1")
         self.assertEqual("123456_0_1", res)
 
 
