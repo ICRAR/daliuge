@@ -35,18 +35,18 @@ def get_lg_fpath(test_type, f_name):
     :param f_name: name of the original logical graph created in Eagle
     :return: str, full path of the file
     """
-    f_dir = f"{files(test_graphs)}/"
+    f_dir = files(test_graphs)
 
     if test_type == "pickle":
         f_name = f_name.split(".")[0] + ".pkl"
-        f_dir += test_type
+        f_dir = f_dir / test_type
     elif test_type == "go_js_json":
         f_name = f_name.split(".")[0] + ".json"
-        f_dir += test_type
+        f_dir = f_dir / test_type
     elif test_type == "drop_spec":
         f_name = f_name.split(".")[0] + ".spec"
-        f_dir += test_type
+        f_dir = f_dir / test_type
     else:
-        f_dir += "logical_graphs"
+        f_dir = f_dir / "logical_graphs"
 
-    return f"{f_dir}/{f_name}"
+    return f"{f_dir / f_name}"
