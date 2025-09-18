@@ -441,8 +441,7 @@ class PyFuncApp(BarrierAppDROP):
         if not self._applicationArgs:
             encoding = DropParser.DILL
             for key in positionalArgsMap:
-                if positionalArgsMap[key].encoding:
-                    positionalArgsMap[key].encoding = encoding
+                positionalArgsMap[key].encoding = encoding
             logger.debug("AppArgs/pargsDict: %s", positionalArgsMap)
 
             return positionalArgsMap, keywordArgsMap, input_outputs, vparg, vkarg
