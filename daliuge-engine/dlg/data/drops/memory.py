@@ -90,9 +90,16 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
                  pydata, type(pydata), pd["type"])
     empty_strings = ["None", ""]
     if pydata in empty_strings:
-        pydata = bytes() # Treat None/Empty objects as empty object data.
-        pd_dict["type"] = 'object'
-    if pd_dict["type"].lower() == "json":
+        if pytype in ["string", "str"]:
+            pydata = ''
+        else:
+            pydata = bytes() # Treat None/Empty objects as empty object data.
+            pytype = 'object'
+    builtin_types = get_builtins()
+    if pytype != "raw" and type(pydata) in builtin_types.values() and pytype not in builtin_types.keys():
+        logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pytype)
+        # pytype = type(pydata).__name__
+    if pytype == "json":
         try:
             pydata = json.loads(pydata)
         except JSONDecodeError:
