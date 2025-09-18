@@ -50,7 +50,7 @@ def default_map():
         "uid": str(uuid.uuid4()),
     } 
 
-def base_uid_pathname(uid: str, humanKey: str):
+def base_uid_filename(uid: str, humanKey: str):
     """
     This a basic filename generator, using the UID and humandReadableKey. The function
     returns only the name of the file, and expects the full filepath to be handled by
@@ -138,7 +138,7 @@ def filepath_from_string(filename: str, dirname: str = "", **kwargs) -> str:
     fstring_map = default_map() 
     fstring_map.update(kwargs)
     if not filename and "humanKey" in fstring_map:
-        return base_uid_pathname(fstring_map["uid"], fstring_map["humanKey"])
+        return base_uid_filename(fstring_map["uid"], fstring_map["humanKey"])
     elif not filename:
         return filename
 
