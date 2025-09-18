@@ -23,6 +23,7 @@ import logging
 import os
 import shutil
 
+from dlg.data import path_builder
 from dlg.data.drops.data_base import PathBasedDrop, DataDROP
 from dlg.exceptions import InvalidDropException
 from dlg.meta import dlg_bool_param
@@ -80,6 +81,23 @@ class DirectoryDROP(PathBasedDrop, DataDROP):
             self._map_input_ports_to_params()
             self._setupDirectoryPath()
         return DirectoryIO(self._path)
+
+    def _setupDirectoryPath(self):
+        """
+        Do the same as file._setupFilePaths()
+        :return:
+        """
+
+        logger.debug("Checking existence of %s %s", self.dirpath, self.check_exists)
+        # if "check_exists" in kwargs and kwargs["check_exists"] is True:
+        if self.check_exists:
+            if not os.path.isdir(self.dirpath):
+                raise InvalidDropException(self, f"{self.dirpath} is not a directory")
+        if not self.path:
+            dirname = path_builder.base_uid_pathname(self.uid, self._humanKey)
+            self._path = self.get_dir(dirname, self.create_if_missing)
+
+        self.dirname = self._path
 
 
     def delete(self):
