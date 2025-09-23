@@ -60,7 +60,7 @@ def construct_map(**kwargs):
     fstring_map.update(**kwargs)
     return fstring_map
 
-def base_uid_filename(uid: str, humanKey: str):
+def base_uid_pathname(uid: str, humanKey: str):
     """
     This a basic filename generator, using the UID and humandReadableKey. The function
     returns only the name of the file, and expects the full filepath to be handled by
