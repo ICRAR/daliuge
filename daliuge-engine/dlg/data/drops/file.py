@@ -145,7 +145,7 @@ class FileDROP(DataDROP, PathBasedDrop):
 
         # Default filename to drop human readable format based on UID
         if filename is None:
-            filename = path_builder.base_uid_filename(self.uid, self._humanKey)
+            filename = path_builder.base_uid_pathname(self.uid, self._humanKey)
 
         self.filename = filename
         self.dirname = self.get_dir(dirname)
