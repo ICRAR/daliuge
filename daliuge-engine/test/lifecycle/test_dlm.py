@@ -142,20 +142,20 @@ class TestDataLifecycleManager(unittest.TestCase):
                 pass
 
         with dlm.DataLifecycleManager(check_period=0.5, cleanup_period=2) as manager:
-            a = DirectoryDROP(
+            a = FileDROP(
                 "a",
                 "a",
                 persist=False,
                 expireAfterUse=True,
-                dirname=tempfile.mkdtemp(),
+                filename=tempfile.mktemp(),
             )
-            b_dirname = tempfile.mkdtemp()
-            b = DirectoryDROP(
+
+            b = FileDROP(
                 "b",
                 "b",
                 persist=False,
                 expireAfterUse=False,
-                dirname=b_dirname,
+                filename=tempfile.mktemp(),
             )
             c = MyApp("c", "c")
             d = MyApp("d", "d")
