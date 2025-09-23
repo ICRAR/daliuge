@@ -43,7 +43,8 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # @param base_name directorycontainer/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
-# @param check_exists True/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
+# @param check_exists False/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False
+# /Perform a check to make sure the file path exists before proceeding with the application
 # @param dirname /String/ApplicationArgument/NoPort/ReadWrite//False/False/"Directory name/path"
 # @param overwrite_existing /Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/"Overwrite existing directory if exists"
 # @param block_skip False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/If set the drop will block a skipping chain until the last producer has finished and is not also skipped.
@@ -57,7 +58,7 @@ class DirectoryDROP(PathBasedDrop, DataDROP):
     append an arbitrary filename to the directory if it does not exist.
     """
 
-    check_exists = dlg_bool_param("check_exists", True)
+    check_exists = dlg_bool_param("check_exists", False)
 
     def initialize(self, **kwargs):
         DataDROP.initialize(self, **kwargs)

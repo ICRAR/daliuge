@@ -765,6 +765,10 @@ class TestDROP(unittest.TestCase):
         cont1 = DirectoryDROP("e", "e", dirname=dirname)
         cont2 = DirectoryDROP("f", "f", dirname=dirname2)
 
+        print(cont1.path)
+        print(cont2.path)
+
+
         # Paths are absolutely reported
         self.assertEqual(
             os.path.realpath(f"{tmpdir}/.hidden"), os.path.realpath(cont1.path)
