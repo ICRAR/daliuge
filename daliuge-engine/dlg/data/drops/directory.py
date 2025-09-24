@@ -61,7 +61,7 @@ class DirectoryDROP(PathBasedDrop, DataDROP):
     """
 
     check_exists = dlg_bool_param("check_exists", False)
-    create_if_missing = dlg_bool_param("create_if_missing", False)
+    create_if_missing = dlg_bool_param("create_if_missing", True)
 
     def initialize(self, **kwargs):
         DataDROP.initialize(self, **kwargs)
@@ -71,6 +71,7 @@ class DirectoryDROP(PathBasedDrop, DataDROP):
                 self, 'DirectoryContainer needs a "dirname" parameter'
             )
         self.dirpath = os.path.expandvars(kwargs["dirname"])
+        self.dirname = self.dirpath
         self._setupDirectoryPath()
 
 
