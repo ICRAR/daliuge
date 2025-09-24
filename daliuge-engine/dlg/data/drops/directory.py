@@ -93,9 +93,9 @@ class DirectoryDROP(PathBasedDrop, DataDROP):
         if self.check_exists:
             if not os.path.isdir(self.dirpath):
                 raise InvalidDropException(self, f"{self.dirpath} is not a directory")
-        if not self.path:
-            dirname = path_builder.base_uid_pathname(self.uid, self._humanKey)
-            self._path = self.get_dir(dirname, self.create_if_missing)
+        if not self._path:
+            # dirname = path_builder.base_uid_pathname(self.uid, self._humanKey)
+            self._path = self.get_dir(self.dirpath, self.create_if_missing)
 
         self.dirname = self._path
 
