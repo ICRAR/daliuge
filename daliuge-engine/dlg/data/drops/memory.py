@@ -90,10 +90,11 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
                  pydata, type(pydata), pd["type"])
     empty_strings = ["None", ""]
     if pydata in empty_strings:
-        pydata = bytes() # Treat None/Empty objects as empty object data.
-        pytype = 'object'
-    if pytype in ["string", "str"]:
-        pass
+        if pytype in ["string", "str"]:
+            pydata = ''
+        else:
+            pydata = bytes() # Treat None/Empty objects as empty object data.
+            pytype = 'object'
     builtin_types = get_builtins()
     if pytype != "raw" and type(pydata) in builtin_types.values() and pytype not in builtin_types.keys():
         logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pytype)

@@ -933,7 +933,7 @@ class PyFuncApp(BarrierAppDROP):
                 o.write(dill.dumps(result))
             elif parser is DropParser.EVAL or parser is DropParser.UTF8:
                 if isinstance(result, str):
-                    o.write(result.encode("utf-8"))
+                    o.write(result)
                 else:
                     encoded_result = repr(result).encode("utf-8")
                     o.write(encoded_result)
