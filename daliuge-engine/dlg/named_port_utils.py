@@ -56,7 +56,7 @@ class Argument:
     """
 
     value: object
-    encoding: DropParser = DropParser.DILL
+    encoding: DropParser = None #DropParser.DILL
     type: Union [ArgType, None] = None
     precious: bool = False
     positional: bool = False
