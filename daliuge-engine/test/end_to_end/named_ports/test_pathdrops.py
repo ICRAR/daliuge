@@ -102,8 +102,8 @@ class TestDirectoryDrops(unittest.TestCase):
         pass
 
     def test_directory_drop_side_effects(self):
-        f = files(graphs)/'DirectoryDropSideEffects.graph'
-        g = translate_graph(str(f), 'directoryDrop')
+        f = files(graphs)/"DirectoryDropSideEffects.graph"
+        g = translate_graph(str(f), "directoryDrop")
 
         _, leafs = create_and_run_graph_spec(self,g, app_root=False)
 
