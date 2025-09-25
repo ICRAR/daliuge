@@ -35,8 +35,8 @@ import time
 from inspect import signature
 
 from dlg import utils, droputils
-from dlg.apps import pyfunc
 from dlg.common import dropdict
+from dlg.data.drops.memory import parse_pydata
 from dlg.ddap_protocol import DROPStates
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import InvalidDropException
@@ -312,7 +312,7 @@ class _AppDrop(_DelayedDrop):
         self.fname = None
         if hasattr(f, "__name__"):
             self.fname = f.__name__
-        self.fcode, self.fdefaults = pyfunc.serialize_func(f)
+        self.fcode, self.fdefaults = utils.serialize_func(f)
         # self.fcode = inspect.getsource(f)
         self.original_kwarg_names = []
         self.original_arg_names = []
@@ -436,9 +436,8 @@ class _DataDrop(_DelayedDrop):
                 "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         )
-        if not self.producer:
-            my_dropdict["pydata"] = pyfunc.serialize_data(self.pydata)
-            # my_dropdict["pydata"] = self.pydata
+        if hasattr(self, "pydata"):
+            my_dropdict["pydata"] = parse_pydata(self.pydata)
         return my_dropdict
 
     def __repr__(self):

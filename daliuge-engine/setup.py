@@ -161,6 +161,7 @@ install_requires = [
     "psutil",
     "python-daemon",
     "pyzmq == 25.1.1",  # Python 25.1.1 is minimal install that supports Python 3.12
+    "requests",
     "scp",
     "pyyaml",
     # 0.19.0 requires netifaces < 0.10.5, exactly the opposite of what *we* need
@@ -183,8 +184,8 @@ extra_requires = {
     "aws": ["boto3"],
     "test": ["pytest",
         # Toggle comments below if adding new test graphs
-        "eagle-test-graphs==0.1.9"
-        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@branch-name"
+        "eagle-test-graphs==0.1.20"
+        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-510"
     ]
 }
 
