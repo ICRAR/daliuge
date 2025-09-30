@@ -22,7 +22,8 @@
 
 import json
 import unittest
-from dlg.dropmake.graph_config import apply_active_configuration, get_key_idx_from_list
+from dlg.dropmake.graph_config import (apply_active_configuration,
+                                       get_key_idx_from_list, fill_config)
 import daliuge_tests.dropmake as test_graphs
 
 try:
@@ -33,7 +34,7 @@ except ModuleNotFoundError:
 LOG_PRFIX = "WARNING:dlg.dlg.dropmake.graph_config:"
 
 
-def get_lg_from_fname(lg_name: str) -> dict:
+def get_file_from_fname(lg_name: str) -> dict:
     """
     Return the logical graph from the graph_config files in the test graph repository
     """
@@ -71,7 +72,7 @@ class TestGraphConfig(unittest.TestCase):
             - Keys from the activeGraphConfigId or graphConfigurations are not found in
             the logical graph.
         """
-        lg = get_lg_from_fname("ArrayLoopNoActiveID.graph")
+        lg = get_file_from_fname("ArrayLoopNoActiveID.graph")
         with self.assertLogs("root", level="WARNING") as cm:
             alt_lg = apply_active_configuration(lg)
         self.assertEqual(
@@ -119,7 +120,7 @@ class TestGraphConfig(unittest.TestCase):
         ArrayLoopLoop.graph has a GraphConfig with modified "num_of_iter" field in the
         "Loop" node (construct).
         """
-        lg = get_lg_from_fname("ArrayLoopLoop.graph")
+        lg = get_file_from_fname("ArrayLoopLoop.graph")
         node_id = "732df21b-f714-4d25-9773-b4169db270a0"
         field_id = "3d25fcc9-50bb-4bbc-9b19-2eceabc238f2"
         value = get_value_from_lgnode_field(node_id, field_id, lg)
@@ -133,7 +134,7 @@ class TestGraphConfig(unittest.TestCase):
         ArrayLoopLoop.graph has a GraphConfig with modified "num_of_copies" field in the
         "Scatter" node (construct).
         """
-        lg = get_lg_from_fname("ArrayLoopScatter.graph")
+        lg = get_file_from_fname("ArrayLoopScatter.graph")
         node_id = "5560c56a-10f3-4d42-a436-404816dddf5f"
         field_id = "0057b318-2405-4b5b-ac59-06c0068f91b7"
         value = get_value_from_lgnode_field(node_id, field_id, lg)
@@ -141,3 +142,46 @@ class TestGraphConfig(unittest.TestCase):
         lg = apply_active_configuration(lg)
         value = get_value_from_lgnode_field(node_id, field_id, lg)
         self.assertEqual(5, int(value))
+
+
+class TestCrossCheck(unittest.TestCase):
+    """
+    Confirm that our crosschecking between graph config and logical graph works.
+    """
+
+
+class TestFillConfig(unittest.TestCase):
+
+    """
+    Confirm that we can apply graph configs according to an active configuration
+    pass through via the command line interface.
+    """
+
+    def testApplyConfigurationFromEAGLE(self):
+        lg = get_file_from_fname("ArrayLoopScatter.graph")
+        config = get_file_from_fname("LoopConfig.graphConfig")
+        node_id = "732df21b-f714-4d25-9773-b4169db270a0"
+        field_id = "3d25fcc9-50bb-4bbc-9b19-2eceabc238f2"
+
+        value = get_value_from_lgnode_field(node_id, field_id, lg)
+        self.assertEqual(1, int(value))
+
+        filled_lg = fill_config(lg, config)
+        # self.assertNotEqual(lg, filled_lg)
+        value = get_value_from_lgnode_field(node_id, field_id, filled_lg)
+        self.assertEqual(5, int(value))
+
+    def testApplyConfigurationNonEAGLE(self):
+        lg = get_file_from_fname("ArrayLoopScatter.graph")
+        config = get_file_from_fname("LoopConfigNonEagle.graphConfig")
+        node_id = "732df21b-f714-4d25-9773-b4169db270a0"
+        field_id = "3d25fcc9-50bb-4bbc-9b19-2eceabc238f2"
+
+        value = get_value_from_lgnode_field(node_id, field_id, lg)
+        self.assertEqual(1, int(value))
+
+        filled_lg = fill_config(lg, config)
+        # self.assertNotEqual(lg, filled_lg)
+        value = get_value_from_lgnode_field(node_id, field_id, filled_lg)
+        self.assertEqual(25, int(value))
+
