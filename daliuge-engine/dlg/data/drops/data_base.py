@@ -26,6 +26,7 @@ import logging
 from typing import Union
 
 from dlg.drop import AbstractDROP, track_current_drop
+from dlg.data.path_builder import PathType
 from dlg.data.io import (
     DataIO,
     OpenMode,
@@ -499,13 +500,13 @@ class DataDROP(AbstractDROP):
         DROP implementations will use different URI schemes.
         """
 
-
 class PathBasedDrop(object):
     """
     Base class for data drops that handle paths (i.e., file and directory drops)
     """
 
     _path: str = None
+    _path_type: PathType = PathType.File
 
     def get_dir(self, dirname, create_if_missing=True):
         """
@@ -539,6 +540,9 @@ class PathBasedDrop(object):
     def path(self) -> str:
         return self._path
 
+    @property
+    def path_type(self) -> PathType:
+        return self._path_type
 
 ##
 # @brief NULL

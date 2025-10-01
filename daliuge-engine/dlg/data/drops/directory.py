@@ -70,6 +70,7 @@ class DirectoryDROP(PathBasedDrop, DataDROP):
             )
         self.dirpath = os.path.expandvars(kwargs["dirname"])
         self.dirname = self.dirpath
+        self._path_type = path_builder.PathType.Directory
         self._setupDirectoryPath()
 
 
@@ -77,7 +78,7 @@ class DirectoryDROP(PathBasedDrop, DataDROP):
         """
         Return DirectoryIO object
         """
-        if not self._path:
+        if not self.parameters.get("dirname", None):
             self._map_input_ports_to_params()
             self._setupDirectoryPath()
         return DirectoryIO(self._path)
