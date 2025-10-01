@@ -124,20 +124,26 @@ def find_dlg_fstrings(filename: str) -> list[str]:
         return opts
 
 
-def filepath_from_string(filename: str, dirname: str = "", **kwargs) -> str:
+def filepath_from_string(filename: str, path: str, dirname: str = "", **kwargs) -> str:
     """
     Attempts to construct a filename from filename and possible mappings, which are
     built from a combination of FSTRING_MAP and **kwargs.
 
+    There is conflict between filename, path, and dirname.
+
     Returns
     -------
     filename
+    path
+    dirname
     """
 
     opts = []
     fstring_map = default_map() 
     fstring_map.update(kwargs)
-    if not filename and "humanKey" in fstring_map:
+    if path == dirname:
+        filename = "" # The path we want is a directory DROP and we do not care about filename
+    elif not filename and "humanKey" in fstring_map:
         return base_uid_pathname(fstring_map["uid"], fstring_map["humanKey"])
     elif not filename:
         return filename

@@ -48,14 +48,14 @@ class TestPathBuilders(unittest.TestCase):
 
     def test_file_path_from_string(self):
         uid = "123456"
-        res = filepath_from_string("prefix_{uid}_{datetime}.dat", uid=uid)
+        res = filepath_from_string("prefix_{uid}_{datetime}.dat", None, uid=uid)
         dstr = datetime.date.today().strftime("%Y-%m-%d")
         self.assertEqual(f"prefix_123456_{dstr}.dat", res)
         dt = "2025-08-17"
-        res = filepath_from_string("prefix_{uid}_{datetime}.dat",
+        res = filepath_from_string("prefix_{uid}_{datetime}.dat", None,
                                    uid=uid, datetime=dt)
         self.assertEqual("prefix_123456_2025-08-17.dat", res)
-        res = filepath_from_string(None, uid=None)
+        res = filepath_from_string(None, None, uid=None)
         self.assertEqual(None, res)
 
 
