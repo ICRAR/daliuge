@@ -19,11 +19,12 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
-
+import os.path
 import unittest
 import datetime
+
 from dlg.data.path_builder import (find_dlg_fstrings, filepath_from_string,
-                                   base_uid_pathname)
+                                   base_uid_pathname, PathType)
 
 
 class TestPathBuilders(unittest.TestCase):
@@ -45,19 +46,50 @@ class TestPathBuilders(unittest.TestCase):
         self.assertEqual("123456_0_1", res)
 
 
-
     def test_file_path_from_string(self):
+        """
+        Go through each of the variations we expect for Files we want to name
+        :return:
+        """
         uid = "123456"
-        res = filepath_from_string("prefix_{uid}_{datetime}.dat", None, uid=uid)
+        res = filepath_from_string("prefix_{uid}_{datetime}.dat", PathType.File, uid=uid)
         dstr = datetime.date.today().strftime("%Y-%m-%d")
         self.assertEqual(f"prefix_123456_{dstr}.dat", res)
         dt = "2025-08-17"
-        res = filepath_from_string("prefix_{uid}_{datetime}.dat", None,
+        res = filepath_from_string("prefix_{uid}_{datetime}.dat", PathType.File,
                                    uid=uid, datetime=dt)
         self.assertEqual("prefix_123456_2025-08-17.dat", res)
-        res = filepath_from_string(None, None, uid=None)
+        res = filepath_from_string(None, PathType.File, uid=None)
         self.assertEqual(None, res)
 
+    def test_directory_path_from_string(self):
+        """
+        Go through each of the variations we expect for Directories we want to name
+
+        :return:
+        """
+
+        uid = "123456"
+        # 'path' takes precedence over dirname if there is already a value.
+        # This is based on InputApp setting the path for DirectoryDROP,
+        # which takes precedence over the auto-generated directoryDROP path.
+        res = filepath_from_string("$HOME/directory_name", PathType.Directory, uid=uid,
+                                   dirname="/$HOME/session_dir/")
+        self.assertEqual(os.path.expandvars("$HOME/directory_name"), res)
+
+        # If 'path' is not absolute, we want to see it put undernead the
+        # 'base_name' directory.
+
+        res = filepath_from_string("directory_name", PathType.Directory, uid=uid,
+                                   dirname='base_name/123456')
+        self.assertEqual(os.path.expandvars("base_name/123456/directory_name"), res)
+
+        # If 'path' is not set, we want to see it put underneath 'base_name' with the
+        # auto-generated path.
+
+        res = filepath_from_string(None, PathType.Directory, uid=uid,
+                                   dirname='base_name/123456')
+        self.assertEqual(os.path.expandvars("base_name/123456/"), res)
 
 class TestHelperFunctions(unittest.TestCase):
 

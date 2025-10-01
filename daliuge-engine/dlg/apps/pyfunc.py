@@ -606,7 +606,7 @@ class PyFuncApp(BarrierAppDROP):
                 if parser == DropParser.PATH:
                     try:
                         argument.value = filepath_from_string(
-                            argument.value, path=output_drop.path,
+                            argument.value, path_type=output_drop.path_type,
                             dirname=output_drop.dirname,
                             uid=output_drop.uid,
                             humanKey=output_drop.humanKey
