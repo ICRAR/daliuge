@@ -58,7 +58,7 @@ class DirectoryDROP(PathBasedDrop, DataDROP):
     """
 
     check_exists = dlg_bool_param("check_exists", False)
-    create_if_missing = dlg_bool_param("create_if_missing", True)
+    create_if_missing = dlg_bool_param("create_if_missing", False)
 
     def initialize(self, **kwargs):
         DataDROP.initialize(self, **kwargs)
