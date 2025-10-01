@@ -607,7 +607,9 @@ class PyFuncApp(BarrierAppDROP):
                 if parser == DropParser.PATH:
                     try:
                         argument.value = filepath_from_string(
-                            argument.value, dirname=output_drop.dirname, uid=output_drop.uid,
+                            argument.value, path=output_drop.path,
+                            dirname=output_drop.dirname,
+                            uid=output_drop.uid,
                             humanKey=output_drop.humanKey
                         )
                     except RuntimeError as e:
