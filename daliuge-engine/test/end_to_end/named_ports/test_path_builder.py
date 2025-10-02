@@ -42,7 +42,7 @@ class TestPathBuilders(unittest.TestCase):
         self.assertEqual(None, res)
         res = base_uid_pathname(123456, None)
         self.assertEqual("123456_", res)
-        res = base_uid_pathname("123456_abcdef", "0/1")
+        res = base_uid_pathname("123456_abcdef", "0-1")
         self.assertEqual("123456_0_1", res)
 
 
@@ -61,6 +61,16 @@ class TestPathBuilders(unittest.TestCase):
         self.assertEqual("prefix_123456_2025-08-17.dat", res)
         res = filepath_from_string(None, PathType.File, uid=None)
         self.assertEqual(None, res)
+
+    def test_auto_path_from_string(self):
+        """
+        Test that the 'auto' keyword works as expected by generating the base_uid_name.
+        """
+        uid = "123456"
+        res = filepath_from_string("{auto}.dat", PathType.File, uid=uid, humanKey="0-1")
+        self.assertEqual("123456_0-1.dat", res)
+        res = filepath_from_string("{auto}.ms/", PathType.Directory, uid=uid, humanKey="0-1")
+        self.assertEqual("123456_0-1.ms/", res)
 
     def test_directory_path_from_string(self):
         """

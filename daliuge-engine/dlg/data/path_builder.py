@@ -47,15 +47,18 @@ class PathType(Enum):
     Directory = auto()
 
 
-def default_map():
+def construct_map(**kwargs):
     """
     Get the default map for the FSTRING replacement keywords
     """
-    return {
+    map = {
         "dlg": "DALIGUE",
         "datetime": datetime.date.today().strftime("%Y-%m-%d"),
         "uid": str(uuid.uuid4()),
-    } 
+        "auto": base_uid_pathname(kwargs.get("uid"), kwargs.get("humanKey"))
+    }
+    map.update(**kwargs)
+    return map
 
 def base_uid_pathname(uid: str, humanKey: str):
     """
@@ -150,12 +153,9 @@ def filepath_from_string(path: str, path_type: PathType, dirname: str = "",
     """
 
     opts = []
-    fstring_map = default_map() 
-    fstring_map.update(kwargs)
-    if path_type == path_type.Directory and not path:
+    fstring_map = construct_map(**kwargs)
+    if path_type == PathType.Directory and not path:
         path = "" # The path we want is a directory DROP and we do not care about
-        # dirname = path
-        # filename
     elif not path and "humanKey" in fstring_map:
         return base_uid_pathname(fstring_map["uid"], fstring_map["humanKey"])
     elif not path:
