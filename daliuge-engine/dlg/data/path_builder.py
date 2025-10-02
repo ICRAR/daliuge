@@ -51,14 +51,14 @@ def construct_map(**kwargs):
     """
     Get the default map for the FSTRING replacement keywords
     """
-    map = {
+    fstring_map = {
         "dlg": "DALIGUE",
         "datetime": datetime.date.today().strftime("%Y-%m-%d"),
         "uid": str(uuid.uuid4()),
         "auto": base_uid_pathname(kwargs.get("uid"), kwargs.get("humanKey"))
     }
-    map.update(**kwargs)
-    return map
+    fstring_map.update(**kwargs)
+    return fstring_map
 
 def base_uid_pathname(uid: str, humanKey: str):
     """
