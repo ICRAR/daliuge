@@ -43,7 +43,7 @@ class TestPathBuilders(unittest.TestCase):
         res = base_uid_pathname(123456, None)
         self.assertEqual("123456_", res)
         res = base_uid_pathname("123456_abcdef", "0-1")
-        self.assertEqual("123456_0_1", res)
+        self.assertEqual("123456_0-1", res)
 
 
     def test_file_path_from_string(self):
