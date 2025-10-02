@@ -55,10 +55,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - python-version: "3.9"
           - python-version: "3.10"
           - python-version:  "3.11"
           - python-version:  "3.12"
+          - python-version: "3.13"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -95,10 +96,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - python-version: "3.9"
           - python-version: "3.10"
           - python-version:  "3.11"
           - python-version:  "3.12"
+          - python-version: "3.13"
 
     steps:
       - uses: actions/checkout@v4
