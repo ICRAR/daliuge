@@ -32,12 +32,11 @@ from dlg.data.io import DirectoryIO
 logger = logging.getLogger(f"dlg.{__name__}")
 
 
-# TODO: This needs some more work
 ##
 # @brief Directory
 # @details A DataDROP that represents a filesystem directory.
 # @par EAGLE_START
-# @param category Data
+# @param category Directory
 # @param tag daliuge
 # @param dropclass dlg.data.drops.directory.DirectoryDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
 # @param base_name directorycontainer/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
