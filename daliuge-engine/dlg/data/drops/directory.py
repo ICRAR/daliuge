@@ -39,7 +39,7 @@ logger = logging.getLogger(f"dlg.{__name__}")
 # @param category Directory
 # @param tag daliuge
 # @param dropclass dlg.data.drops.directory.DirectoryDROP/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
-# @param base_name directorycontainer/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param base_name directory/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param data_volume 5/Float/ConstraintParameter/NoPort/ReadWrite//False/False/Estimated size of the data contained in this node
 # @param group_end False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the end of a group?
 # @param check_exists False/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Perform a check to make sure the file path exists before proceeding with the application
