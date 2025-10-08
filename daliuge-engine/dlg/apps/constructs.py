@@ -119,7 +119,7 @@ class ExclusiveForceDrop(BarrierAppDROP):
 # @brief GlobalVariables
 # @details A Global variable store
 # @par EAGLE_START
-# @param category EnvironmentVariables
+# @param category GlobalVariables
 # @param tag template
 # @par EAGLE_END
 class GlobalVariableDrop(BarrierAppDROP):
