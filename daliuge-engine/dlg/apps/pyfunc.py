@@ -64,6 +64,7 @@ logger = logging.getLogger(f"dlg.{__name__}")
 
 MAX_IMPORT_RECURSION = 100
 
+
 def import_using_name(app, fname, curr_depth):
     if curr_depth > MAX_IMPORT_RECURSION:
         raise BadModuleException(
@@ -112,14 +113,15 @@ def import_using_name(app, fname, curr_depth):
                         break
                     except ModuleNotFoundError:
                         # try again, sometimes fixes the namespace
-                        mod = import_using_name(app, fname, curr_depth=curr_depth+1)
+                        mod = import_using_name(app, fname, curr_depth=curr_depth + 1)
                         break
-                    except Exception as e: # pylint: disable=broad-exception-caught
+                    except Exception as e:  # pylint: disable=broad-exception-caught
                         raise BadModuleException(
                             app, "Problem importing module %s, %s" % (mod, e)
                         ) from e
             logger.debug("Loaded module: %s", mod)
             return mod
+
 
 def import_using_code_ser(func_code: Union[str, bytes], func_name: str):
     """
@@ -137,6 +139,7 @@ def import_using_code_ser(func_code: Union[str, bytes], func_name: str):
         )
     return func
 
+
 def import_using_code(func_code: str, func_name: str, serialized: bool = True):
     """
     Import the function provided as a code string. Plain code as well as serialized code
@@ -144,10 +147,10 @@ def import_using_code(func_code: str, func_name: str, serialized: bool = True):
     """
     mod = None
     if not serialized and not isinstance(func_code, bytes):
-        logger.debug("Trying to import code from string: %s\n",  func_code.strip())
+        logger.debug("Trying to import code from string: %s\n", func_code.strip())
         try:
             mod = pyext.RuntimeModule.from_string("mod", func_name, func_code.strip())
-        except Exception: # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             func = import_using_code_ser(func_code, func_name)
         logger.debug("Imported function: %s", func_name)
         if mod and func_name:
@@ -252,10 +255,9 @@ class PyFuncApp(BarrierAppDROP):
     func: Callable
     fdefaults: dict
 
-
     def __repr__(self):
         if hasattr(self, "func"):
-            return  f"{self.__class__.__name__}_{self.func}_{self.oid}"
+            return f"{self.__class__.__name__}_{self.func}_{self.oid}"
         else:
             return f"{self.__class__.__name__}"
 
@@ -348,7 +350,7 @@ class PyFuncApp(BarrierAppDROP):
                     self.varargs = True
                 elif p.kind == p.VAR_KEYWORD:
                     self.varkw = True
-                if p.default != inspect._empty: # pylint: disable=protected-access
+                if p.default != inspect._empty:  # pylint: disable=protected-access
                     self.fn_defaults[k] = p.default
                     # self.arguments_defaults.append(p.default)
                     self.fn_ndef += 1
@@ -379,9 +381,9 @@ class PyFuncApp(BarrierAppDROP):
         for kw in self.func_def_keywords:
             # these are the preferred ones now
             if kw in self._applicationArgs and isinstance(
-                self._applicationArgs[kw]["value"],
-                bool or self._applicationArgs[kw]["value"] or
-                self._applicationArgs[kw]["precious"],
+                    self._applicationArgs[kw]["value"],
+                    bool or self._applicationArgs[kw]["value"] or
+                    self._applicationArgs[kw]["precious"],
             ):
                 # only transfer if there is a value or precious is True
                 self._applicationArgs.pop(kw)
@@ -492,7 +494,6 @@ class PyFuncApp(BarrierAppDROP):
 
         return positionalArgsMap, keywordArgsMap, input_outputs, vparg, vkarg
 
-
     def _map_parameters_to_func_args(self, positionalArgs: dict, keywordArguments: dict) -> tuple:
         """
         Given the keyword and postional arguments of the function we are using, map
@@ -513,9 +514,8 @@ class PyFuncApp(BarrierAppDROP):
         # update the positional args
         positionalArgsMap = self._initialise_args(positionalArgs)
         keywordArgsMap = self._initialise_args(keywordArguments)
-        positionalArgsMap, keywordArgsMap, input_outputs, vparg, vkarg =  (
+        positionalArgsMap, keywordArgsMap, input_outputs, vparg, vkarg = (
             self._populate_arguments_with_graph_data(positionalArgsMap, keywordArgsMap))
-
 
         # Determine if we can use the *args and **kwargs we identified above
         if self.varargs or self.populate_arguments_without_signature:
@@ -709,7 +709,6 @@ class PyFuncApp(BarrierAppDROP):
         self.func_name = self.func.__qualname__
         return
 
-
     @track_current_drop
     def initialize(self, **kwargs):
         """
@@ -833,7 +832,7 @@ class PyFuncApp(BarrierAppDROP):
 
         # 3. remove self argument if this is the initializer.
         if (self.func_name is not None
-                and self.func_name.split(".")[-1] in ["__init__","__class__"]
+                and self.func_name.split(".")[-1] in ["__init__", "__class__"]
                 and "self" in funcargs):
             funcargs.pop("self")
 
@@ -883,7 +882,7 @@ class PyFuncApp(BarrierAppDROP):
         component_params = self.parameters.get("componentParams", {})
         applicationArgs = self.parameters.get("applicationArgs", {})
         if "outputs" in self.parameters and check_ports_dict(
-            self.parameters["outputs"]
+                self.parameters["outputs"]
         ):
             for outport in self.parameters["outputs"]:
                 drop_uid, drop_port = list(outport.items())[0]
@@ -905,19 +904,22 @@ class PyFuncApp(BarrierAppDROP):
         logger.debug(
             "Writing following result to %d outputs: %s", len(self.outputs), result_iter
         )
+        num_outputs = len(self.outputs)
         for i, o in enumerate(self.outputs):
             # Ensure that we don't produce two files for the same output DROP
             if o.uid in self._output_filepaths:
                 # Trigger FileDROP filename update, but don't write to the drop because
                 # it has already been written to.
                 _ = o.getIO()
+                # 'Discount the Filepath output from outputs we write to'
+                num_outputs -= 1
                 continue
             if not result_iter and self.outputs:
                 result = result_iter
             elif len(result_iter) == 1:
                 # We only have one element, no need to save as a list
                 result = result_iter[0]
-            elif len(result_iter) > 1 and len(self.outputs) == 1:
+            elif len(result_iter) > 1 and num_outputs == 1:
                 # We want all elements in the list to go to the output
                 result = self.result
             else:
@@ -963,5 +965,3 @@ class PyFuncApp(BarrierAppDROP):
                 logger.debug(e)
                 self._recompute_data[name] = repr(val)
         return self._recompute_data
-
-
