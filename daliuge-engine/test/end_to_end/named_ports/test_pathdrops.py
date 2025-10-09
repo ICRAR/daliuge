@@ -25,6 +25,7 @@ This module is used to test FileDROP input/output naming through named ports.
 import datetime
 import os
 import shutil
+from os.path import isfile, exists, isdir
 
 import dill
 import pytest
@@ -36,7 +37,11 @@ from pathlib import Path
 pexpect = pytest.importorskip("dlg.dropmake")
 
 from dlg.ddap_protocol import DROPStates
-from test.dlg_end_to_end_utils import create_and_run_graph_spec_from_graph_file
+from dlg.data.drops.file import FileDROP
+
+from test.dlg_end_to_end_utils import (translate_graph, create_and_run_graph_spec,
+                                       create_and_run_graph_spec_from_graph_file)
+import daliuge_tests.engine.graphs as graphs
 from daliuge_tests.engine import test_filedrops as test_graphs
 
 # Note this test will only run with a full installation of DALiuGE.
@@ -57,13 +62,7 @@ class TestBasicApp(unittest.TestCase):
     def setUp(self):
         if os.path.exists(self.rundir):
             shutil.rmtree(self.rundir)
-        # if os.path.exists(self.rundir):
-        #     shutil.rmtree(self.rundir)
-        # os.makedirs(self.rundir)
 
-    # def tearDown(self):
-    #     if os.path.exists(self.rundir):
-    #         shutil.rmtree(self.rundir)
 
     def test_pyfunc_to_fileapp(self):
         """
@@ -96,3 +95,23 @@ class TestBasicApp(unittest.TestCase):
                 text = output_text
                 with p.open() as fp:
                     self.assertEqual(text, fp.read())
+
+class TestDirectoryDrops(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_directory_drop_side_effects(self):
+        f = files(graphs)/"DirectoryDropSideEffects.graph"
+        g = translate_graph(str(f), "directoryDrop")
+
+        _, leafs = create_and_run_graph_spec(self,g, app_root=False)
+
+        for l in leafs:
+            if isinstance(l, FileDROP):
+                self.assertTrue(exists(l.path))
+                self.assertTrue(isfile(l.path))
+            else:
+                self.assertTrue(exists(l.path))
+                self.assertTrue(isdir(l.path))
+

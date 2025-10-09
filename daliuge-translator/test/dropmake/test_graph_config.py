@@ -22,9 +22,10 @@
 
 import json
 import unittest
+from dlg.dropmake.graph_config import apply_active_configuration, get_key_idx_from_list
+import daliuge_tests.translator as test_graphs
 from dlg.dropmake.graph_config import (apply_active_configuration,
                                        get_key_idx_from_list, fill_config)
-import daliuge_tests.dropmake as test_graphs
 
 try:
     from importlib.resources import files, as_file
