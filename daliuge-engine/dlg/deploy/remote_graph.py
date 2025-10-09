@@ -29,6 +29,8 @@ import json
 import requests
 import sys
 
+import logging
+logger = logging.getLogger(f"dlg.{__name__}")
 
 def gitlab_request(user, repo, branch, path):
     """
@@ -50,7 +52,7 @@ def gitlab_request(user, repo, branch, path):
     r = requests.get(f"https://gitlab.com/api/v4/projects/{url_enabled_user}%2F"
                      f"{repo}/repository/files/{url_enabled_path}/raw?ref"
                      f"={branch}", timeout=15)
-    return r.content
+    return json.loads(r.content)
 
 def github_request(user, repo, branch, path):
     """
@@ -68,14 +70,20 @@ def github_request(user, repo, branch, path):
     :return:
     """
 
+    def report_and_exit(request, content):
+        logger.error("Things went wrong with request: %s !", {request})
+        logger.error("Received content: %s", content)
+        sys.exit(1)
+
     request_url = f"https://api.github.com/repos/{user}/{repo}/contents/{path}?ref={branch}"
 
-    r = requests.get(request_url,
-                     timeout=15)
+    r = requests.get(request_url, timeout=15)
     content = json.loads(r.content)
-    decoded_content = base64.b64decode(content['content']).decode()
-    if r.status_code != 200:
-        print(f"Things went wrong with {request_url}!")
-        print(f"{decoded_content}")
-        sys.exit(1)
-    return decoded_content
+    try:
+        decoded_content = base64.b64decode(content['content']).decode()
+        if r.status_code != 200:
+            report_and_exit(request_url, decoded_content)
+    except KeyError:
+        report_and_exit(request_url, content)
+
+    return json.loads(decoded_content)

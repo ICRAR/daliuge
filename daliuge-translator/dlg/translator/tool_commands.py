@@ -27,6 +27,7 @@ import optparse # pylint: disable=deprecated-module
 import os
 import sys
 
+
 from dlg.common import tool
 from dlg.common.reproducibility.reproducibility import (
     init_lgt_repro_data,
@@ -35,6 +36,7 @@ from dlg.common.reproducibility.reproducibility import (
     init_pgt_partition_repro_data,
     init_pg_repro_data,
 )
+from dlg.dropmake import pg_generator
 from dlg.dropmake.pgt import GPGTNoNeedMergeException
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -223,6 +225,53 @@ def dlg_fill(parser, args):
     from ..dropmake.pg_generator import fill
 
     graph = fill(_open_i(opts.logical_graph), params)
+    dump(init_lg_repro_data(init_lgt_repro_data(graph, opts.reproducibility)))
+
+def dlg_config(parser, args):
+    """
+    Apply config passed to CLI to the LGT.
+    :param parser:
+    :param config:
+    :return:
+    """
+    tool.add_logging_options(parser)
+    _add_output_options(parser)
+
+    parser.add_option(
+        "-L",
+        "--logical-graph",
+        default="-",
+        help="Path to the Logical Graph:",
+    )
+    parser.add_option(
+        "--graph_config",
+        help="Graph configuration input"
+
+    )
+
+    parser.add_option(
+        "-R",
+        "--reproducibility",
+        default="0",
+        help="Level of reproducibility. Default 0 (NOTHING). Accepts '0,1,2,4,5,6,7,8'",
+    )
+
+    (opts, args) = parser.parse_args(args)
+    tool.setup_logging(opts)
+
+    dump = _setup_output(opts)
+    graph_config = None
+    if opts.graph_config == "-":
+        sin = sys.stdin.read()
+        graph_config = json.loads(sin)
+    else:
+        with open (opts.graph_config) as fp:
+            graph_config = json.load(fp)
+
+    with open (opts.logical_graph) as fp:
+        logical_graph = json.load(fp)
+
+    graph = pg_generator.apply_config(logical_graph, graph_config)
     dump(init_lg_repro_data(init_lgt_repro_data(graph, opts.reproducibility)))
 
 
@@ -583,5 +632,9 @@ def register_commands():
     )
     tool.cmdwrap("unroll-and-partition", translator_group,
                  "unroll + partition", dlg_unroll_and_partition)
+    tool.cmdwrap("fill_config", translator_group,
+                 "Apply a graph config to the logical graph", dlg_config)
     tool.cmdwrap("fill", translator_group,
-                 "Fill a Logical Graph with parameters", dlg_fill)
+                 "[Deprecated] Fill a Logical Graph with parameters", dlg_fill)
+
+

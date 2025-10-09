@@ -51,6 +51,8 @@ from dlg.common.reproducibility.reproducibility import (
 from dlg.deploy.configs.config_manager import ConfigManager, ConfigType
 
 from dlg.dropmake import pg_generator
+from dlg.dropmake.graph_config import change_active_configuration, \
+    apply_active_configuration, find_config_id_from_name
 
 FACILITIES = ConfigFactory.available()
 
@@ -261,7 +263,6 @@ def create_config_group(parser: optparse.OptionParser):
 
 def create_local_graph_group(parser):
     """
-    TODO: LIU-424
     """
     group = optparse.OptionGroup(parser, "Local graph options",
                       "Options for locally stored graphs")
@@ -316,11 +317,71 @@ def create_remote_graph_group(parser):
 
     return group
 
+def create_graph_config_group(parser)->optparse.OptionGroup:
+    """
+    Construct a CLI group to parse graph config options
+
+    Graph configurations may be sorted separately from the graph so we treat them
+    independently.
+
+    :param parser: the Parser to which we are adding a group
+    :return: group, and OptionGroup
+    """
+
+    group = optparse.OptionGroup(parser, "Graph config options",
+                      "Options for selecting the active graph configuration. \n"
+                      "Only one option is used: priority in descending is fill, id, name")
+
+    group.add_option("--config_name",
+                     dest="config_name",
+                     help="The name of the config as it appears in the graph")
+
+    group.add_option("--config_id",
+                     dest="config_id",
+                     help="The id of the config")
+
+    group.add_option("--fill_config",
+                     dest="fill_config",
+                     help="Use stdin to fill graph with config provided at runtime using "
+                          "'dlg fill'")
+
+    return group
+
+
+def _process_config_options(opts, graph):
+    """
+    We parse configuration options in the following priority:
+
+        - Fill config
+        - Config id
+        - Config name
+
+    If no config option is provided, return None.
+
+    :param opts:
+    :return:
+    """
+
+    if opts.fill_config:
+        return pg_generator.fill_config(graph, opts.fill_config)
+    elif opts.config_id:
+        return change_active_configuration(graph, opts.config_id)
+    elif opts.config_name:
+        id = find_config_id_from_name(graph, opts.config_name)
+        graph = change_active_configuration(graph, id)
+        return apply_active_configuration(graph)
+    else:
+        return None
 
 def evaluate_graph_options(opts, parser):
     """
     Perform checks on the graph options to ensure mutually exclusive information is not
-    stored.
+    stored. Procedes to:
+
+    1. Apply graph configurations (if any)
+    2. Load, or retrieve graph information
+    3. Translate and return in Physical Graph Template form.
+
     :param opts:
     :return:
     """
@@ -330,25 +391,27 @@ def evaluate_graph_options(opts, parser):
     use_remote_graph = opts.github or opts.gitlab
     use_local_graph = opts.logical_graph or opts.physical_graph
 
-    graph = None
-    if use_local_graph:
-        if use_remote_graph:
-            parser.error("Cannot specify both local and remote graph")
-        else:
-            if opts.logical_graph:
-                graph =  _translate_graph(parser, opts.logical_graph)
-            if opts.physical_graph:
-                graph =  opts.physical_graph
+    if use_local_graph and use_remote_graph:
+        parser.error("Cannot specify both local and remote graph")
 
-    if opts.github:
+    if opts.physical_graph:
+        return opts.physical_graph
+    elif opts.logical_graph:
+        with open(opts.logical_graph) as fp:
+            graph_content = json.load(fp)
+            lg = _process_config_options(opts, graph_content)
+            return _translate_graph(parser, opts, lg_graph=lg)
+    elif opts.github:
         content = github_request(opts.user_org, opts.repo, opts.branch, opts.path)
-        graph = _translate_graph(parser, opts, content)
-    if opts.gitlab:
+        lg = _process_config_options(opts, content)
+        return _translate_graph(parser, opts, lg)
+    elif opts.gitlab:
         content = gitlab_request(opts.user_org, opts.repo, opts.branch, opts.path)
-        graph =  _translate_graph(parser, opts, content)
-
-    graph = 'mytest.graph'
-    return graph
+        lg = _process_config_options(opts, content)
+        return  _translate_graph(parser, opts, lg)
+    else:
+        parser.error("No graph specified!")
+        return None
 
 
 def create_monitor_options(parser):
@@ -443,7 +506,7 @@ def create_algorithm_options(parser):
 
     return group
 
-def _translate_graph(parser, opts, content=""):
+def _translate_graph(parser, opts, lg_graph):
     if opts.logical_graph:
         graph_file = os.path.basename(opts.logical_graph)
     else:
@@ -454,17 +517,11 @@ def _translate_graph(parser, opts, content=""):
     else:
         pgt_file = graph_file
 
-    lg_graph = {}
-    if opts.logical_graph:
-        with open(opts.logical_graph) as f:
-            # logical graph provided, translate first
-            lg_graph = json.loads(f.read())
-    elif content:
-        lg_graph = json.loads(content)
 
-    else:
+    if not lg_graph:
         parser.error("Incorrect configuration, no graph available to translate")
         sys.exit(1)
+
     pgt = pg_generator.unroll(lg_graph, zerorun=opts.zerorun)
     pgt = init_pgt_unroll_repro_data(pgt)
     reprodata = pgt.pop()
@@ -547,6 +604,7 @@ def submit(opts, parser):
         parser.error("Must specify only one of --github or gitlab")
 
     pgt_file = evaluate_graph_options(opts, parser)
+    # config_file = evaluate_graph_options(opts, parser)
     if not pgt_file or not Path(pgt_file).exists():
         parser.error("There was an issue translating the physical graph and no graph "
                      "file could be found!")
@@ -624,6 +682,7 @@ def run(_, args):
     parser.add_option_group(create_component_options(parser))
     parser.add_option_group(create_remote_graph_group(parser))
     parser.add_option_group(create_local_graph_group(parser))
+    parser.add_option_group(create_graph_config_group(parser))
     parser.add_option_group(create_config_group(parser))
 
     # SSH options
