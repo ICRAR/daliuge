@@ -31,7 +31,7 @@ from dlg.data.drops.container import ContainerDROP
 from dlg.apps.app_base import AppDROP
 
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
-from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.apps.simple import RandomArrayApp
 
 
@@ -91,25 +91,20 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual("B", b.oid)
         self.assertEqual("B", b.uid)
 
+    def test_directoryDROP(self):
+
         # A directory container
         dropSpecList = [
             {
-                "oid": "A",
-                "categoryType": "Data",
-                "dropclass": "dlg.data.drops.file.FileDROP",
-                "dirname": ".",
-            },
-            {
                 "oid": "B",
-                "categoryType": "Container",
-                "dropclass": "dlg.data.drops.DirectoryContainer",
-                "children": ["A"],
-                "dirname": ".",
+                "categoryType": "Data",
+                "dropclass": "dlg.data.drops.DirectoryDROP",
+                "dirname": "/tmp/testdir"
             },
         ]
-        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
-        b = a.parent
-        self.assertIsInstance(b, DirectoryContainer)
+        b = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
+        self.assertIsInstance(b, DirectoryDROP)
+        self.assertEqual("/tmp/testdir", b.path)
 
     def test_consumer(self):
         dropSpecList = [

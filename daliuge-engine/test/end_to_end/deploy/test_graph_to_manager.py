@@ -37,6 +37,7 @@ from dlg.ddap_protocol import DROPStates
 from dlg.testutils import ManagerStarter
 from test.dlg_engine_testutils import NMTestsMixIn, DROPManagerUtils
 
+
 def create_full_hostname(server_info, event_port, rpc_port):
 
     return (f"{server_info.server._server.listen}:"
@@ -79,6 +80,9 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
         # Partitioning currently requires the to_go_js + to_pg_spec approach
         # We will partition using METIS, as the base PGT class doesn't actually partition
         # anything.
+        #
+        # NOTE: if this test fails to run with an zerorpc error 'port already in use', try to
+        # kill all python processes. Seems that sometimes the tear-down is not completed.
         lg_path = str(files(__package__) / "ArrayLoop.graph")
 
         # drop_list = lg.unroll_to_tpl()

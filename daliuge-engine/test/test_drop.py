@@ -42,12 +42,15 @@ from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
-from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
-from dlg.exceptions import InvalidDropException
+from dlg.exceptions import InvalidDropException, ErrorManagerCaughtException, \
+    InvalidDROPState
 from dlg.apps.simple import Branch
 from dlg.apps.simple import NullBarrierApp, SleepAndCopyApp
+
+from test.dlg_engine_testutils import run_errormanagement_exception_test
 
 try:
     from crc32c import crc32c
@@ -747,10 +750,9 @@ class TestDROP(unittest.TestCase):
             f.write(b" ")
         assertFiles(True, True, tempDir=tempDir)
 
-    def test_directoryContainer(self):
+    def test_DirectoryDROP(self):
         """
-        A small, simple test for the DirectoryContainer DROP that checks it allows
-        only valid children to be added
+        A small, simple test for the DirectoryDROP
         """
 
         # Prepare our playground
@@ -760,13 +762,12 @@ class TestDROP(unittest.TestCase):
         if not os.path.exists(dirname2):
             os.makedirs(dirname2)
 
-        # DROPs involved
-        a = FileDROP("a", "a", filepath=f"{dirname}/")
-        b = FileDROP("b", "b", filepath=f"{dirname}/")
-        c = FileDROP("c", "c", filepath=f"{dirname2}/")
-        d = FileDROP("d", "d", filepath=f"{dirname2}/")
-        cont1 = DirectoryContainer("e", "e", dirname=dirname)
-        cont2 = DirectoryContainer("f", "f", dirname=dirname2)
+        cont1 = DirectoryDROP("e", "e", dirname=dirname)
+        cont2 = DirectoryDROP("f", "f", dirname=dirname2)
+
+        print(cont1.path)
+        print(cont2.path)
+
 
         # Paths are absolutely reported
         self.assertEqual(
@@ -777,20 +778,8 @@ class TestDROP(unittest.TestCase):
             os.path.realpath(cont2.path),
         )
 
-        # Certain children-to-be are rejected
-        self.assertRaises(TypeError, cont1.addChild, NullDROP("g", "g"))
-        self.assertRaises(TypeError, cont1.addChild, InMemoryDROP("h", "h"))
-        self.assertRaises(TypeError, cont1.addChild, ContainerDROP("i", "i"))
-        self.assertRaises(Exception, cont1.addChild, c)
-        self.assertRaises(Exception, cont1.addChild, d)
-        self.assertRaises(Exception, cont2.addChild, a)
-        self.assertRaises(Exception, cont2.addChild, b)
-
-        # These children are correct
-        cont1.addChild(a)
-        cont1.addChild(b)
-        cont2.addChild(c)
-        cont2.addChild(d)
+        self.assertTrue(cont1.exists())
+        self.assertTrue(cont2.exists())
 
         # Revert to previous state
         shutil.rmtree(dirname, True)
@@ -838,28 +827,27 @@ class TestDROP(unittest.TestCase):
                 pass
 
         # No n_effective_inputs given
-        self.assertRaises(InvalidDropException, InputFiredAppDROP, "a", "a")
+        cause = InvalidDropException
+        run_errormanagement_exception_test(self, InputFiredAppDROP,
+                                           cause, "a", "a")
         # Invalid values
-        self.assertRaises(
-            InvalidDropException,
-            InputFiredAppDROP,
-            "a",
-            "a",
-            n_effective_inputs=-2,
+        run_errormanagement_exception_test(
+            self, InputFiredAppDROP,
+            cause,
+            "a", "a", n_effective_inputs=-2
         )
-        self.assertRaises(
-            InvalidDropException,
-            InputFiredAppDROP,
-            "a",
-            "a",
-            n_effective_inputs=0,
+
+        run_errormanagement_exception_test(
+            self, InputFiredAppDROP,
+            cause,
+            "a", "a", n_effective_inputs=0
         )
 
         # More effective inputs than inputs
         a = InMemoryDROP("b", "b")
         b = InputFiredAppDROP("a", "a", n_effective_inputs=2)
         b.addInput(a)
-        self.assertRaises(Exception, a.setCompleted)
+        self.assertRaises(RuntimeError, a.setCompleted)
 
         # 2 effective inputs, 4 outputs. Trigger 2 inputs and make sure the
         # app has run

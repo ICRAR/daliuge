@@ -6,6 +6,8 @@ import logging
 import math
 import threading
 
+from dlg.exceptions import (InvalidDropException, InvalidRelationshipException,
+                            ErrorManagerCaughtException, InvalidDROPState)
 from dlg.drop import track_current_drop
 from dlg.drop_loaders import load_dill
 from dlg.data.drops.container import ContainerDROP
@@ -16,7 +18,6 @@ from dlg.ddap_protocol import (
     DROPStates,
     DROPRel,
 )
-from dlg.exceptions import InvalidDropException, InvalidRelationshipException
 
 from dlg.meta import (
     dlg_int_param,
@@ -431,7 +432,9 @@ class InputFiredAppDROP(AppDROP):
         elif drop_state == DROPStates.SKIPPED:
             self._skippedInputs.append(uid)
         else:
-            raise Exception("Invalid DROP state in dropCompleted: %s" % drop_state)
+            raise InvalidDROPState(
+                f"Invalid DROP state in dropCompleted: {drop_state}",
+                f"Drop state in state {drop_state} during completion")
 
         error_len = len(self._errorInputs)
         ok_len = len(self._completedInputs)
@@ -494,7 +497,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
-        logger.info("Executing %r", f"{self.name}.{self._humanKey}")
+        logger.user("Executing %r", f"{self.name}.{self._humanKey}")
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING
@@ -515,6 +518,11 @@ class InputFiredAppDROP(AppDROP):
                         self._humanKey,
                         self._global_log_level,
                     )
+                break
+            except ErrorManagerCaughtException as e:
+                self.execStatus = AppDROPStates.ERROR
+                drop_state = DROPStates.ERROR
+                logger.error("Caught ErrorManagerCaughtException: %s", e)
                 break
             except Exception: # pylint: disable=broad-exception-caught
                 if self.execStatus == AppDROPStates.CANCELLED:

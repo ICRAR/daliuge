@@ -37,20 +37,30 @@ import os
 import uuid
 
 from pathlib import Path
+from enum import Enum, auto
 
 NON_FILENAME_CHARACTERS = re.compile(fr":|{os.sep}")
 
-def default_map():
+class PathType(Enum):
+
+    File = auto()
+    Directory = auto()
+
+
+def construct_map(**kwargs):
     """
     Get the default map for the FSTRING replacement keywords
     """
-    return {
+    fstring_map = {
         "dlg": "DALIGUE",
         "datetime": datetime.date.today().strftime("%Y-%m-%d"),
         "uid": str(uuid.uuid4()),
-    } 
+        "auto": base_uid_pathname(kwargs.get("uid"), kwargs.get("humanKey"))
+    }
+    fstring_map.update(**kwargs)
+    return fstring_map
 
-def base_uid_filename(uid: str, humanKey: str):
+def base_uid_pathname(uid: str, humanKey: str):
     """
     This a basic filename generator, using the UID and humandReadableKey. The function
     returns only the name of the file, and expects the full filepath to be handled by
@@ -124,37 +134,46 @@ def find_dlg_fstrings(filename: str) -> list[str]:
         return opts
 
 
-def filepath_from_string(filename: str, dirname: str = "", **kwargs) -> str:
+def filepath_from_string(path: str, path_type: PathType, dirname: str = "",
+                         **kwargs) -> (
+        str):
     """
-    Attempts to construct a filename from filename and possible mappings, which are
-    built from a combination of FSTRING_MAP and **kwargs.
+    Attempts to construct a path from path, dirname, and possible string replacements.
+    The replacements are built from a combination of FSTRING_MAP and **kwargs.
+
+    If path_type is PathType.Directory and we do not have a 'path', we do not create a
+    base_uid_pathname, for we do not need to create a filename. Instead, we use dirname
+    only to construct the final path.
 
     Returns
     -------
-    filename
+    path: The provisional path provided. This may be empty, a file-path, or a directory path.
+    path_type: An indicator of what
+    dirname
     """
 
     opts = []
-    fstring_map = default_map() 
-    fstring_map.update(kwargs)
-    if not filename and "humanKey" in fstring_map:
-        return base_uid_filename(fstring_map["uid"], fstring_map["humanKey"])
-    elif not filename:
-        return filename
+    fstring_map = construct_map(**kwargs)
+    if path_type == PathType.Directory and not path:
+        path = "" # The path we want is a directory DROP and we do not care about
+    elif not path and "humanKey" in fstring_map:
+        return base_uid_pathname(fstring_map["uid"], fstring_map["humanKey"])
+    elif not path:
+        return path
 
-    full_filename = os.path.expandvars(filename)
-    full_dirname = os.path.expandvars(dirname)
+    expanded_path = os.path.expandvars(path)
+    expanded_dirname = os.path.expandvars(dirname)
 
-    if full_filename == filename and "$" in full_filename:
-        raise RuntimeError(f"Environment variable in path {filename} not set!")
-    if full_dirname == dirname and "$" in full_dirname:
+    if expanded_path == path and "$" in expanded_path:
+        raise RuntimeError(f"Environment variable in path {path} not set!")
+    if expanded_dirname == dirname and "$" in expanded_dirname:
         raise RuntimeError(f"Environment variable in path {dirname} not set!")
 
-    opts.extend(find_dlg_fstrings(filename))
+    opts.extend(find_dlg_fstrings(path))
     for fp in opts:
-        full_filename = full_filename.replace(f"{{{fp}}}", fstring_map[fp])
+        expanded_path = expanded_path.replace(f"{{{fp}}}", fstring_map[fp])
 
-    if Path(full_filename).is_absolute():
-        return full_filename
+    if Path(expanded_path).is_absolute():
+        return expanded_path
     else:
-        return f"{full_dirname}/{full_filename}" if full_dirname else full_filename
+        return f"{expanded_dirname}/{expanded_path}" if expanded_dirname else expanded_path
