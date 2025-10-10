@@ -1,6 +1,16 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.0.0
+- [Feature] Add support for DirectoryDROP: https://github.com/ICRAR/daliuge/pull/360
+  - [Deprecated] This has replaced DirectoryContainerDROP
+- [Feature] Add support for GlobalVariableDROP: https://github.com/ICRAR/daliuge/pull/357
+  - [Deprecated] This has replaced EnvironmentVarDROP
+- [Feature] LIU-457: Add USER log level and error intercept feature: https://github.com/ICRAR/daliuge/pull/344
+- [Feature] Add automatic directoryDROP naming: https://github.com/ICRAR/daliuge/pull/364
+- [Fixed] Fix pydata issues with Utf-8 pyfunc output: https://github.com/ICRAR/daliuge/pull/363
+
+
 # v5.6.3
 - [Fixed] Revert node_str parameter name in rest.py function definition: https://github.com/ICRAR/daliuge/pull/358
 
