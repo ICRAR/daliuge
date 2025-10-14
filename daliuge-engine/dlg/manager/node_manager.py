@@ -39,7 +39,6 @@ import sys
 import threading
 import time
 import typing
-# import dlg.runtime.dlg_logging as logging
 
 
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future
@@ -57,8 +56,8 @@ from dlg.exceptions import (
     DaliugeException, ErrorManagerCaughtException, SessionInterruptError,
 )
 from ..lifecycle.dlm import DataLifecycleManager
-from dlg.runtime.dlg_logging import setup_logger_class
-setup_logger_class()
+# from dlg.runtime.dlg_logging import setup_logger_class
+# setup_logger_class()
 
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -315,12 +314,12 @@ class NodeManagerBase(DROPManager):
 
     def start(self, rpc_endpoint):
         super().start()
-        logger.user("Running NodeManager")
+        logger.info("Running NodeManager")
         self.drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
-        logger.user("Stopping NodeManager")
+        logger.info("Stopping NodeManager")
         self._dlm.cleanup()
         self.drop_runner.close()
         super().shutdown()

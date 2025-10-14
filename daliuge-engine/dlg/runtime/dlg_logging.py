@@ -26,9 +26,6 @@ Logging facilities for DALiuGE runtime environment.
 
 import logging
 
-PREFIX = "dlg"
-
-USER = 25
 
 def setup_logger_class():
 
@@ -72,30 +69,11 @@ def setup_logger_class():
             record.session_id = session_id
             return record
 
-        def user(self, message, *args, **kwargs):
-            """
-            Operator-specific error messages
-
-            :param self:
-            :param message:
-            :param args:
-            :param kwargs:
-            :return:
-            """
-            if self.isEnabledFor(USER):
-                self._log(USER, message, args, **kwargs)
-
-    logging.addLevelName(USER, "USER")
     # To avoid 'No handlers could be found for logger' messages during testing
     logging.getLogger(__name__).addHandler(logging.NullHandler())
 
     # Use our own logger class, which knows about the currently executing app
     logging.setLoggerClass(_DlgLogger)
-    # logging.logger.user = _Dlglogger.user
-    logging.addLevelName(USER, "USER")
-    # logging.user = _DlgLogger.user
-    logging.USER = USER # CREATE
-
 
 
 # class RedirectOperatorLoggingHandler(logging.Handler):

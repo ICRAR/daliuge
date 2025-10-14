@@ -85,8 +85,8 @@ def launchServer(opts):
     import multiprocessing as mp
     print(f"[{mp.current_process().name}] Start method: {mp.get_start_method()}")
 
-    logger.user("DALiuGE version %s running at %s", version.full_version, os.getcwd())
-    logger.user("Creating %s", dmName)
+    logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())
+    logger.info("Creating %s", dmName)
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
     except Exception as e:
@@ -391,8 +391,8 @@ def setupLogging(opts):
     # Assuming we have selected the default, info-level messages will not show to the
     # user. A Warning message here let's the user know something is happening without
     # us needing to modify the default logging level.
-    logger.user("Log level: %s", logging.getLevelName(level))
-    logger.user("Logging in: %s time", time_fmt)
+    logger.info("Log level: %s", logging.getLevelName(level))
+    logger.info("Logging in: %s time", time_fmt)
 
     return fileHandler
 

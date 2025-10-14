@@ -48,8 +48,6 @@ else:
     # If we can’t import it (e.g. in docs), just continue gracefully
     print("Warning: dlg.runtime.dlg_logging not available, skipping logger setup")
 
-print("Setting up DALiuGE runtime...")
-
 # -------------------------------------------------------------------------
 # Continue with the rest of the runtime imports
 # -------------------------------------------------------------------------

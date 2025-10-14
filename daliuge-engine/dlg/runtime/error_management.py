@@ -213,7 +213,7 @@ def intercept_error(e: Exception):
     logger = logging.getLogger(f"dlg.{__name__}")
     if type(e) != ex.ErrorManagerCaughtException:
         errorno = EXCEPTION_MAP.get(type(e), ErrorCode.DROP_ERROR)
-        logger.user(errorno.doc_url)
+        logger.info(errorno.doc_url)
     raise ex.ErrorManagerCaughtException from e
 
 
