@@ -57,6 +57,8 @@ from dlg.exceptions import (
     DaliugeException, ErrorManagerCaughtException, SessionInterruptError,
 )
 from ..lifecycle.dlm import DataLifecycleManager
+from dlg.runtime.dlg_logging import setup_logger_class
+setup_logger_class()
 
 
 logger = logging.getLogger(f"dlg.{__name__}")

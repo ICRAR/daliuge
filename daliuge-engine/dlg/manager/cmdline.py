@@ -52,6 +52,7 @@ from .rest import (
     MasterManagerRestServer,
 )
 from dlg import utils
+# import dlg.runtime
 from dlg.runtime import version
 
 _terminating = False
@@ -81,6 +82,8 @@ def launchServer(opts):
     # we might be called via __main__, but we want a nice logger name
     logger = logging.getLogger(f"dlg.{__name__}")
     dmName = opts.dmType.__name__
+    import multiprocessing as mp
+    print(f"[{mp.current_process().name}] Start method: {mp.get_start_method()}")
 
     logger.user("DALiuGE version %s running at %s", version.full_version, os.getcwd())
     logger.user("Creating %s", dmName)
