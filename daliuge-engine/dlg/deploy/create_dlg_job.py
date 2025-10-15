@@ -348,7 +348,7 @@ def create_graph_config_group(parser)->optparse.OptionGroup:
     return group
 
 
-def _process_config_options(opts, graph):
+def _process_config_options(parser, opts, graph):
     """
     We parse configuration options in the following priority:
 
@@ -358,7 +358,9 @@ def _process_config_options(opts, graph):
 
     If no config option is provided, return None.
 
+    :param parser:
     :param opts:
+    :param graph:
     :return:
     """
 
@@ -368,6 +370,9 @@ def _process_config_options(opts, graph):
         return change_active_configuration(graph, opts.config_id)
     elif opts.config_name:
         id = find_config_id_from_name(graph, opts.config_name)
+        if not id:
+            parser.error(f"'{opts.config_name}' configuration does not exist in graph!")
+            sys.exit(1)
         graph = change_active_configuration(graph, id)
         return apply_active_configuration(graph)
     else:
@@ -399,15 +404,15 @@ def evaluate_graph_options(opts, parser):
     elif opts.logical_graph:
         with open(opts.logical_graph) as fp:
             graph_content = json.load(fp)
-            lg = _process_config_options(opts, graph_content)
+            lg = _process_config_options(parser, opts, graph_content)
             return _translate_graph(parser, opts, lg_graph=lg)
     elif opts.github:
         content = github_request(opts.user_org, opts.repo, opts.branch, opts.path)
-        lg = _process_config_options(opts, content)
+        lg = _process_config_options(parser, opts, content)
         return _translate_graph(parser, opts, lg)
     elif opts.gitlab:
         content = gitlab_request(opts.user_org, opts.repo, opts.branch, opts.path)
-        lg = _process_config_options(opts, content)
+        lg = _process_config_options(parser, opts, content)
         return  _translate_graph(parser, opts, lg)
     else:
         parser.error("No graph specified!")

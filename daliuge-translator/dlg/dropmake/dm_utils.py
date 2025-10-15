@@ -828,7 +828,7 @@ def extract_globals(logical_graph: dict):
     global_nodes = [
         node
         for node in logical_graph["nodeDataArray"]
-        if node["category"] == "EnvironmentVariables"
+        if node["category"] == "GlobalVariable"
     ]
 
     # Remove all globals from graph
