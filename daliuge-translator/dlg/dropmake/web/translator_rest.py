@@ -125,7 +125,7 @@ app = FastAPI(
     description=APP_DESCRIPTION,
     openapi_tags=APP_TAGS_METADATA,
     contact={"name": "pritchardn", "email": "nicholas.pritchard@icrar.org"},
-    version=dlg.version.version,
+    version="6.0.0",
     license_info={
         "name": "LGPLv2+",
         "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html",

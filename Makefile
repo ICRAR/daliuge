@@ -30,8 +30,8 @@ local:            ## Install the project using local enviroment
 docker-install:	  ## Install using docker containers
 	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
 	@  cd daliuge-common && ./build_common.sh dev && cd ..
-	@  cd daliuge-engine && ./build_engine.sh devall && cd ..
-	@  cd daliuge-translator && ./build_translator.sh devall && cd ..
+	@  cd daliuge-engine && ./build_engine.sh dev && cd ..
+	@  cd daliuge-translator && ./build_translator.sh dev && cd ..
 
 .PHONY: docker-run
 docker-run:	  ## Install using docker containers
