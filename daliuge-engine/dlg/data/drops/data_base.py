@@ -500,6 +500,11 @@ class DataDROP(AbstractDROP):
         DROP implementations will use different URI schemes.
         """
 
+    @property
+    def buftype(self):
+        return None
+
+
 class PathBasedDrop(object):
     """
     Base class for data drops that handle paths (i.e., file and directory drops)
