@@ -27,6 +27,7 @@ like DMs and DIMs.
 import logging
 import os
 import signal
+import socket
 import sys
 import time
 import re
