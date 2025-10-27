@@ -50,7 +50,7 @@ services:
     user: ${MY_UID}:${MY_GID}
     container_name: dlg-dim
     hostname: dlg-dim.localhost
-    command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm1.localhost,dlg-nm2.localhost"]
+    command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm1,dlg-nm2"]
     networks:
       - dlg-demo
     labels:

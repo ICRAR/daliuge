@@ -533,15 +533,15 @@ class CompositeManagerRestServer(ManagerRestServer):
             callback=self.getNodeSessionInformation,
         )
         app.get(
-            "/api/node/<node>/sessions/<sessionId>/status",
+            "/api/node/<node_str>/sessions/<sessionId>/status",
             callback=self.getNodeSessionStatus,
         )
         app.get(
-            "/api/node/<node>/sessions/<sessionId>/graph",
+            "/api/node/<node_str>/sessions/<sessionId>/graph",
             callback=self.getNodeGraph,
         )
         app.get(
-            "/api/node/<node>/sessions/<sessionId>/graph/status",
+            "/api/node/<node_str>/sessions/<sessionId>/graph/status",
             callback=self.getNodeGraphStatus,
         )
 
