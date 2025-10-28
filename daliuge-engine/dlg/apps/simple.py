@@ -699,7 +699,7 @@ class HelloWorldApp(BarrierAppDROP):
         else:  # the input is expected to be a vector. We'll use the first element
             try:
                 phrase = pickle.loads(droputils.allDropContents(ins[0]))[0]
-            except (_pickle.UnpicklingError, TypeError):
+            except (_pickle.UnpicklingError, TypeError, IndexError):
                 phrase = droputils.allDropContents(ins[0])
             self.greeting = f"Hello, {phrase}"
         logger.debug("Greeting is %s", self.greeting)
@@ -982,10 +982,14 @@ class Branch(PyFuncApp):
 
         if self.inputs and hasattr(go_drop, "write"):
             droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], go_drop, bufsize=self.bufsize
+                    self.x, go_drop, bufsize=self.bufsize
             )
+            logger.debug("Sent the following data to correct branch: %s",
+                         droputils.allDropContents(self.x))
+
         else:  # this enables a branch based only on the condition function
-            d = pickle.dumps(self.parameters[self.argnames[0]])
+            d = pickle.dumps(self.parameters['x'])
+            logger.debug("Sending following data to correct branch: %s", self.parameters['x'])
             # d = self.parameters[self.argnames[0]]
             if hasattr(go_drop, "write"):
                 go_drop.write(d)
@@ -1023,10 +1027,13 @@ class PickOne(BarrierAppDROP):
         data = pickle.loads(droputils.allDropContents(ipt))
         # data = droputils.allDropContents(input)
         # data = dill.loads(base64.b64decode(data))
+        logger.warning("Data type is: %s", type(data))
 
         # make sure we always have a ndarray with at least 1dim.
         if type(data) not in (list, tuple) and not isinstance(data, (np.ndarray)):
             logger.warning("Data type not in [list, tuple]: %s", data)
+            if not data:
+                raise RuntimeError("You need to change the loop structure!")
             raise TypeError
         if isinstance(data, np.ndarray) and data.ndim == 0:
             data = np.array([data])

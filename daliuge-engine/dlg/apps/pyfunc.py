@@ -897,16 +897,17 @@ class PyFuncApp(BarrierAppDROP):
     def write_results(self):
         from dlg.droputils import listify
 
-        result_iter = listify(self.result)
-        if not self.outputs and result_iter:
+        # result_iter = listify(self.result)
+        if not self.outputs:
             return
 
         logger.debug(
-            "Writing following result to %d outputs: %s", len(self.outputs), result_iter
+            "Writing following result to %d outputs: %s", len(self.outputs),
+            self.result
         )
         num_outputs = len(self.outputs)
         for i, o in enumerate(self.outputs):
-            # Ensure that we don't produce two files for the same output DROP
+            # Ensure that we don't produce two files for the same output DROP8
             if o.uid in self._output_filepaths:
                 # Trigger FileDROP filename update, but don't write to the drop because
                 # it has already been written to.
@@ -914,20 +915,19 @@ class PyFuncApp(BarrierAppDROP):
                 # 'Discount the Filepath output from outputs we write to'
                 num_outputs -= 1
                 continue
-            if not result_iter and self.outputs:
-                result = result_iter
-            elif len(result_iter) == 1:
-                # We only have one element, no need to save as a list
-                result = result_iter[0]
-            elif len(result_iter) > 1 and num_outputs == 1:
-                # We want all elements in the list to go to the output
-                result = self.result
-            else:
-                # Iterate over each element of the list for each output
-                # Wrap around for len(result_iter) < len(self.outputs)
-                i = i % len(self.outputs)
-                result = result_iter[i]
-
+            # elif len(self.result) > 1:
+            #     # We only have one element, no need to save as a list
+            #
+            #   result = result_iter[0]
+            # elif len(result_iter) > 1 and num_outputs == 1:
+            #     # We want all elements in the list to go to the output
+            #     result = self.result
+            # else:
+            #     # Iterate over each element of the list for each output
+            #     # Wrap around for len(result_iter) < len(self.outputs)
+            #     i = i % len(self.outputs)
+            #     result = result_iter[i]
+            result = self.result
             parser = self._match_parser(o)
             parser = resolve_drop_parser(parser)
             if parser is DropParser.PICKLE:
