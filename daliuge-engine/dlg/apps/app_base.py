@@ -158,9 +158,9 @@ class AppDROP(ContainerDROP):
         """
         return list(self._inputs.values())
 
-    @inputs.setter
-    def inputs(self, inputs):
-        self._inputs = inputs
+    # @inputs.setter
+    # def inputs(self, inputs):
+    #     self._inputs = inputs
 
     @track_current_drop
     def addOutput(self, outputDrop: DataDROP, back=True):

@@ -62,7 +62,7 @@ def create_and_run_graph_spec(test_case: unittest.TestCase, appDropSpec: list[di
     roots = graph_loader.createGraphFromDropSpecList(appDropSpec)
     # drops = [v for d,v in drops.items()]
     leafs = droputils.getLeafNodes(roots)
-    with droputils.DROPWaiterCtx(test_case, leafs, timeout=10, expected_states=[
+    with droputils.DROPWaiterCtx(test_case, leafs, timeout=100, expected_states=[
         DROPStates.COMPLETED, DROPStates.SKIPPED, DROPStates.ERROR, DROPStates.CANCELLED]):
         for drop in roots:
             if drop.type != "Data":

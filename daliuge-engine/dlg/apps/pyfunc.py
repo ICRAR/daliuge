@@ -540,15 +540,15 @@ class PyFuncApp(BarrierAppDROP):
         funcargs.update(tmpPargs)
         logger.debug("positionalArgsMap: %s", positionalArgsMap)
         # Mixin the values from named ports
-        portargs = self._ports2args(positionalArgsMap, keywordArgsMap)
+        positionalArgsMap, keywordArgsMap = self._ports2args(positionalArgsMap, keywordArgsMap)
 
         # Update any InputOutput ports that might have path names defined from input port
         for arg in input_outputs:
             keywordArgsMap, positionalArgsMap = self._update_filepaths(
                 positionalArgsMap, keywordArgsMap, arg)
 
-        logger.debug("Updating funcargs with values from named ports %s", portargs)
-        tmpPortArgs = {port: arg.value for port, arg in portargs.items()}
+        logger.debug("Updating funcargs with values from named ports...")
+        tmpPortArgs = {port: arg.value for port, arg in positionalArgsMap.items()}
         funcargs.update(tmpPortArgs)
 
         return funcargs, pargs
@@ -620,7 +620,7 @@ class PyFuncApp(BarrierAppDROP):
                 self.parameters[arg] = arg_map[arg].value
         return keywordArgsMap, positionalArgsMap
 
-    def _ports2args(self, pargsDict, keyargsDict) -> dict:
+    def _ports2args(self, pargsDict, keyargsDict) -> tuple[dict,dict]:
         """
         Replace arguments with values from ports.
 
@@ -628,8 +628,9 @@ class PyFuncApp(BarrierAppDROP):
         --------
         portargs dictionary
         """
-        portargs = {}
         # 3. replace default argument values with named input ports
+        posPortArgs = {}
+        keyPortArgs = {}
         logger.debug("Mapping from _inputs: %s", self._inputs)
         logger.debug("Parameters: %s", self.parameters)
         if "input_parser" in self.parameters:
@@ -655,7 +656,7 @@ class PyFuncApp(BarrierAppDROP):
                 if hasattr(self, "input_parser")
                 else None
             )
-            keyPortArgs, _ = identify_named_ports(
+            keyargsDict, pargsDict = identify_named_ports(
                 inputs_dict,
                 pargsDict,
                 keyargsDict,
@@ -664,7 +665,8 @@ class PyFuncApp(BarrierAppDROP):
                 addPositionalToKeyword=True,
                 parser=parser
             )
-            portargs.update(keyPortArgs)
+
+            # portargs.update(keyPortArgs)
         else:
             for i, input_drop in enumerate(self._inputs.values()):
                 parser = (
@@ -679,9 +681,9 @@ class PyFuncApp(BarrierAppDROP):
                                  value)
 
         logger.debug(
-            "Finally port mapping: %s, %s, %s", portargs, pargsDict, keyargsDict
+            "Finally port mapping: %s, %s", pargsDict, keyargsDict
         )
-        return portargs
+        return (pargsDict, keyargsDict)
 
     def initialize_with_func_code(self):
         """
