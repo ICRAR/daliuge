@@ -186,7 +186,7 @@ def filepath_from_string(path: str,
     if expanded_dirname == dirname and "$" in expanded_dirname:
         raise RuntimeError(f"Environment variable in path {dirname} not set!")
 
-    expanded_path = replace_dlg_fstring(path, fstring_map)
+    expanded_path = replace_dlg_fstring(expanded_path, fstring_map)
 
     if Path(expanded_path).is_absolute() or relative:
         return expanded_path
