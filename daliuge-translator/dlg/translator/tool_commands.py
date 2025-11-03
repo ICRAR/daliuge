@@ -228,7 +228,7 @@ def dlg_fill(parser, args):
     graph = fill(_open_i(opts.logical_graph), params)
     dump(init_lg_repro_data(init_lgt_repro_data(graph, opts.reproducibility)))
 
-def dlg_config(parser, args):
+def dlg_graph_config(parser, args):
     """
     Apply config passed to CLI to the LGT.
     :param parser:
@@ -249,7 +249,6 @@ def dlg_config(parser, args):
         help="Graph configuration input"
 
     )
-
     parser.add_option(
         "-R",
         "--reproducibility",
@@ -262,6 +261,8 @@ def dlg_config(parser, args):
 
     dump = _setup_output(opts)
     graph_config = None
+    if not opts.graph_config:
+        parser.error("Must provide an option for --graph_config")
     if opts.graph_config == "-":
         sin = sys.stdin.read()
         graph_config = json.loads(sin)
@@ -269,6 +270,8 @@ def dlg_config(parser, args):
         with open (opts.graph_config) as fp:
             graph_config = json.load(fp)
 
+    if not opts.logical_graph:
+        parser.error("Must provide an option for --graph_config")
     with open (opts.logical_graph) as fp:
         logical_graph = json.load(fp)
 
@@ -627,9 +630,9 @@ def register_commands():
     )
     tool.cmdwrap("unroll-and-partition", translator_group,
                  "unroll + partition", dlg_unroll_and_partition)
-    tool.cmdwrap("fill_config", translator_group,
-                 "Apply a graph config to the logical graph", dlg_config)
+    tool.cmdwrap("fill-config", translator_group,
+                 "Apply a graph config to the logical graph", dlg_graph_config)
     tool.cmdwrap("fill", translator_group,
-                 "[Deprecated] Fill a Logical Graph with parameters", dlg_fill)
+                 "[DEPRECATED] Fill a Logical Graph with parameters", dlg_fill)
 
 

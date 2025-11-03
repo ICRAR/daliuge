@@ -83,7 +83,7 @@ def apply_active_configuration(logical_graph: dict) -> dict:
 
     try:
         activeConfigurationID = logical_graph[ACTIVE_CONFIG_KEY]
-        activeConfig = logical_graph[CONFIG_KEY][activeConfigurationID]
+        activeConfig = logical_graph[GRAPH_CONFIGS][activeConfigurationID]
 
         logical_graph = apply_configuration(logical_graph, activeConfig)
 
@@ -142,7 +142,7 @@ def apply_configuration(logical_graph: dict, graph_config) -> dict:
             fieldidx = get_key_idx_from_list(field_id, nodeDataArray[idx][GRAPH_FIELDS])
             field = nodeDataArray[idx][GRAPH_FIELDS][fieldidx]
             prev_value = field["value"]
-            field["value"] = cfg_field[GRAPH_FIELDS]
+            field["value"] = cfg_field["value"]
             field_name = field["name"]
             logger.info(
                 "Updating: Node %s, Field %s, from %s to %s",
@@ -178,9 +178,9 @@ def is_config_stored_in_graph(logical_graph: dict) -> bool:
     if not checkActiveId:
         logger.warning("No %s data available in Logical Graph.", ACTIVE_CONFIG_KEY)
         config_stored = False
-    checkGraphConfig = logical_graph.get(CONFIG_KEY)
+    checkGraphConfig = logical_graph.get(GRAPH_CONFIGS)
     if not checkGraphConfig:
-        logger.warning("No %s data available in Logical Graph.", CONFIG_KEY)
+        logger.warning("No %s data available in Logical Graph.", GRAPH_CONFIGS)
         config_stored = False
 
     return config_stored
