@@ -57,9 +57,9 @@ class GraphConfigFieldDoesNotExist(GraphConfigException):
     Raised if the Graph Configuration supplies an ID for a field that does not exist in
     the Logical Graph
     """
-    def __init__(self, id):
+    def __init__(self, graph_id):
         self.msg = (f"Field in graphConfig does not exist in Logical Graph\n"
-                    f"id: {id}\n")
+                    f"id: {graph_id}\n")
 
     def __str__(self):
         return self.msg
@@ -113,9 +113,9 @@ def find_config_id_from_name(logical_graph, name):
     :return: str, the ID for the name of the graph configuration
     """
 
-    for id, gc  in logical_graph[GRAPH_CONFIGS].items():
+    for gid, gc  in logical_graph[GRAPH_CONFIGS].items():
         if name == gc['modelData']['name']:
-            return id
+            return gid
 
     return None
 

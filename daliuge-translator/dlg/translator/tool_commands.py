@@ -39,7 +39,6 @@ from dlg.common.reproducibility.reproducibility import (
     init_pg_repro_data,
 )
 
-from dlg.deploy import common
 from dlg.dropmake import pg_generator
 from dlg.dropmake.pgt import GPGTNoNeedMergeException
 
@@ -118,7 +117,7 @@ def partition(pgt, opts):
 
 
 def submit(pg, opts):
-
+    from dlg.deploy import common
     session_id = common.submit(
         pg,
         host=opts.host,
