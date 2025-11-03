@@ -123,7 +123,7 @@ class TestBigGraph(unittest.TestCase):
 
         with TerminatingTestHelper(dimProcess, timeout=timeout):
             c.create_session(sessionId)
-            logger.info("Appending graph")
+            lgigger.info("Appending graph")
             c.append_graph(sessionId, graph)
 
             # What we are actually trying to measure with all this stuff

@@ -130,8 +130,8 @@ extra_requires = {
     "test": [
         "pytest",
         # Toggle comments below if adding new test graphs
-        "eagle-test-graphs==0.2.1",
-        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@pydata_utf8_fix",
+        # "eagle-test-graphs==0.2.1",
+        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-514",
         "np-merklelib",
         "parameterized>=0.9.0",
         "ruamel.yaml==0.16.0",

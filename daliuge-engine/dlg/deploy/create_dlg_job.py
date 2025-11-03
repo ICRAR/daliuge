@@ -369,11 +369,11 @@ def _process_config_options(parser, opts, graph):
     elif opts.config_id:
         return change_active_configuration(graph, opts.config_id)
     elif opts.config_name:
-        id = find_config_id_from_name(graph, opts.config_name)
-        if not id:
+        graph_id = find_config_id_from_name(graph, opts.config_name)
+        if not graph_id:
             parser.error(f"'{opts.config_name}' configuration does not exist in graph!")
             sys.exit(1)
-        graph = change_active_configuration(graph, id)
+        graph = change_active_configuration(graph, graph_id)
         return apply_active_configuration(graph)
     else:
         return None

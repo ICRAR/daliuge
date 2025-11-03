@@ -629,8 +629,6 @@ class PyFuncApp(BarrierAppDROP):
         portargs dictionary
         """
         # 3. replace default argument values with named input ports
-        posPortArgs = {}
-        keyPortArgs = {}
         logger.debug("Mapping from _inputs: %s", self._inputs)
         logger.debug("Parameters: %s", self.parameters)
         if "input_parser" in self.parameters:
@@ -897,9 +895,6 @@ class PyFuncApp(BarrierAppDROP):
         return DropParser(encoding) if encoding else self.output_parser
 
     def write_results(self):
-        from dlg.droputils import listify
-
-        # result_iter = listify(self.result)
         if not self.outputs:
             return
 
@@ -908,7 +903,7 @@ class PyFuncApp(BarrierAppDROP):
             self.result
         )
         num_outputs = len(self.outputs)
-        for i, o in enumerate(self.outputs):
+        for _, o in enumerate(self.outputs):
             # Ensure that we don't produce two files for the same output DROP8
             if o.uid in self._output_filepaths:
                 # Trigger FileDROP filename update, but don't write to the drop because
@@ -917,21 +912,9 @@ class PyFuncApp(BarrierAppDROP):
                 # 'Discount the Filepath output from outputs we write to'
                 num_outputs -= 1
                 continue
-            # elif len(self.result) > 1:
-            #     # We only have one element, no need to save as a list
-            #
-            #   result = result_iter[0]
-            # elif len(result_iter) > 1 and num_outputs == 1:
-            #     # We want all elements in the list to go to the output
-            #     result = self.result
-            # else:
-            #     # Iterate over each element of the list for each output
-            #     # Wrap around for len(result_iter) < len(self.outputs)
-            #     i = i % len(self.outputs)
-            #     result = result_iter[i]
             result = self.result
-            parser = self._match_parser(o)
-            parser = resolve_drop_parser(parser)
+            tmp_parser = self._match_parser(o)
+            parser = resolve_drop_parser(tmp_parser)
             if parser is DropParser.PICKLE:
                 o.write(pickle.dumps(result))
             elif parser is DropParser.DILL:

@@ -27,7 +27,9 @@ import optparse # pylint: disable=deprecated-module
 import os
 import sys
 
+import dlg.constants as con
 
+from dlg.clients import CompositeManagerClient
 from dlg.common import tool
 from dlg.common.reproducibility.reproducibility import (
     init_lgt_repro_data,
@@ -36,6 +38,8 @@ from dlg.common.reproducibility.reproducibility import (
     init_pgt_partition_repro_data,
     init_pg_repro_data,
 )
+
+from dlg.deploy import common
 from dlg.dropmake import pg_generator
 from dlg.dropmake.pgt import GPGTNoNeedMergeException
 
@@ -99,7 +103,6 @@ def parse_partition_algo_params(algo_params):
 
 
 def partition(pgt, opts):
-    from ..dropmake import pg_generator
 
     algo_params = parse_partition_algo_params(opts.algo_params or [])
     pg = pg_generator.partition(
@@ -115,7 +118,6 @@ def partition(pgt, opts):
 
 
 def submit(pg, opts):
-    from dlg.deploy import common
 
     session_id = common.submit(
         pg,
@@ -334,8 +336,6 @@ def dlg_unroll(parser, args):
 
 
 def _add_partition_options(parser):
-    from ..dropmake import pg_generator
-
     parser.add_option(
         "-N",
         "--partitions",
@@ -436,7 +436,6 @@ def dlg_unroll_and_partition(parser, args):
 
 
 def dlg_map(parser, args):
-    import dlg.constants as con
 
     tool.add_logging_options(parser)
     _add_output_options(parser)
@@ -494,8 +493,6 @@ def dlg_map(parser, args):
     tool.setup_logging(opts)
     dump = _setup_output(opts)
 
-    from ..dropmake import pg_generator
-    from dlg.clients import CompositeManagerClient
 
     if opts.nodes:
         nodes = [n for n in opts.nodes.split(",") if n]

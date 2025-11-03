@@ -45,9 +45,9 @@ class GraphConfigNodeDoesNotExist(GraphConfigException):
     the Logical Graph
     """
     
-    def __init__(self, id):
+    def __init__(self, config_id):
         self.msg = (f"Node in graphConfig does not exist in Logical Graph\n"
-                    f"id: {id}\n")
+                    f"id: {config_id}\n")
 
     def __str__(self):
         return self.msg
