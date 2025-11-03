@@ -30,9 +30,9 @@ logger = logging.getLogger(f"dlg.{__name__}")
 
 
 ACTIVE_CONFIG_KEY = "activeGraphConfigId"
-CONFIG_KEY = "graphConfigurations"
 GRAPH_NODES = "nodeDataArray"
 GRAPH_CONFIGS = "graphConfigurations"
+GRAPH_FIELDS = "fields"
 
 class GraphConfigException(Exception):
     """
@@ -113,13 +113,11 @@ def find_config_id_from_name(logical_graph, name):
     :return: str, the ID for the name of the graph configuration
     """
 
-    for gid, gc  in logical_graph[GRAPH_CONFIGS].items():
-        if name == gc['modelData']['name']:
-            return gid
-
-    return None
-
-
+    return next((
+            id for id, gc in logical_graph[GRAPH_CONFIGS].items()
+            if name == gc['modelData']['name']),
+            None
+    )
 def apply_configuration(logical_graph: dict, graph_config) -> dict:
     """
     Given a valid configuration, apply it to the logical graph.
@@ -140,11 +138,11 @@ def apply_configuration(logical_graph: dict, graph_config) -> dict:
             )
             continue
         node_name = nodeDataArray[idx]["name"]
-        for field_id, cfg_field in graph_config["nodes"][node_id]["fields"].items():
-            fieldidx = get_key_idx_from_list(field_id, nodeDataArray[idx]["fields"])
-            field = nodeDataArray[idx]["fields"][fieldidx]
+        for field_id, cfg_field in graph_config["nodes"][node_id][GRAPH_FIELDS].items():
+            fieldidx = get_key_idx_from_list(field_id, nodeDataArray[idx][GRAPH_FIELDS])
+            field = nodeDataArray[idx][GRAPH_FIELDS][fieldidx]
             prev_value = field["value"]
-            field["value"] = cfg_field["value"]
+            field["value"] = cfg_field[GRAPH_FIELDS]
             field_name = field["name"]
             logger.info(
                 "Updating: Node %s, Field %s, from %s to %s",
@@ -153,7 +151,7 @@ def apply_configuration(logical_graph: dict, graph_config) -> dict:
                 str(prev_value),
                 str(field["value"]),
             )
-            nodeDataArray[idx]["fields"][fieldidx] = field
+            nodeDataArray[idx][GRAPH_FIELDS][fieldidx] = field
     logical_graph[GRAPH_NODES] = nodeDataArray
     return logical_graph
 
@@ -210,17 +208,17 @@ def crosscheck_ids(logical_graph, graph_config):
     :return:
     """
 
-
     for nid, node in graph_config["nodes"].items():
         idx = get_key_idx_from_list(nid, logical_graph[GRAPH_NODES])
-        if idx:
-            lg_node = logical_graph[GRAPH_NODES][idx]
-            for field in node["fields"]:
-                fidx = get_key_idx_from_list(field, lg_node["fields"])
-                if not fidx:
-                    raise GraphConfigFieldDoesNotExist(field)
-        else:
+
+        if not idx:
             raise GraphConfigNodeDoesNotExist(nid)
+        lg_node = logical_graph[GRAPH_NODES][idx]
+
+        for field in node[GRAPH_FIELDS]:
+            fidx = get_key_idx_from_list(field, lg_node[GRAPH_FIELDS])
+            if not fidx:
+                raise GraphConfigFieldDoesNotExist(field)
 
 
 def fill_config(lg, graph_config):
@@ -247,7 +245,7 @@ def fill_config(lg, graph_config):
     non_eagle = False
     if is_config_stored_in_graph(lg):
         gcid = graph_config["id"]
-        if gcid in lg["graphConfigurations"]:
+        if gcid in lg[GRAPH_CONFIGS]:
             return apply_configuration(lg, graph_config)
         else:
             non_eagle=True

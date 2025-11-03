@@ -52,6 +52,7 @@ def gitlab_request(user, repo, branch, path):
     r = requests.get(f"https://gitlab.com/api/v4/projects/{url_enabled_user}%2F"
                      f"{repo}/repository/files/{url_enabled_path}/raw?ref"
                      f"={branch}", timeout=15)
+
     return json.loads(r.content)
 
 def github_request(user, repo, branch, path):

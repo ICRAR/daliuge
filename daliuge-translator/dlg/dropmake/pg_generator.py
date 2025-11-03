@@ -73,8 +73,7 @@ def apply_config(lg: str, config: dict):
     :return:
     """
     logger.info("Applying configuration to Logical Graph...")
-    filled_lg = fill_config(lg, config)
-    return filled_lg
+    return fill_config(lg, config)
 
 
 def unroll(lg, oid_prefix=None, zerorun=False, app=None):

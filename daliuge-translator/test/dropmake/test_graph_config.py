@@ -144,12 +144,6 @@ class TestGraphConfig(unittest.TestCase):
         self.assertEqual(5, int(value))
 
 
-class TestCrossCheck(unittest.TestCase):
-    """
-    Confirm that our crosschecking between graph config and logical graph works.
-    """
-
-
 class TestFillConfig(unittest.TestCase):
 
     """
