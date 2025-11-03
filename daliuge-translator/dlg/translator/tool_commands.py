@@ -518,7 +518,6 @@ def dlg_map(parser, args):
 
 
 def dlg_submit(parser, args):
-    import dlg.constants as con
 
     # Submit Physical Graph
     _add_output_options(parser)

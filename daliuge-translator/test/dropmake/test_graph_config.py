@@ -22,7 +22,6 @@
 
 import json
 import unittest
-from dlg.dropmake.graph_config import apply_active_configuration, get_key_idx_from_list
 import daliuge_tests.translator as test_graphs
 from dlg.dropmake.graph_config import (apply_active_configuration,
                                        get_key_idx_from_list, fill_config)
