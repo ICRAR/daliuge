@@ -116,7 +116,6 @@ class DlgDaemon(RestServer):
         if dim:
             nodes = []
             if nm:
-                # addrs = utils.get_local_ip_addr()
                 addrs = "127.0.0.1"
                 nm_port = constants.NODE_DEFAULT_REST_PORT
                 nodes = [f"{addrs}:{nm_port}"]
@@ -240,7 +239,7 @@ class DlgDaemon(RestServer):
             )
         return
 
-    def startDIM(self, nodes: list):
+    def startDIM(self, nodes):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()
@@ -342,7 +341,7 @@ class DlgDaemon(RestServer):
         args += self._verbosity_as_cmdline()
 
         ## Translator does not support daemonising yet.
-        # if self._daemonise:
+        # TODO if self._daemonise:
         #     args += ['-d']
         logger.info("Starting Translator Manager with args: %s", (" ".join(args)))
         self._tm_proc = tool.start_process("tm", args)

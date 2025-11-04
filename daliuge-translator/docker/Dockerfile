@@ -7,15 +7,8 @@ ARG VCS_TAG
 FROM icrar/daliuge-common:${VCS_TAG:-latest}
 LABEL stage=builder
 #LABEL build=$BUILD_ID
-# all dependencies are already installed in daliuge-common
-# RUN apt-get update && \
-#     apt-get clean && \
-#     apt install -y gcc python3-venv python3-distutils
 
-# RUN service avahi-daemon stop && \
-#     service dbus start && \
-#     service avahi-daemon start && \
-#     avahi-set-host-name dlg-tm
+# All dependencies are already installed in daliuge-common
 
 COPY / /daliuge
 
@@ -28,7 +21,6 @@ RUN . /dlg/bin/activate && \
 FROM icrar/daliuge-common:${VCS_TAG:-latest}
 COPY --from=0 /daliuge/. /daliuge/.
 COPY --from=0 /dlg /dlg
-# RUN apt-get update && apt-get install -y libmetis-dev python3
 
 # enable the virtualenv path from daliuge-common
 ENV VIRTUAL_ENV=/dlg
