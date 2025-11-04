@@ -131,7 +131,7 @@ paths:
     parameters:
       - schema:
           type: string
-        name: node
+        name: node_str
         in: path
         required: true
       - schema:

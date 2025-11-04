@@ -27,6 +27,7 @@ like DMs and DIMs.
 import logging
 import os
 import signal
+import socket
 import sys
 import time
 import re
@@ -375,7 +376,8 @@ def setupLogging(opts):
     # This is the logfile we'll use from now on
     logdir = opts.logdir
     utils.createDirIfMissing(logdir)
-    logfile = os.path.join(logdir, "dlg%s.log" % (opts.dmAcronym))
+    hostname = socket.gethostname().split('.')[0]
+    logfile = os.path.join(logdir, "dlg%s.%s.log" % (opts.dmAcronym, hostname))
     fileHandler = logging.FileHandler(logfile)
     fileHandler.setFormatter(fmt)
     logging.root.addHandler(fileHandler)

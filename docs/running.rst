@@ -90,7 +90,7 @@ respectively.
 
 To run the translator::
 
-    dlg lgweb -d /tmp/ -t /tmp/
+    dlg tm -d /tmp/ -t /tmp/
 
 
 The help for the complete CLI is available by just entering dlg at the prompt::
@@ -103,7 +103,7 @@ The help for the complete CLI is available by just entering dlg at the prompt::
         dim                      Starts a Drop Island Manager
         fill                     Fill a Logical Graph with parameters
         include_dir              Print the directory where C header files can be found
-        lgweb                    A Web server for the Logical Graph Editor
+        tm                       Starts the Translator Manager
         map                      Maps a Physical Graph Template to resources and produces a Physical Graph
         mm                       Starts a Master Manager
         monitor                  A proxy to be used in conjunction with the dlg proxy in restricted environments

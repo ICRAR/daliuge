@@ -39,11 +39,11 @@ from importlib.resources import files
 import daliuge_tests.translator as test_graphs
 
 lg_dir = files(test_graphs)
-lgweb_port = 8086
+tm_port = 8086
 logger = logging.getLogger(f"dlg.{__name__}")
 
 
-class TestLGWeb(unittest.TestCase):
+class TestTm(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.temp_dir = tempfile.mkdtemp()
@@ -53,7 +53,7 @@ class TestLGWeb(unittest.TestCase):
             "-t",
             self.temp_dir,
             "-p",
-            str(lgweb_port),
+            str(tm_port),
             "-H",
             "localhost",
             "-vv",
@@ -66,7 +66,7 @@ class TestLGWeb(unittest.TestCase):
         lf = "/dev/null"
         with open(lf, "wb") as self.logfile:
             self.web_proc = tool.start_process(
-                "lgweb", args, stdout=self.logfile, stderr=self.logfile
+                "tm", args, stdout=self.logfile, stderr=self.logfile
             )
 
     def tearDown(self):
@@ -83,7 +83,7 @@ class TestLGWeb(unittest.TestCase):
         )
 
     def test_get_lgjson(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
 
         # a specific one
         lg = c._get_json("/jsonbody?lg_name=logical_graphs/chiles_simple.graph")
@@ -101,7 +101,7 @@ class TestLGWeb(unittest.TestCase):
         )
 
     def test_post_lgjson(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
 
         # new graphs cannot currently be added
         form_data = {
@@ -131,7 +131,7 @@ class TestLGWeb(unittest.TestCase):
             shutil.move(copy_fname, original_fname)
 
     def test_gen_pgt(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
 
         # doesn't exist!
         self.assertRaises(
@@ -149,7 +149,7 @@ class TestLGWeb(unittest.TestCase):
         self._generate_pgt(c)
 
     def test_get_pgtjson(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
         c._GET(
             "/gen_pgt?lg_name=logical_graphs/chiles_simple.graph&num_par=5&algo=metis&min_goal=0&ptype=0&max_load_imb=100"
         )
@@ -164,7 +164,7 @@ class TestLGWeb(unittest.TestCase):
         c._get_json("/pgt_jsonbody?pgt_name=logical_graphs/chiles_simple1_pgt.graph")
 
     def test_get_pgt_post(self, algo="metis", algo_options=None):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
 
         # an API call with an empty form should cause an error
         self.assertRaises(RestClientException, c.POST, "/gen_pgt")
@@ -201,7 +201,7 @@ class TestLGWeb(unittest.TestCase):
 
     @unittest.skip("MKN does not work at this point")
     def test_mkn_pgt_post(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
 
         # an API call with an empty form should cause an error
         self.assertRaises(RestClientException, c.POST, "/gen_pgt")
@@ -235,7 +235,7 @@ class TestLGWeb(unittest.TestCase):
             self.fail(e)
 
     def test_loop_pgt_post(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
 
         # an API call with an empty form should cause an error
         self.assertRaises(RestClientException, c.POST, "/gen_pgt")
@@ -292,7 +292,7 @@ class TestLGWeb(unittest.TestCase):
         )
 
     def test_pg_viewer(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
         self._generate_pgt(c)
 
         # doesn't exist
@@ -307,7 +307,7 @@ class TestLGWeb(unittest.TestCase):
         # c._GET("/pg_viewer?pgt_view_name=logical_graphs/chiles_simple2_pgt.graph")
 
     def _test_pgt_action(self, path, unknown_fails):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
         self._generate_pgt(c)
 
         # doesn't exist
@@ -336,7 +336,7 @@ class TestLGWeb(unittest.TestCase):
     def test_get_submission_methods(self):
         import json
 
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
         response = c._GET("/api/submission_method")
         response_content = json.load(response)
         self.assertEqual(response_content, {"methods": []})
@@ -382,7 +382,7 @@ class TestLGWeb(unittest.TestCase):
 
     @parameterized.expand([("0", "testLoop.graph"), ("1", "ArrayLoop.graph")])
     def test_get_fill(self, n, graph):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
         test_url = "/lg_fill"
         with open(os.path.join(lg_dir, "logical_graphs", graph), "rb") as infile:
             json_data = infile.read()
@@ -420,7 +420,7 @@ class TestLGWeb(unittest.TestCase):
         ]
     )
     def test_lg_unroll(self, n, graph):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
         test_url = "/unroll"
         with open(os.path.join(lg_dir, "logical_graphs", graph), "rb") as infile:
             json_data = infile.read()
@@ -460,7 +460,7 @@ class TestLGWeb(unittest.TestCase):
                 self.assertEqual(dropspec["dropclass"], "test.app")
 
     def test_pgt_partition(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
         test_url = "/partition"
         with open(
             os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
@@ -485,7 +485,7 @@ class TestLGWeb(unittest.TestCase):
             self._test_post_request(c, test_url, request[0], request[1])
 
     def test_lg_unroll_and_partition(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
         test_url = "/unroll_and_partition"
         with open(
             os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
@@ -519,7 +519,7 @@ class TestLGWeb(unittest.TestCase):
             self._test_post_request(c, test_url, request[0], request[1])
 
     def test_pgt_map(self):
-        c = RestClient("localhost", lgweb_port, timeout=10)
+        c = RestClient("localhost", tm_port, timeout=10)
         test_url = "/map"
         with open(
             os.path.join(lg_dir, "logical_graphs", "testLoop.graph"), "rb"
@@ -549,5 +549,5 @@ class TestLGWeb(unittest.TestCase):
             self._test_post_request(c, test_url, request[0], request[1])
 
     def test_get_mgr_deployment_methods(self):
-        response = get_mgr_deployment_methods("localhost", lgweb_port, "")
+        response = get_mgr_deployment_methods("localhost", tm_port, "")
         self.assertEqual([], response)

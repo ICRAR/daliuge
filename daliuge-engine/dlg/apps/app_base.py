@@ -10,14 +10,15 @@ from dlg.exceptions import (InvalidDropException, InvalidRelationshipException,
                             ErrorManagerCaughtException, InvalidDROPState)
 from dlg.drop import track_current_drop
 from dlg.drop_loaders import load_dill
-from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
+from dlg.data.drops.container import ContainerDROP
 from dlg.ddap_protocol import (
     AppDROPStates,
     DROPLinkType,
     DROPStates,
     DROPRel,
 )
+
 
 from dlg.meta import (
     dlg_int_param,
@@ -497,7 +498,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
-        logger.user("Executing %r", f"{self.name}.{self._humanKey}")
+        logger.info("Executing %r", f"{self.name}.{self._humanKey}")
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING
