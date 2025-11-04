@@ -30,6 +30,7 @@ import logging
 import os
 import pathlib
 import signal
+import socket
 import sys
 import threading
 import time
@@ -1200,7 +1201,8 @@ def run(_, args):
             # This is the logfile we'll use from now on
             logdir = options.logdir
             utils.createDirIfMissing(logdir)
-            logfile = os.path.join(logdir, "dlgTranslator.log")
+            hostname = socket.gethostname().split('.')[0]
+            logfile = os.path.join(logdir, f"dlgTM.{hostname}.log")
             fileHandler = logging.FileHandler(logfile)
             fileHandler.setFormatter(fmt)
             logging.root.addHandler(fileHandler)

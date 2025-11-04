@@ -118,7 +118,7 @@
         if (selectedNode) {
             d3.select('#nodes').remove();
             d3.select('#islandDisplay').html("<a href=" + serverUrl + ">DIM: " + serverIP + "</a>");
-            d3.select('#nodeDisplay').html("<a href=" + serverUrl + "/?node=" + selectedNode + "&dim_url=" + serverUrl + ">Node: " + selectedNode + "</a>");
+            d3.select('#nodeDisplay').html("<a href=" + serverUrl + "/api/?node=" + selectedNode + "&dim_url=" + serverUrl + ">Node: " + selectedNode + "</a>");
         } else {
             d3.select('#zoom-notice').remove();
             d3.select('#nodeDisplay').remove();

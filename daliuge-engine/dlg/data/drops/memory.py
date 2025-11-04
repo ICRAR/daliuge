@@ -20,11 +20,7 @@
 #    MA 02111-1307  USA
 #
 import base64
-import binascii
 import builtins
-from json import JSONDecodeError
-from pickle import PickleError
-
 import dill
 import io
 import json
@@ -32,6 +28,8 @@ import os
 import random
 import string
 import sys
+
+from json import JSONDecodeError
 from typing import Union
 
 from dlg.utils import serialize_data
@@ -176,6 +174,9 @@ class InMemoryDROP(DataDROP):
             kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 
+    # TODO add exception management handler for the initialize here
+    # TODO This should raise DlgMemoryException, which links to documentation for encoding
+
     def initialize(self, **kwargs):
         """
         If there is a pydata argument use that to populate the DROP
@@ -223,6 +224,10 @@ class InMemoryDROP(DataDROP):
             return SharedMemoryIO(self.oid, self._sessionId)
         else:
             return MemoryIO(self._buf)
+
+    @property
+    def buf(self):
+        return self._buf
 
     @property
     def dataURL(self) -> str:
@@ -302,24 +307,32 @@ class SharedMemoryDROP(DataDROP):
     def initialize(self, **kwargs):
         args = []
         pydata = None
+        # pdict = {}
+        pdict = {"type": "raw"}  # initialize this value to enforce BytesIO
+        self.data_type = pdict["type"]
+        field_names = (
+            [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
+        )
         if "pydata" in kwargs and not (
-            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
-        ):  # means that is was passed directly
+            "fields" in kwargs and "pydata" in field_names
+        ):  # means that is was passed directly (e.g. from tests)
             pydata = kwargs.pop("pydata")
-            logger.debug("pydata value provided: %s", pydata)
-            try:  # test whether given value is valid
-                _ = dill.loads(base64.b64decode(pydata.encode("latin1")))
-                pydata = base64.b64decode(pydata.encode("latin1"))
-            except PickleError:
-                pydata = None
-                logger.warning("Unable to load using pickle, default to None")
-            except binascii.Error:
-                pydata = None
-                logger.warning("Unable to load using base64, defaulting to None")
-        elif "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]:
-            pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
-        args.append(pydata)
-        self._buf = io.BytesIO(*args)
+            pdict["value"] = pydata
+            pydata = parse_pydata(pdict)
+        elif "fields" in kwargs and "pydata" in field_names:
+            data_pos = field_names.index("pydata")
+            pdict = kwargs["fields"][data_pos]
+            pydata = parse_pydata(pdict)
+        if pdict and pdict["type"].lower() in ["str","string"]:
+            self.data_type =  "String" if pydata else "raw"
+        else:
+            self.data_type = pdict["type"] if pdict else ""
+        if pydata:
+            args.append(pydata)
+            logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
+        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(
+            dill.loads(*args)) # pylint: disable = no-value-for-parameter
+        self.size = len(pydata) if pydata else 0
 
     def getIO(self):
         if sys.version_info >= (3, 8):
