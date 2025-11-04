@@ -20,11 +20,7 @@
 #    MA 02111-1307  USA
 #
 import base64
-import binascii
 import builtins
-from json import JSONDecodeError
-from pickle import PickleError
-
 import dill
 import io
 import json
@@ -32,6 +28,8 @@ import os
 import random
 import string
 import sys
+
+from json import JSONDecodeError
 from typing import Union
 
 from dlg.utils import serialize_data

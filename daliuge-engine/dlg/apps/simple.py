@@ -546,7 +546,7 @@ class ArrayGatherApp(BarrierAppDROP):
                 try:
                     # TODO: This really needs to use the encoding but requires a drop data-type/encoding.
                     self.value_list.append(dill.loads(value))
-                except Exception:
+                except _pickle.PickleError:
                     self.value_list.append(value)
             output.write(dill.dumps(self.value_list))
 

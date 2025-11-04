@@ -355,7 +355,6 @@ class SharedMemoryIO(DataIO):
             raise
         return len(data)
 
-        return len(data)
 
     @overrides
     def _read(self, count=65536, **kwargs):

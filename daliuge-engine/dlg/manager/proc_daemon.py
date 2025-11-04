@@ -240,7 +240,7 @@ class DlgDaemon(RestServer):
             )
         return
 
-    def startDIM(self, nodes=[]):
+    def startDIM(self, nodes: list):
         tool = get_tool()
         args = ["--host", "0.0.0.0"]
         args += self._verbosity_as_cmdline()

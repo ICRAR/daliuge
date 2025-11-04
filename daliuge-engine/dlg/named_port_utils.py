@@ -8,7 +8,6 @@ from dlg.ddap_protocol import DROPStates
 from dlg.utils import deserialize_data
 import numpy as np
 
-from dlg.data.drops.data_base import DataDROP
 import dlg.droputils as droputils
 import dlg.drop_loaders as drop_loaders
 
