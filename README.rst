@@ -70,12 +70,13 @@ Running both the Engine and the Translator is as a simple as::
 
     make docker-run
 
-It is possible to confirm the running of both by accessing the following links in a browser
+It is possible to confirm that everything is up and running by accessing the following links in a browser
 (Opera, Firefox, or Chrome are recommended):: 
 
-    http://dlg-trans.local:8084/ # Translator
-    http://dlg-engine.local:8000/ # Node Manager 
-    http://dlg-engine.local:8001/ # Data Island Manager
+    http://dlg-tm.localhost/ # Translator Manager
+    http://dlg-nm1.localhost/ # Node Manager 1
+    http://dlg-nm2.localhost/ # Node Manager 2
+    http://dlg-dim.localhost/ # Data Island Manager
 
 
 With this setup running, it is now possible to translate and deploy a prototype EAGLE workflow

@@ -10,14 +10,15 @@ from dlg.exceptions import (InvalidDropException, InvalidRelationshipException,
                             ErrorManagerCaughtException, InvalidDROPState)
 from dlg.drop import track_current_drop
 from dlg.drop_loaders import load_dill
-from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.data_base import DataDROP
+from dlg.data.drops.container import ContainerDROP
 from dlg.ddap_protocol import (
     AppDROPStates,
     DROPLinkType,
     DROPStates,
     DROPRel,
 )
+
 
 from dlg.meta import (
     dlg_int_param,

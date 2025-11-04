@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.1.0
+- [Feature] Improved daemon support and docker builds: https://github.com/ICRAR/daliuge/pull/365
+
 # v6.0.0
 - [Feature] Add support for DirectoryDROP: https://github.com/ICRAR/daliuge/pull/360
   - [Deprecated] This has replaced DirectoryContainerDROP

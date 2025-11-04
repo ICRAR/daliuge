@@ -42,7 +42,7 @@ If *only* the daliuge-translator is installed this changes to::
     ❯ dlg
     Commands for unrolling and partitioning graphs using the dlg translator.
          fill                     Fill a Logical Graph with parameters
-         lgweb                    A Web server for the Logical Graph Editor
+         tm                       Starts the Translator Manager
          map                      Maps a Physical Graph Template to resources and produces a Physical Graph
          partition                Divides a Physical Graph Template into N logical partitions
          submit                   Submits a Physical Graph to a Drop Manager
@@ -73,7 +73,7 @@ If everything is installed the output is a merge of all three::
 
     Commands for unrolling and partitioning graphs using the dlg translator.
          fill                     Fill a Logical Graph with parameters
-         lgweb                    A Web server for the Logical Graph Editor
+         tm                       Starts the Translator Manager
          map                      Maps a Physical Graph Template to resources and produces a Physical Graph
          partition                Divides a Physical Graph Template into N logical partitions
          submit                   Submits a Physical Graph to a Drop Manager

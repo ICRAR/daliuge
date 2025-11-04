@@ -36,7 +36,7 @@ To start, we want to run the following applications using the respective command
 
 **DALiuGE Translator**::
   
-  dlg lgweb -t /tmp/ -d /tmp/
+  dlg tm -t /tmp/ -d /tmp/
 
 **Node Manager (NM)**::
   

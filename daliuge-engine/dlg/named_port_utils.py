@@ -8,7 +8,6 @@ from dlg.ddap_protocol import DROPStates
 from dlg.utils import deserialize_data
 import numpy as np
 
-from dlg.data.drops.data_base import DataDROP
 import dlg.droputils as droputils
 import dlg.drop_loaders as drop_loaders
 
@@ -184,7 +183,7 @@ def identify_named_ports(
                 value = positionalPortArgs[key].value
                 logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
             elif local_parser:
-                logger.debug("Reading from %s encoded port %s using %s", encoding, key, parser.__repr__())
+                logger.debug("Reading from %s encoded port %s using %s", encoding, key, local_parser.__repr__())
                 value = local_parser(port_dict[keys[i]]["drop"])
                 try:
                     value = deserialize_data(value)
@@ -483,17 +482,7 @@ def get_port_reader_function(input_parser: DropParser):
             return ast.literal_eval(content) if len(content) > 0 else None
 
         reader = optionalEval
-    elif ip is DropParser.UTF8:
-
-        def utf8decode(drop: "DataDROP"):
-            """
-            Decode utf8
-            Not stored in drop_loaders to avoid cyclic imports
-            """
-            return droputils.allDropContents(drop).decode("utf-8")
-
-        reader = utf8decode
-    elif ip is DropParser.NPY:
+    elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy
     elif ip is DropParser.PATH:
         def PathFromData(x: AbstractDROP):
