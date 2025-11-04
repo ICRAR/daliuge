@@ -289,7 +289,6 @@ class RandomArrayApp(BarrierAppDROP):
         super(RandomArrayApp, self).initialize(**kwargs)
         self._keep_array = keep_array
 
-
     @track_current_drop
     def run(self):
         self._run()
@@ -367,9 +366,6 @@ class AverageArraysApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         super(AverageArraysApp, self).initialize(**kwargs)
         self.marray = []
-
-    def initialize(self, **kwargs):
-        super().initialize(**kwargs)
 
     @track_current_drop
     def run(self):

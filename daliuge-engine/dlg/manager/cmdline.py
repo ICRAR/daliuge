@@ -109,7 +109,6 @@ def launchServer(opts):
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
-    # signal.signal(signal.SIGSEGV, handle_signal)
 
     if opts.watchdog_enabled:
         start_watchdog(server, opts, logger)

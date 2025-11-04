@@ -1,6 +1,3 @@
-"""
-
-"""
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from concurrent.futures import Future
@@ -77,48 +74,6 @@ def run_on_daemon_thread(func: Callable, *args, **kwargs) -> Future:
 
 
 _SYNC_DROP_RUNNER = SyncDropRunner()
-
-class InstanceLogHandler(logging.Handler):
-    """Custom handler to store logs in-memory per object instance."""
-    def __init__(self, log_storage):
-        super().__init__()
-        self.log_storage = log_storage
-
-    def emit(self, record):
-        """Store log messages in the instance's log storage.
-
-         :param record: The log string we want to add to the log storage
-
-         .. note: We are not interested in actually emitting the log;
-             we are just interested in extracting and storing Record metadata
-        """
-
-        exc = f"{str(record.exc_text)}" if record and record.exc_text else ""
-        # msg = str(record.message).replace("\n", "<br>")
-        # msg = self.format(record)
-        msg = (f"<pre>{record.message.encode('utf-8').decode('unicode_escape')}\n"
-               f"{exc}</pre>")
-        try:
-            rec_time = record.asctime
-        except AttributeError:
-            rec_time = ""
-        self.log_storage.append({ "time":rec_time,
-            "Level": record.levelname,
-            "Module": record.name,
-            "Function/Method": record.funcName,
-            "Line #": record.lineno,
-            "Message": msg,
-        })
-
-class DROPLogFilter(logging.Filter):
-    def __init__(self, uid: str, humanKey: str):
-        super().__init__()
-        self.uid = uid
-        self.humanKey = humanKey
-
-    def filter(self, record):
-        uid = getattr(record, "drop_uid", None)
-        return uid == self.uid or uid == self.humanKey
 
 
 
@@ -543,7 +498,7 @@ class InputFiredAppDROP(AppDROP):
         #       applications, for the time being they follow their execState.
 
         # Run at most self._n_tries if there are errors during the execution
-        logger.user("Executing %r", f"{self.name}.{self._humanKey}")
+        logger.info("Executing %r", f"{self.name}.{self._humanKey}")
         tries = 0
         drop_state = DROPStates.COMPLETED
         self.execStatus = AppDROPStates.RUNNING

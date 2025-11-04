@@ -71,7 +71,6 @@ class FileDROP(DataDROP, PathBasedDrop):
     delete_parent_directory = dlg_bool_param("delete_parent_directory", False)
     check_filepath_exists = dlg_bool_param("check_filepath_exists", False)
 
-    # is_dir = dlg_bool_param("is_dir", False)
 
     # Make sure files are not deleted by default and certainly not if they are
     # marked to be persisted no matter what expireAfterUse said
@@ -137,9 +136,7 @@ class FileDROP(DataDROP, PathBasedDrop):
                 dirname = os.path.dirname(filepath)
         else:
             dirname = "."
-            filename = None
-        filename = os.path.expandvars(filename) if filename else None
-        dirname = self.sanitize_paths(dirname) if dirname else None
+
         # We later check if the file exists, but only if the user has specified
         # an absolute dirname/filepath (otherwise it doesn't make sense, since
         # we create our own filenames/dirnames dynamically as necessary
@@ -161,7 +158,7 @@ class FileDROP(DataDROP, PathBasedDrop):
         )
         if check and not os.path.isfile(self._path):
             raise InvalidPathException(
-                self, f"File does not exist or is not a file: {self._path}"
+                self, "File does not exist or is not a file: {self._path}"
             )
 
         self._wio = None
