@@ -29,12 +29,11 @@ the system.
 # we load daliuge up. Most modules in daliuge that have a logger create it at
 # import time, so we need to perform this setup before doing any other imports
 
-
 import logging
 
 try:
     # Avoid circular import problems if called during documentation or setup
-    from dlg.runtime.dlg_logging import setup_logger_class
+    from dlg.dlg_logging import setup_logger_class
 except ImportError:
     setup_logger_class = None
 
@@ -51,7 +50,7 @@ else:
 # -------------------------------------------------------------------------
 # Continue with the rest of the runtime imports
 # -------------------------------------------------------------------------
+
 from dlg.common.version import git_version as __git_version__
 from dlg.common.version import version as __version__
 from ..apps import get_include_dir
-from ..dask_emulation import delayed

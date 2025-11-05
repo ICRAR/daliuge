@@ -30,3 +30,14 @@ try:
 except ModuleNotFoundError:
     # This can happen when running from source
     __version__ = "unknown"
+
+try:
+    # Avoid circular import problems if called during documentation or setup
+    from dlg.dlg_logging import setup_logger_class
+except ImportError:
+    setup_logger_class = None
+
+if setup_logger_class is not None:
+    # This ensures the USER level and DlgLogger class are always set up
+    setup_logger_class()
+    del setup_logger_class

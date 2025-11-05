@@ -56,8 +56,6 @@ from dlg.exceptions import (
     DaliugeException, ErrorManagerCaughtException, SessionInterruptError,
 )
 from ..lifecycle.dlm import DataLifecycleManager
-# from dlg.runtime.dlg_logging import setup_logger_class
-# setup_logger_class()
 
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -314,12 +312,12 @@ class NodeManagerBase(DROPManager):
 
     def start(self, rpc_endpoint):
         super().start()
-        logger.info("Running NodeManager")
+        logger.user("Running NodeManager")
         self.drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
-        logger.info("Stopping NodeManager")
+        logger.user("Stopping NodeManager")
         self._dlm.cleanup()
         self.drop_runner.close()
         super().shutdown()

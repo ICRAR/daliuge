@@ -804,7 +804,6 @@ class PyFuncApp(BarrierAppDROP):
 
         """
         self._run()
-        logger.info("Confirm the operator exception works.")
         logger.debug("This object: %s, %s", self, self._humanKey)
         funcargs = {}
         # Keyword arguments are made up of the default values plus the inputs
@@ -836,8 +835,8 @@ class PyFuncApp(BarrierAppDROP):
                 and "self" in funcargs):
             funcargs.pop("self")
 
-        logger.info("Running %s", self.func_name)
-        logger.info("Arguments: *%s **%s", pargs, funcargs)
+        logger.user("Running %s", self.func_name)
+        logger.user("Arguments: *%s **%s", pargs, funcargs)
 
         # 4. prepare for execution
         # we capture and log whatever is produced on STDOUT
@@ -857,7 +856,7 @@ class PyFuncApp(BarrierAppDROP):
             else:
                 self.result = self.func(*pargs, **funcargs)
 
-        logger.info("Returned result from %s: %s", self.func_name, self.result)
+        logger.user("Returned result from %s: %s", self.func_name, self.result)
         if capture.getvalue():
             msg = f"STDOUT/STDERR output from function: '{self.func_name}': {capture.getvalue()}"
         else:
