@@ -85,8 +85,7 @@ def setup_logger_class():
             except ImportError:
                 pass
 
-            finally:
-                return record
+            return record
 
 
         def user(self, message, *args, **kwargs):
