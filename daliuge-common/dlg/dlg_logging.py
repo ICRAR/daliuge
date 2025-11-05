@@ -40,36 +40,53 @@ def setup_logger_class():
         return
 
     class _DlgLogger(logging.Logger):
+        """
+        Logging subclass that adds information to the log record and creates a "USER"
+        log level.
+
+        This exists in the daliuge-common to ensure that the USER logging is available
+        both across all modules.
+
+        Note: Moving this to dlg-engine prevents the USER log-level from being run within
+        subprocesses (for example, when deployed using the start_dlg_cluster).
+        """
+
         def makeRecord(self, *args, **kwargs):
+
             record = super(_DlgLogger, self).makeRecord(*args, **kwargs)
 
-            from dlg import drop
-            from dlg.manager import session
-
-            # Try to get the UID of the drop ultimately in charge of sending this
-            # log record, if any
             try:
-                drop = drop.track_current_drop.tlocal.drop
-            except AttributeError:
-                drop = None
-            try:
-                drop_uid = drop.humanKey if drop else ""
-            except AttributeError:
-                drop_uid = ""
+                from dlg import drop
+                from dlg.manager import session
 
-            # Do the same with the session_id, which can be found via the drop (if any)
-            # or checking if there is a session currently executing something
-            session_id = ""
-            if drop and hasattr(drop, "dlg_session_id"):
-                session_id = drop.dlg_session_id
-            else:
+                # Try to get the UID of the drop ultimately in charge of sending this
+                # log record, if any
                 try:
-                    session_id = session.track_current_session.tlocal.session.sessionId
+                    drop = drop.track_current_drop.tlocal.drop
                 except AttributeError:
-                    pass
-            record.drop_uid = drop_uid
-            record.session_id = session_id
-            return record
+                    drop = None
+                try:
+                    drop_uid = drop.humanKey if drop else ""
+                except AttributeError:
+                    drop_uid = ""
+
+                # Do the same with the session_id, which can be found via the drop (if any)
+                # or checking if there is a session currently executing something
+                session_id = ""
+                if drop and hasattr(drop, "dlg_session_id"):
+                    session_id = drop.dlg_session_id
+                else:
+                    try:
+                        session_id = session.track_current_session.tlocal.session.sessionId
+                    except AttributeError:
+                        pass
+                record.drop_uid = drop_uid
+                record.session_id = session_id
+            except ImportError:
+                pass
+
+            finally:
+                return record
 
 
         def user(self, message, *args, **kwargs):
@@ -94,13 +111,3 @@ def setup_logger_class():
     logging.addLevelName(USER, "USER")
     # logging.user = _DlgLogger.user
     logging.USER = USER # CREATE
-
-# class RedirectOperatorLoggingHandler(logging.Handler):
-#     def __init__(self, target_logger):
-#         super().__init__()
-#         self.target_logger = target_logger
-#         self.setFormatter(logging.Formatter('%(name)s - %(message)s'))
-#
-#     def emit(self, record):
-#         msg = self.format(record)
-#         self.target_logger.trace(msg)  # Send to your TRACE level
