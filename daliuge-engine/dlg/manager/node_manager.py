@@ -650,8 +650,12 @@ class ZMQPubSubMixIn(object):
                     continue
                 endpoint = utils.b2s(msg["endpoint"])
                 sub_endpoints.add(endpoint)
-                finished_evt = pending_connections.pop(endpoint)
-                finished_evt.set()
+                try:
+                    finished_evt = pending_connections.pop(endpoint)
+                    finished_evt.set()
+                except KeyError:
+                    logger.warning("Issue removing endpoint '%s'; endpoint may have "
+                                   "shutdown unexpectedly", endpoint)
             except zmq.error.Again:
                 pass
 

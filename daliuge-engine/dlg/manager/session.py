@@ -167,6 +167,7 @@ class Session(object):
         self._statusLock = threading.Lock()
         self._roots = []
         self._proxyinfo = []
+        self.proxy_drops = {}
         self._worker = None
         self._status = SessionStates.PRISTINE
         self._error_status_listener = None
@@ -469,6 +470,8 @@ class Session(object):
             method = getattr(self._drops[local_uid], relname)
             method(proxy, False)
 
+            self.proxy_drops[proxy.uid] = proxy
+
         # We move to COMPLETED the DROPs that we were requested to
         # InputFiredAppDROP are here considered as having to be executed and
         # not directly moved to COMPLETED.
@@ -638,6 +641,14 @@ class Session(object):
 
         return statusDict
 
+    def _getLogsFromDrop(self, drop_oid: str):
+        if drop_oid in self._drops:
+            return self._drops[drop_oid].getLogs()
+        if drop_oid in self.proxy_drops:
+            return self.proxy_drops[drop_oid].getLogs()
+
+        return f"Drop '{drop_oid}' not found."
+
     def getDropLogs(self, drop_oid: str):
         """
         Retrieve the logs stored in the given DROP
@@ -648,7 +659,7 @@ class Session(object):
         return {"session": self.sessionId,
                 "status": self.status,
                 "oid": drop_oid,
-                "logs": self._drops[drop_oid].getLogs()}
+                "logs": self._getLogsFromDrop(drop_oid)}
                 # "stderr": self._drops[drop_oid].getStdError(),
                 # "stdout": self._drops[drop_oid].getStdOut()}
 
