@@ -704,7 +704,7 @@ class HelloWorldApp(BarrierAppDROP):
         else:  # the input is expected to be a vector. We'll use the first element
             try:
                 phrase = pickle.loads(droputils.allDropContents(ins[0]))[0]
-            except (_pickle.UnpicklingError, TypeError):
+            except (_pickle.UnpicklingError, TypeError, IndexError):
                 phrase = droputils.allDropContents(ins[0])
             self.greeting = f"Hello, {phrase}"
         logger.debug("Greeting is %s", self.greeting)
@@ -932,7 +932,7 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param tag daliuge
 # @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
 # @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
-# @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
+# @param x /Object/ApplicationParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
 # @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
 # @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
@@ -987,10 +987,14 @@ class Branch(PyFuncApp):
 
         if self.inputs and hasattr(go_drop, "write"):
             droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], go_drop, bufsize=self.bufsize
+                    self.x, go_drop, bufsize=self.bufsize
             )
+            logger.debug("Sent the following data to correct branch: %s",
+                         droputils.allDropContents(self.x))
+
         else:  # this enables a branch based only on the condition function
-            d = pickle.dumps(self.parameters[self.argnames[0]])
+            d = pickle.dumps(self.parameters['x'])
+            logger.debug("Sending following data to correct branch: %s", self.parameters['x'])
             # d = self.parameters[self.argnames[0]]
             if hasattr(go_drop, "write"):
                 go_drop.write(d)
@@ -1028,10 +1032,13 @@ class PickOne(BarrierAppDROP):
         data = pickle.loads(droputils.allDropContents(ipt))
         # data = droputils.allDropContents(input)
         # data = dill.loads(base64.b64decode(data))
+        logger.warning("Data type is: %s", type(data))
 
         # make sure we always have a ndarray with at least 1dim.
         if type(data) not in (list, tuple) and not isinstance(data, (np.ndarray)):
             logger.warning("Data type not in [list, tuple]: %s", data)
+            if not data:
+                raise RuntimeError("You need to change the loop structure!")
             raise TypeError
         if isinstance(data, np.ndarray) and data.ndim == 0:
             data = np.array([data])

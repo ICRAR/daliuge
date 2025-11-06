@@ -35,6 +35,8 @@ import logging
 import unittest
 import pytest
 
+import numpy as np
+
 import daliuge_tests.engine.simple_functions as simple_functions
 
 logging.basicConfig(level=logging.DEBUG)
@@ -85,10 +87,11 @@ class TestPortsEncoding(unittest.TestCase):
         # Leaf Node 1 has been encoded first as numpy, second as UTF-8.
         leaf = leafs.pop()
         desc = leaf.open()
-        self.assertEqual(8, dill.loads(leaf.read(desc)))
+        result = (np.array([2, 8]), (2, 8))
+        self.assertEqual(str(result), str(dill.loads(leaf.read(desc))))
         leaf = leafs.pop()
         desc = leaf.open()
-        self.assertEqual("array(2)", leaf.read(desc).decode())
+        self.assertEqual(str(result), str(leaf.read(desc).decode()))
 
     def test_bash_shell_ports(self):
         """

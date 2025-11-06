@@ -27,6 +27,9 @@ import optparse # pylint: disable=deprecated-module
 import os
 import sys
 
+import dlg.constants as con
+
+from dlg.clients import CompositeManagerClient
 from dlg.common import tool
 from dlg.common.reproducibility.reproducibility import (
     init_lgt_repro_data,
@@ -35,6 +38,8 @@ from dlg.common.reproducibility.reproducibility import (
     init_pgt_partition_repro_data,
     init_pg_repro_data,
 )
+
+from dlg.dropmake import pg_generator
 from dlg.dropmake.pgt import GPGTNoNeedMergeException
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -97,7 +102,6 @@ def parse_partition_algo_params(algo_params):
 
 
 def partition(pgt, opts):
-    from ..dropmake import pg_generator
 
     algo_params = parse_partition_algo_params(opts.algo_params or [])
     pg = pg_generator.partition(
@@ -114,7 +118,6 @@ def partition(pgt, opts):
 
 def submit(pg, opts):
     from dlg.deploy import common
-
     session_id = common.submit(
         pg,
         host=opts.host,
@@ -225,6 +228,56 @@ def dlg_fill(parser, args):
     graph = fill(_open_i(opts.logical_graph), params)
     dump(init_lg_repro_data(init_lgt_repro_data(graph, opts.reproducibility)))
 
+def dlg_graph_config(parser, args):
+    """
+    Apply config passed to CLI to the LGT.
+    :param parser:
+    :param config:
+    :return:
+    """
+    tool.add_logging_options(parser)
+    _add_output_options(parser)
+
+    parser.add_option(
+        "-L",
+        "--logical-graph",
+        default="-",
+        help="Path to the Logical Graph:",
+    )
+    parser.add_option(
+        "--graph_config",
+        help="Graph configuration input"
+
+    )
+    parser.add_option(
+        "-R",
+        "--reproducibility",
+        default="0",
+        help="Level of reproducibility. Default 0 (NOTHING). Accepts '0,1,2,4,5,6,7,8'",
+    )
+
+    (opts, args) = parser.parse_args(args)
+    tool.setup_logging(opts)
+
+    dump = _setup_output(opts)
+    graph_config = None
+    if not opts.graph_config:
+        parser.error("Must provide an option for --graph_config")
+    if opts.graph_config == "-":
+        sin = sys.stdin.read()
+        graph_config = json.loads(sin)
+    else:
+        with open (opts.graph_config) as fp:
+            graph_config = json.load(fp)
+
+    if not opts.logical_graph:
+        parser.error("Must provide an option for --graph_config")
+    with open (opts.logical_graph) as fp:
+        logical_graph = json.load(fp)
+
+    graph = pg_generator.apply_config(logical_graph, graph_config)
+    dump(init_lg_repro_data(init_lgt_repro_data(graph, opts.reproducibility)))
+
 
 def _add_unroll_options(parser):
     parser.add_option(
@@ -285,8 +338,6 @@ def dlg_unroll(parser, args):
 
 
 def _add_partition_options(parser):
-    from ..dropmake import pg_generator
-
     parser.add_option(
         "-N",
         "--partitions",
@@ -387,7 +438,6 @@ def dlg_unroll_and_partition(parser, args):
 
 
 def dlg_map(parser, args):
-    import dlg.constants as con
 
     tool.add_logging_options(parser)
     _add_output_options(parser)
@@ -445,8 +495,6 @@ def dlg_map(parser, args):
     tool.setup_logging(opts)
     dump = _setup_output(opts)
 
-    from ..dropmake import pg_generator
-    from dlg.clients import CompositeManagerClient
 
     if opts.nodes:
         nodes = [n for n in opts.nodes.split(",") if n]
@@ -473,7 +521,6 @@ def dlg_map(parser, args):
 
 
 def dlg_submit(parser, args):
-    import dlg.constants as con
 
     # Submit Physical Graph
     _add_output_options(parser)
@@ -583,5 +630,9 @@ def register_commands():
     )
     tool.cmdwrap("unroll-and-partition", translator_group,
                  "unroll + partition", dlg_unroll_and_partition)
+    tool.cmdwrap("fill-config", translator_group,
+                 "Apply a graph config to the logical graph", dlg_graph_config)
     tool.cmdwrap("fill", translator_group,
-                 "Fill a Logical Graph with parameters", dlg_fill)
+                 "[DEPRECATED] Fill a Logical Graph with parameters", dlg_fill)
+
+

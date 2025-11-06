@@ -2,7 +2,7 @@
 ENV_PREFIX=$(shell python -c "if __import__('pathlib').Path('.venv/bin/pip').exists(): print('%s/'% __import__('pathlib').Path('.venv/bin').absolute())")
 USING_POETRY=$(shell grep "tool.poetry" pyproject.toml && echo "yes")
 MY_GID=$(shell id -g)
-MY_UID=$(shell id -u) 
+MY_UID=$(shell id -u)
 .PHONY: help
 help:             ## Show the help.
 	@echo "Usage: make <target>"

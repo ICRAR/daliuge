@@ -124,22 +124,10 @@ class SlurmClient:
             self.exec_prefix = config.getpar("exec_prefix")
             self.username = username
         # sbatch 
-        if slurm_template:
-            self._slurm_template = slurm_template
-            self._num_nodes = 1 # placeholder
-            self._job_dur = 1 # placeholder
-        else:
-            self._slurm_template = None
-            if num_nodes is None:
-                self._num_nodes = 1
-            else:
-                self._num_nodes = num_nodes
-            self._job_dur = job_dur
+        self._slurm_template = slurm_template
+        self._job_dur = job_dur
+        self._num_nodes = num_nodes if num_nodes else 1  # placeholder
 
-        # self._log_root = (
-        #     self._config.getpar("log_root") if (log_root is None) else log_root
-        # )
-        # 
         # start_dlg_cluster arguments
         self.visualise_graph = False
         self._logical_graph = logical_graph

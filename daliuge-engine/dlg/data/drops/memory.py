@@ -245,6 +245,18 @@ class InMemoryDROP(DataDROP):
             logger.debug("Could not read drop reproduce data")
         return {"data_hash": common_hash(data)}
 
+    @property
+    def buftype(self)->str:
+        """
+        This needs to return strings to ensure that the type is correctly serialized. Necessary
+        for drop_proxies where the type has to be passed over the wire.
+
+        See use in droputils.allDropContents for context.
+        """
+        if type(self._buf) == io.StringIO:
+            return 'str'
+        else:
+            return 'bytes'
 
 ##
 # @brief PythonObject
@@ -341,3 +353,17 @@ class SharedMemoryDROP(DataDROP):
     def dataURL(self) -> str:
         hostname = os.uname()[1]
         return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
+
+    @property
+    def buftype(self):
+        """
+        This needs to return strings to ensure that the type is correctly serialized. Necessary
+        for drop_proxies where the type has to be passed over the wire.
+
+        See use in droputils.allDropContents for context.
+        """
+
+        if type(self._buf) == io.StringIO:
+            return 'str'
+        else:
+            return 'bytes'

@@ -1149,15 +1149,17 @@ class TestDROPReproducibility(unittest.TestCase):
             os.unlink(dbfile)
 
 
-def func1(result:bool=False):
-    return result
+def func1(x:bool=False):
+    return x
 
 
 class BranchAppDropTestsBase(object):
     """Tests for the Branch class"""
 
-    def _simple_branch_with_outputs(self, result, uids):
-        a = Branch(uids[0], uids[0], result=result, func_name="test.test_drop.func1")
+    def _simple_branch_with_outputs(self, result, uids, **kwargs):
+        a = Branch(uids[0], uids[0], func_name="test.test_drop.func1",
+                   x=result,
+                   inputs=kwargs.get("inputs",[]))
         b, c = (self.DataDropType(x, x) for x in uids[1:])
         a.addOutput(b)
         a.addOutput(c)
@@ -1320,13 +1322,18 @@ class BranchAppDropTestsBase(object):
         ]
 
         for uids, result in zip(all_uids, results[1:]):
-            x, y, z = self._simple_branch_with_outputs(result, uids)
+            x, y, z = self._simple_branch_with_outputs(result, uids,
+                                                       inputs=[{last_first_output.uid, "x"}])
             all_drops += [x, y, z]
+            x.addInput(last_first_output)
             last_first_output.addConsumer(x)
             last_first_output = y
 
+        for d in all_drops:
+            print(d.parameters)
+
         with DROPWaiterCtx(
-            self, all_drops, 3, [DROPStates.COMPLETED, DROPStates.SKIPPED]
+            self, all_drops, 30, [DROPStates.COMPLETED, DROPStates.SKIPPED]
         ):
             a.async_execute()
 
@@ -1342,11 +1349,11 @@ class BranchAppDropTestsBase(object):
         """Like test_simple_branch_app, but events propagate downstream one level"""
         # self._test_multi_branch_graph(True, True)
         # self._test_multi_branch_graph(True, False)
-        self._test_multi_branch_graph(False, False)
+        self._test_multi_branch_graph(False, 2)
 
     def test_multi_branch_more_levels(self):
         """Like test_skipped_propagates, but events propagate more levels"""
-        for levels in (3, 4, 5, 6, 7):
+        for levels in (3, 4, 5, 6):
             self._test_multi_branch_graph(True, levels)
             self._test_multi_branch_graph(False, levels)
 

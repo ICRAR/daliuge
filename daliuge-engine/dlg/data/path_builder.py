@@ -133,8 +133,26 @@ def find_dlg_fstrings(filename: str) -> list[str]:
         logging.warning("Data not in expected format %s",e)
         return opts
 
+def replace_dlg_fstring(path: str, dlg_strings: dict) -> str:
+    """
+    Perform the replacement for each dlg fstring found in path
 
-def filepath_from_string(path: str, path_type: PathType, dirname: str = "",
+    :param path: the path 'template' we are modifying
+    :param dlg_strings: the dictionary of strings
+    :return: modified path with all possible strings replaced
+    """
+
+    opts=[]
+    opts.extend(find_dlg_fstrings(path))
+    for fp in opts:
+        path = path.replace(f"{{{fp}}}", dlg_strings[fp])
+    return path
+
+
+def filepath_from_string(path: str,
+                         path_type: PathType,
+                         dirname: str = "",
+                         relative=False,
                          **kwargs) -> (
         str):
     """
@@ -152,7 +170,6 @@ def filepath_from_string(path: str, path_type: PathType, dirname: str = "",
     dirname
     """
 
-    opts = []
     fstring_map = construct_map(**kwargs)
     if path_type == PathType.Directory and not path:
         path = "" # The path we want is a directory DROP and we do not care about
@@ -169,11 +186,9 @@ def filepath_from_string(path: str, path_type: PathType, dirname: str = "",
     if expanded_dirname == dirname and "$" in expanded_dirname:
         raise RuntimeError(f"Environment variable in path {dirname} not set!")
 
-    opts.extend(find_dlg_fstrings(path))
-    for fp in opts:
-        expanded_path = expanded_path.replace(f"{{{fp}}}", fstring_map[fp])
+    expanded_path = replace_dlg_fstring(expanded_path, fstring_map)
 
-    if Path(expanded_path).is_absolute():
+    if Path(expanded_path).is_absolute() or relative:
         return expanded_path
     else:
         return f"{expanded_dirname}/{expanded_path}" if expanded_dirname else expanded_path

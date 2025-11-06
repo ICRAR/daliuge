@@ -645,6 +645,7 @@ class Session(object):
 
         :return:
         """
+        # TODO Look into DropProxies to avoid issues with multiple nodes.
         return {"session": self.sessionId,
                 "status": self.status,
                 "oid": drop_oid,

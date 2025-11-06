@@ -203,6 +203,19 @@ Help output::
                             The filename of the physical graph (template) to
                             deploy
 
+      Graph config options:
+        Options for selecting the active graph configuration.  Only one option
+        is used: priority in descending is fill, id, name
+
+        --config_name=CONFIG_NAME
+                            The name of the config as it appears in the graph
+        --config_id=CONFIG_ID
+                            The id of the config
+        --fill_config=FILL_CONFIG
+                            Use stdin to fill graph with config provided at
+                            runtime using 'dlg fill_config'
+
+
       Remote configuration Options:
         Remote deployment configuration options based on configuration and
         template files.

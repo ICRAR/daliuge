@@ -540,15 +540,15 @@ class PyFuncApp(BarrierAppDROP):
         funcargs.update(tmpPargs)
         logger.debug("positionalArgsMap: %s", positionalArgsMap)
         # Mixin the values from named ports
-        portargs = self._ports2args(positionalArgsMap, keywordArgsMap)
+        positionalArgsMap, keywordArgsMap = self._ports2args(positionalArgsMap, keywordArgsMap)
 
         # Update any InputOutput ports that might have path names defined from input port
         for arg in input_outputs:
             keywordArgsMap, positionalArgsMap = self._update_filepaths(
                 positionalArgsMap, keywordArgsMap, arg)
 
-        logger.debug("Updating funcargs with values from named ports %s", portargs)
-        tmpPortArgs = {port: arg.value for port, arg in portargs.items()}
+        logger.debug("Updating funcargs with values from named ports...")
+        tmpPortArgs = {port: arg.value for port, arg in positionalArgsMap.items()}
         funcargs.update(tmpPortArgs)
 
         return funcargs, pargs
@@ -620,7 +620,7 @@ class PyFuncApp(BarrierAppDROP):
                 self.parameters[arg] = arg_map[arg].value
         return keywordArgsMap, positionalArgsMap
 
-    def _ports2args(self, pargsDict, keyargsDict) -> dict:
+    def _ports2args(self, pargsDict, keyargsDict) -> tuple[dict,dict]:
         """
         Replace arguments with values from ports.
 
@@ -628,7 +628,6 @@ class PyFuncApp(BarrierAppDROP):
         --------
         portargs dictionary
         """
-        portargs = {}
         # 3. replace default argument values with named input ports
         logger.debug("Mapping from _inputs: %s", self._inputs)
         logger.debug("Parameters: %s", self.parameters)
@@ -655,7 +654,7 @@ class PyFuncApp(BarrierAppDROP):
                 if hasattr(self, "input_parser")
                 else None
             )
-            keyPortArgs, _ = identify_named_ports(
+            keyargsDict, pargsDict = identify_named_ports(
                 inputs_dict,
                 pargsDict,
                 keyargsDict,
@@ -664,7 +663,8 @@ class PyFuncApp(BarrierAppDROP):
                 addPositionalToKeyword=True,
                 parser=parser
             )
-            portargs.update(keyPortArgs)
+
+            # portargs.update(keyPortArgs)
         else:
             for i, input_drop in enumerate(self._inputs.values()):
                 parser = (
@@ -679,9 +679,9 @@ class PyFuncApp(BarrierAppDROP):
                                  value)
 
         logger.debug(
-            "Finally port mapping: %s, %s, %s", portargs, pargsDict, keyargsDict
+            "Finally port mapping: %s, %s", pargsDict, keyargsDict
         )
-        return portargs
+        return (pargsDict, keyargsDict)
 
     def initialize_with_func_code(self):
         """
@@ -804,7 +804,6 @@ class PyFuncApp(BarrierAppDROP):
 
         """
         self._run()
-        logger.user("Confirm the operator exception works.")
         logger.debug("This object: %s, %s", self, self._humanKey)
         funcargs = {}
         # Keyword arguments are made up of the default values plus the inputs
@@ -862,7 +861,7 @@ class PyFuncApp(BarrierAppDROP):
             msg = f"STDOUT/STDERR output from function: '{self.func_name}': {capture.getvalue()}"
         else:
             msg = f"No STDOUT/STDERR output from function: '{self.func_name}'"
-        logger.user(msg)
+        logger.info(msg)
         logger.debug("Finished execution of %s", self.func_name)
 
         # 6. Process results
@@ -895,18 +894,16 @@ class PyFuncApp(BarrierAppDROP):
         return DropParser(encoding) if encoding else self.output_parser
 
     def write_results(self):
-        from dlg.droputils import listify
-
-        result_iter = listify(self.result)
-        if not self.outputs and result_iter:
+        if not self.outputs:
             return
 
         logger.debug(
-            "Writing following result to %d outputs: %s", len(self.outputs), result_iter
+            "Writing following result to %d outputs: %s", len(self.outputs),
+            self.result
         )
         num_outputs = len(self.outputs)
-        for i, o in enumerate(self.outputs):
-            # Ensure that we don't produce two files for the same output DROP
+        for _, o in enumerate(self.outputs):
+            # Ensure that we don't produce two files for the same output DROP8
             if o.uid in self._output_filepaths:
                 # Trigger FileDROP filename update, but don't write to the drop because
                 # it has already been written to.
@@ -914,22 +911,9 @@ class PyFuncApp(BarrierAppDROP):
                 # 'Discount the Filepath output from outputs we write to'
                 num_outputs -= 1
                 continue
-            if not result_iter and self.outputs:
-                result = result_iter
-            elif len(result_iter) == 1:
-                # We only have one element, no need to save as a list
-                result = result_iter[0]
-            elif len(result_iter) > 1 and num_outputs == 1:
-                # We want all elements in the list to go to the output
-                result = self.result
-            else:
-                # Iterate over each element of the list for each output
-                # Wrap around for len(result_iter) < len(self.outputs)
-                i = i % len(self.outputs)
-                result = result_iter[i]
-
-            parser = self._match_parser(o)
-            parser = resolve_drop_parser(parser)
+            result = self.result
+            tmp_parser = self._match_parser(o)
+            parser = resolve_drop_parser(tmp_parser)
             if parser is DropParser.PICKLE:
                 o.write(pickle.dumps(result))
             elif parser is DropParser.DILL:

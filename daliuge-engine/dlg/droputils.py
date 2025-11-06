@@ -130,8 +130,9 @@ def allDropContents(drop, bufsize=65536) -> bytes:
     Returns all the data contained in a given DROP
     """
     buf = io.BytesIO()
-    if hasattr(drop,"_buf") and isinstance(getattr(drop, '_buf'), io.StringIO):
-        buf = io.StringIO()
+    if drop.buftype == 'string':
+        buf = io.StringIO
+
     desc = drop.open()
 
     while True:

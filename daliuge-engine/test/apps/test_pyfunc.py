@@ -307,9 +307,9 @@ class TestPyFuncApp(unittest.TestCase):
         for drop in drops:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
 
-        for expected_output, drop in zip(expected_outputs, output_drops):
+        for drop in output_drops:
             self.assertEqual(
-                expected_output, pickle.loads(droputils.allDropContents(drop))
+                expected_outputs, pickle.loads(droputils.allDropContents(drop))
             )  # @UndefinedVariable
 
     def test_func3_singleoutput(self):
@@ -317,7 +317,7 @@ class TestPyFuncApp(unittest.TestCase):
         Checks that func3 in this module works when wrapped as an application
         with multiple outputs.
         """
-        self._test_func3([InMemoryDROP("b", "b")], [["b", "c", "d"]])
+        self._test_func3([InMemoryDROP("b", "b")], ["b", "c", "d"])
 
     def test_func3_multioutput(self):
         """

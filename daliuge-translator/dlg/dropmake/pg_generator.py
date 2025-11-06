@@ -29,9 +29,11 @@ import json
 import logging
 import string
 
+from dlg.dropmake.graph_config import fill_config
 from dlg.dropmake.lg import LG, GraphException
 from dlg.dropmake.pgt import PGT
 from dlg.dropmake.pgtp import MetisPGTP, MySarkarPGTP, MinNumPartsPGTP, PSOPGTP
+
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -62,6 +64,16 @@ def fill(lg, params):
         lg = json.dumps(lg)
     lg = _LGTemplate(lg).substitute(flat_params)
     return json.loads(lg)
+
+def apply_config(lg: str, config: dict):
+    """
+    Give a logical graph, fill the
+    :param lg:
+    :param config:
+    :return:
+    """
+    logger.info("Applying configuration to Logical Graph...")
+    return fill_config(lg, config)
 
 
 def unroll(lg, oid_prefix=None, zerorun=False, app=None):
