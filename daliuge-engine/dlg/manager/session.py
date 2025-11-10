@@ -647,7 +647,8 @@ class Session(object):
         if drop_oid in self.proxy_drops:
             return self.proxy_drops[drop_oid].getLogs()
 
-        return f"Drop '{drop_oid}' not found."
+        # Return an empty list to maintain consistent return type
+        return []
 
     def getDropLogs(self, drop_oid: str):
         """
