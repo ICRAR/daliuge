@@ -209,10 +209,11 @@ class ManagerRestServer(RestServer):
         app.route("/static/<filepath:path>", callback=self.server_static)
         app.get("/session", callback=self.visualizeSession)
         app.route("/api/sessions/<sessionId>/dir", callback=self._getSessionDir)
+
         app.route("/sessions/<sessionId>/graph/drop/<dropId>",
-                  callback=self._getDropStatus)
+                  callback=self.getDropStatus)
         app.route("/api/sessions/<sessionId>/graph/drop/<dropId>",
-                callback=self.getDropStatus)
+                callback=self._getDropStatus)
 
         # sub-class specifics
         self.initializeSpecifics(app)
