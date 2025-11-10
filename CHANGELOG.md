@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.2.0
+- [Feature] Added new remote-submit support for graph configurations: https://github.com/ICRAR/daliuge/pull/369
+
 # v6.1.0
 - [Feature] Improved daemon support and docker builds: https://github.com/ICRAR/daliuge/pull/365
 
