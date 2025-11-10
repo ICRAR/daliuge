@@ -71,6 +71,7 @@ from dlg.common.reproducibility.reproducibility import (
 
 from dlg import utils
 from dlg.common.deployment_methods import DeploymentMethods
+from dlg.common.version import version as dlg_version
 from dlg.common.k8s_utils import check_k8s_env
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_manager import PGManager
@@ -252,6 +253,7 @@ def load_pg_viewer(
                 "partition_info": None,
                 "title": "Physical Graph Template",
                 "error": None,
+                "version": dlg_version
             },
         )
         return tpl
@@ -410,6 +412,7 @@ def gen_pgt(
                 "title": "Physical Graph Template%s"
                 % ("" if num_partitions == 0 else "Partitioning"),
                 "error": None,
+                "version": dlg_version
             },
         )
         return tpl
@@ -523,6 +526,7 @@ async def gen_pgt_post(
                 "title": "Physical Graph Template%s"
                 % ("" if num_par == 0 else "Partitioning"),
                 "error": None,
+                "version": dlg_version
             },
         )
         return tpl
@@ -1101,6 +1105,7 @@ def index(request: Request):
             "partition_info": None,
             "title": "Physical Graph Template",
             "error": None,
+            "version":dlg_version
         },
     )
     return tpl

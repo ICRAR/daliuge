@@ -57,7 +57,9 @@ from dlg.restserver import RestServer
 from dlg.restutils import RestClient, RestClientException
 from dlg.manager.session import generateLogFileName
 from dlg.common.deployment_methods import DeploymentMethods
+from dlg.common.version import version as dlg_version
 from dlg.manager.manager_data import Node
+
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -392,6 +394,7 @@ class ManagerRestServer(RestServer):
             viewMode=viewMode,
             serverUrl=serverUrl,
             dmType=self.dm.__class__.__name__,
+            version=dlg_version,
             sessionDir=sessionId
         )
 
@@ -423,6 +426,7 @@ class ManagerRestServer(RestServer):
             sessionId=sessionId,
             serverUrl=serverUrl,
             dmType=self.dm.__class__.__name__,
+            version=str(dlg_version)
         )
 
 class NMRestServer(ManagerRestServer):
@@ -510,6 +514,7 @@ class NMRestServer(ManagerRestServer):
             tpl,
             serverUrl=serverUrl,
             dmType=self.dm.__class__.__name__,
+            version=dlg_version,
             reset="false",
         )
 
@@ -722,6 +727,7 @@ class CompositeManagerRestServer(ManagerRestServer):
             dmHosts=json.dumps([str(n) for n in self.dm.dmHosts]),
             nodes=json.dumps([str(n) for n in self.dm.nodes]),
             selectedNode=selectedNode,
+            version=dlg_version
         )
 
 
