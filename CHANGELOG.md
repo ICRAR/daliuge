@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.2.1
+- [Fixed] Session reports as Failed rather than Finished when it fails: https://github.com/ICRAR/daliuge/pull/362
+
 # v6.2.0
 - [Feature] Added new remote-submit support for graph configurations: https://github.com/ICRAR/daliuge/pull/369
 
