@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.2.2
+- [Fixed] DROPLog errors when running multiple Node Managers: https://github.com/ICRAR/daliuge/pull/370
+
 # v6.2.1
 - [Fixed] Session reports as Failed rather than Finished when it fails: https://github.com/ICRAR/daliuge/pull/362
 
