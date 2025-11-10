@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.3.0
+- [Feature] Add version to DROPManagers web UI: https://github.com/ICRAR/daliuge/pull/371
+
 # v6.2.2
 - [Fixed] DROPLog errors when running multiple Node Managers: https://github.com/ICRAR/daliuge/pull/370
 
