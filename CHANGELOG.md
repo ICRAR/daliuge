@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.3.1
+- [Fixed] Fix PyFuncApp Object implementation failing: https://github.com/ICRAR/daliuge/pull/372 
+
 # v6.3.0
 - [Feature] Add version to DROPManagers web UI: https://github.com/ICRAR/daliuge/pull/371
 
