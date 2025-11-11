@@ -269,6 +269,10 @@ class AbstractDROP(EventFirer, EventHandler):
             self._log_level = logging.getLevelName(logger.getEffectiveLevel())
         self._global_log_level = logging.getLevelName(logger.getEffectiveLevel())
 
+        self._humanKey = self._popArg(
+            kwargs, "humanReadableKey", truncateUidToKey(self._uid)
+        )
+
         self.log_storage = []
 
         self.logger = logging.getLogger(f"{__class__}.{self.uid}")
@@ -384,9 +388,6 @@ class AbstractDROP(EventFirer, EventHandler):
         # TODO: Make these threadsafe, no lock around them yet
         self._rios = {}
 
-        self._humanKey = self._popArg(
-            kwargs, "humanReadableKey", truncateUidToKey(self._uid)
-        )
         # The execution mode.
         # When set to DROP (the default) the graph execution will be driven by
         # DROPs themselves by firing and listening to events, and reacting
