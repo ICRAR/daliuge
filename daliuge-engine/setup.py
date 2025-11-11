@@ -185,7 +185,7 @@ extra_requires = {
     "test": ["pytest",
         # Toggle comments below if adding new test graphs
         # "eagle-test-graphs==0.2.1"
-        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-514"
+        "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@fix_objects"
     ]
 }
 
