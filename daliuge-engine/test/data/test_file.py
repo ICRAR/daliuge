@@ -27,16 +27,16 @@ class TestDROPFilepath(unittest.TestCase):
         self.assertEqual(fdir / "mydir", Path(fdrop.dirname))
 
     def test_root_dir(self):
-        fdrop = FileDROP(uid="A", oid="A", filepath="/mydir/")
-        self.assertEqual(Path("/mydir"), Path(fdrop.dirname))
+        fdrop = FileDROP(uid="A", oid="A", filepath="/tmp/")
+        self.assertEqual(Path("/tmp"), Path(fdrop.dirname))
 
     def test_expand_envvar(self):
-        os.environ["MYDIR"] = "/mydir/"
+        os.environ["MYDIR"] = "/tmp/"
         fdrop = FileDROP(uid="A", oid="A", filepath="$MYDIR")
-        self.assertEqual(Path("/mydir"), Path(fdrop.dirname))
+        self.assertEqual(Path("/tmp"), Path(fdrop.dirname))
 
         fdrop = FileDROP(uid="A", oid="A", filepath="$MYDIR/test.txt")
-        self.assertEqual(Path("/mydir") / "test.txt", Path(fdrop.path))
+        self.assertEqual(Path("/tmp") / "test.txt", Path(fdrop.path))
 
         fdir = Path("/tmp/daliuge_tfiles")  # see PathBaseDrop.get_dir()
         os.environ["MYDIR"] = "mydir/"
