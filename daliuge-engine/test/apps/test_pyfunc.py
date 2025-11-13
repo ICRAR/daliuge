@@ -39,7 +39,7 @@ from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException, InvalidSessionState, \
     ErrorManagerCaughtException, SessionInterruptError
 
-from test.dlg_engine_testutils import NMTestsMixIn
+from test.dlg_engine_testutils import NMTestsMixIn, AppArgsStore
 
 from ..manager import test_dm
 
@@ -154,6 +154,7 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_pickle_func(self, f=lambda x: x, input_data="hello", output_data="hello"):
         a = InMemoryDROP("a", "a")
+
         kwargs = {a.uid: "x"}
         b = _PyFuncApp("b", "b", f, **kwargs)
         c = InMemoryDROP("c", "c")

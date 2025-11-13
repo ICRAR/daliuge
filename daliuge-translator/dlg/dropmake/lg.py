@@ -826,6 +826,10 @@ class LG:
         for drop_list in self._drop_dict.values():
             ret += drop_list
 
+        # for drop in ret:
+        #     del drop['outputPorts']
+        #     del drop['inputPorts']
+
         return ret
 
     @property

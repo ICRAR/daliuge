@@ -77,7 +77,7 @@ class TestAppLogStorage(unittest.TestCase):
                               func_name=func_name,
                               func_code=fcode,
                               func_defaults=fdefaults,
-                              kwargs=application_args)
+                              kwargs=application_args.get_args())
 
         for drop in self.input_drops:
             self.app.addInput(drop)

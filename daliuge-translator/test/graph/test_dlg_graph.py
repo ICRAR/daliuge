@@ -24,7 +24,7 @@ import pickle
 import unittest
 
 from dlg.common import CategoryType, path_utils
-from dlg.dropmake.lg import LG
+from dlg.graph.dlg_graph import DaliugeGraph
 
 NODES = 'nodeDataArray'
 LINKS = 'linkDataArray'
@@ -158,16 +158,6 @@ class TestLGNToPGN(unittest.TestCase):
         lg.unroll_to_tpl()
         self.assertEqual("true",
                          trueTargetName)
-
-    def test_branch_skip(self):
-        from importlib.resources import files
-        from daliuge_tests.engine import graphs
-        lg = LG(str(files(graphs) / "branch_skip.graph"),ssid="branch_skip")
-        ret = lg.unroll_to_tpl()
-        import json
-        with open('hasSomething_Simple.json', 'w') as fp:
-            json.dump(ret,fp, indent=2)
-
 
 class TestLGNodeLoading(unittest.TestCase):
 

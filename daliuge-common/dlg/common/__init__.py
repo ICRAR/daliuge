@@ -129,14 +129,14 @@ class dropdict(dict):
         if key not in self:
             self[key] = []
         if other["oid"] not in self[key]:
-            port_name = None
-            if key in ["outputs", "consumers"] and self.get("outputPorts", None):
-                port_name = [v["name"] for k,v in self["outputPorts"].items() if other["oid"].find(v["target_id"])>-1]
-            if key in ["inputs", "producers"] and self.get("inputPorts", None):
-                port_name = [v["name"] for k,v in self["inputPorts"].items() if other["oid"].find(v["source_id"])>-1]
-            port_name = port_name[0] if port_name and len(port_name) > 0 else None
-            if port_name:
-                name = port_name
+            # port_name = None
+            # if key in ["outputs", "consumers"] and self.get("outputPorts", None):
+            #     port_name = [v["name"] for k,v in self["outputPorts"].items() if other["oid"].find(v["target_id"])>-1]
+            # if key in ["inputs", "producers"] and self.get("inputPorts", None):
+            #     port_name = [v["name"] for k,v in self["inputPorts"].items() if other["oid"].find(v["source_id"])>-1]
+            # port_name = port_name[0] if port_name and len(port_name) > 0 else None
+            # if port_name:
+            #     name = port_name
             append = {other["oid"]: name} if name else other["oid"]
             self[key].append(append)
             logger.debug(
