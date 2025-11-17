@@ -143,10 +143,13 @@ setup(
     name="daliuge-translator",
     version=get_version_info()[0],
     description="Data Activated \uf9ca (flow) Graph Engine - Graph Translation",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
+    long_description="The dlg-translator is responsible for taking Logical Graph "
+                     "Templates produced by the EAGLE graph editor, and transforming "
+                     "them into the Physical Graphs that are executed on the DALiuGE "
+                     "Engine.",
     author="ICRAR DIA Group",
-    author_email="rtobar@icrar.org",
-    url="https://github.com/ICRAR/daliuge",
+    author_email="andreas.wicenec@icrar.org",
+    url="https://daliuge.icrar.org/",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Topic :: System :: Distributed Computing",
@@ -156,8 +159,6 @@ setup(
         "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
