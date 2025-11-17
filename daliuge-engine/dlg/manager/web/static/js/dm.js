@@ -629,7 +629,7 @@ function _addNode(g, doSpec, url) {
 	var typeClass = doSpec.type;
 	var typeShape = TYPE_SHAPES[doSpec.type];
 	var notes = '';
-	// console.log('Drop type', doSpec.type)
+	console.log('Drop type', doSpec.type)
 	if (doSpec.name) {
 		notes = "<span>" + doSpec.name + "</span>"
 	}
@@ -643,15 +643,21 @@ function _addNode(g, doSpec, url) {
 	else if (doSpec.type == 'plain') {
 		notes += 'storage: ' + doSpec.storage;
 	}
-     url = url.replace("api/","") + "/graph/drop/" +  doSpec.oid;
+    log_url = url.replace("api/","") + "/graph/drop/" +  doSpec.oid;
+    file_url = url.replace("api/","") + "/graph/drop/" + "data/" + doSpec.oid ;
 //    url = url + "/graph/drop/" +  doSpec.oid;
-    let link = "<a href=" + url +  " target='_blank'>Details</a>";
+    let log_link = "<a href=" + log_url +  " target='_blank'>Details</a>";
 	var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
 	html += '<span class="notes">' + notes + '</span>';
     oid_date = doSpec.oid.split("_")[0];
 	human_readable_id = oid_date + "_" + doSpec.humanReadableKey.toString()
 	html += '<span style="font-size: 13px;">' + human_readable_id + '</span>';
-	html += '<span style="font-size: 13px;">' + link + '</span>';
+	html += '<span style="font-size: 13px;float: left">' + log_link + '</span>';
+	if (doSpec.category == 'File'){
+	    let file_link = "<a href=" + file_url +  " target='_blank'>Download</a>";
+	    html += '<span style="font-size: 13px;float: right">' + file_link + '</span>';
+	}
+
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",

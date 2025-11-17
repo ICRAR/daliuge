@@ -665,9 +665,25 @@ class Session(object):
                 "status": self.status,
                 "oid": drop_oid,
                 "logs": self._getLogsFromDrop(drop_oid)}
-                # "stderr": self._drops[drop_oid].getStdError(),
-                # "stdout": self._drops[drop_oid].getStdOut()}
 
+    def _getDataFromDrop(self, drop_oid: str):
+        def get_path(drop):
+            if hasattr(drop, 'path'):
+                return drop.path
+            else:
+                return ''
+
+        if drop_oid in self._drops:
+            d = self._drops[drop_oid]
+            return get_path(d)
+        if drop_oid in self.proxy_drops:
+            d = self._drops[drop_oid]
+            return get_path(d)
+
+        return ''
+
+    def getDropData(self, drop_oid: str):
+        return {"filepath": self._getDataFromDrop(drop_oid)}
 
     @track_current_session
     def cancel(self, interrupt=False):

@@ -212,10 +212,24 @@ class ManagerRestServer(RestServer):
         app.get("/session", callback=self.visualizeSession)
         app.route("/api/sessions/<sessionId>/dir", callback=self._getSessionDir)
 
+        # The DROP callbacks require both a /session and /api/session interface to
+        # allow for both links that serve the HTML (/sessions) whils also support managers
+        # communicating to each other (/api/sessions), which occurs when commands
+        # are replicated by the DIM to multiple nodes. /api/session calls will return only
+        # data.
+        #
+        # See dlg.common.clients.BaseDROPManagerClient._requests for where the replicated
+        # URL request is created.
+
         app.route("/sessions/<sessionId>/graph/drop/<dropId>",
                   callback=self.getDropStatus)
         app.route("/api/sessions/<sessionId>/graph/drop/<dropId>",
                 callback=self._getDropStatus)
+
+        app.route("/sessions/<sessionId>/graph/drop/data/<dropId>",
+                  callback=self.getDropData)
+        app.route("/api/sessions/<sessionId>/graph/drop/data/<dropId>",
+                callback=self._getDropData)
 
         # sub-class specifics
         self.initializeSpecifics(app)
@@ -428,6 +442,32 @@ class ManagerRestServer(RestServer):
             dmType=self.dm.__class__.__name__,
             version=str(dlg_version)
         )
+
+    def _getDropData(self, sessionId, dropId):
+        return  self.dm.getDropData(sessionId, dropId)
+
+    def getDropData(self, sessionId, dropId):
+        """
+        Given a Drop from this session, attempt to produce the file
+        :param sessionId:
+        :param dropId:
+        :return:
+        """
+        fpath = self._getDropData(sessionId, dropId)['filepath']
+
+        if not fpath: # Empty string, no filepath
+            return {"No file exists"}
+
+        elif not Path(fpath).exists():
+            bottle.response.status = 404
+            return {"error": f"File '{fpath}' not found"}
+        else:
+            path = Path(fpath)
+            filename = path.name
+            root = path.parent
+            if not path.suffix:
+                filename = f"{filename}.txt"
+            return static_file(filename, root=str(root), download=filename)
 
 class NMRestServer(ManagerRestServer):
     """
