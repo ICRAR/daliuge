@@ -457,18 +457,19 @@ class PathBasedDrop(object):
 
         :returns dir
         """
+
         if isabs(dirname):
-            return dirname
-
-        parts = []
-        if self._dlg_session_id:
-            parts.append(".")
+            the_dir = dirname
         else:
-            parts.append("/tmp/daliuge_tfiles")
-        if dirname:
-            parts.append(dirname)
+            parts = []
+            if self._dlg_session_id:
+                parts.append(".")
+            else:
+                parts.append("/tmp/daliuge_tfiles")
+            if dirname:
+                parts.append(dirname)
 
-        the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
+            the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
         logger.debug("Path used for drop: %s", the_dir)
         if create_if_missing:
             createDirIfMissing(the_dir)
