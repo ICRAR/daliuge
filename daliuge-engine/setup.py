@@ -193,15 +193,14 @@ setup(
     name="daliuge-engine",
     version=get_version_info()[0],
     description="Data Activated \uf9ca (flow) Graph Engine - Execution Engine",
-    long_description="""
-        The element of the DALiuGE system executing the workflows. This replaces
-        the former 'runtime' package (up to version 1.0). For more information 
-        see the [Basics section(https://daliuge.readthedocs.io/en/latest/basics.html)]
-        of the DALiuGE documentation.
-        """,
-    author="ICRAR DIA Group",
-    author_email="dfms_prototype@googlegroups.com",
-    url="https://github.com/ICRAR/daliuge",
+    long_description="The dlg-engine is reponsible for system executing DALiuGE "
+                     "workflows. This replaces the former 'runtime' package (up to "
+                     "version 1.0). For more information "
+                     "see the [Basics section(https://daliuge.readthedocs.io/en/latest/basics.html)]"
+                     "of the DALiuGE documentation.",
+    author="ICRAR DIA",
+    author_email="andreas.wicenec@icrar.org",
+    url="https://daliuge.icrar.org/",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Topic :: System :: Distributed Computing",
@@ -211,8 +210,6 @@ setup(
         "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
@@ -222,7 +219,7 @@ setup(
     package_data={
         "": ["VERSION"],
         "dlg.apps": ["dlg_app.h", "dlg_app2.h"],
-        "dlg.deploy.configs": ["*.ini", ".slurm"],
+        "dlg.deploy.configs": ["*.ini", "*.slurm"],
         "dlg.manager": [
             "web/*.html",
             "web/static/css/*.css",
