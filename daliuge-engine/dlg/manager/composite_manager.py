@@ -621,7 +621,7 @@ class CompositeManager(DROPManager):
         for data in allstatus:
             if data['filepath']:
                 return data
-        return next(iter(data))
+        return next(iter(allstatus))
 
     def _getSessionDir(self, dm, host, sessionId):
         logger.debug("Retrieving directory for session %s on %s", sessionId, host)
