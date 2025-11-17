@@ -465,8 +465,9 @@ class ManagerRestServer(RestServer):
             path = Path(fpath)
             filename = path.name
             root = path.parent
-
-            return static_file(filename, root=str(root), download=f"{filename}.download")
+            if not path.suffix:
+                filename = f"{filename}.txt"
+            return static_file(filename, root=str(root), download=filename)
 
 class NMRestServer(ManagerRestServer):
     """
