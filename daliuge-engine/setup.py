@@ -199,8 +199,8 @@ setup(
         see the [Basics section(https://daliuge.readthedocs.io/en/latest/basics.html)]
         of the DALiuGE documentation.
         """,
-    author="ICRAR DIA Group",
-    author_email="dfms_prototype@googlegroups.com",
+    author="ICRAR DIA",
+    author_email="andreas.wicenec@icrar.org",
     url="https://github.com/ICRAR/daliuge",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
