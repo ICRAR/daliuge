@@ -222,7 +222,7 @@ setup(
     package_data={
         "": ["VERSION"],
         "dlg.apps": ["dlg_app.h", "dlg_app2.h"],
-        "dlg.deploy.configs": ["*.ini", ".slurm"],
+        "dlg.deploy.configs": ["*.ini", "*.slurm"],
         "dlg.manager": [
             "web/*.html",
             "web/static/css/*.css",
