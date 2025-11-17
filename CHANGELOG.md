@@ -1,6 +1,9 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.3.2
+- [Fixed] Fix bug caused by using absolute path in DirectoryDROP: https://github.com/ICRAR/daliuge/pull/373 
+
 # v6.3.1
 - [Fixed] Fix PyFuncApp Object implementation failing: https://github.com/ICRAR/daliuge/pull/372 
 
