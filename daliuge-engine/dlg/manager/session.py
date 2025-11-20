@@ -41,7 +41,7 @@ from dlg import graph_loader
 from dlg import rpc
 from dlg import utils
 from dlg.common.reproducibility.constants import ReproducibilityFlags, ALL_RMODES
-from dlg.ddap_protocol import DROPLinkType, DROPRel, DROPStates
+from dlg.ddap_protocol import DROPLinkType, DROPRel, DROPStates, AppDROPStates
 from dlg.drop import (
     AbstractDROP,
     LINKTYPE_1TON_APPEND_METHOD,
@@ -388,8 +388,9 @@ class Session(object):
         # Create the real DROPs from the graph specs
         logger.info("Creating DROPs for session %s", self._sessionId)
 
+        load_failures = []
         try:
-            self._roots = graph_loader.createGraphFromDropSpecList(
+            self._roots, load_failures = graph_loader.createGraphFromDropSpecList(
                 list(self._graph.values()), session=self
             )
 
@@ -399,6 +400,8 @@ class Session(object):
         except ModuleNotFoundError as e:
             logger.exception(e)
             raise e
+
+
         logger.info("%d drops successfully created", len(self._graph))
 
         #  Add listeners for reproducibility information
@@ -479,7 +482,11 @@ class Session(object):
         # This is done in a separate iteration at the very end because all drops
         # to make sure all event listeners are ready
         self.status = SessionStates.RUNNING
-        self.trigger_drops(completedDrops)
+
+        if load_failures:
+            self.fail(load_failures)
+        else:
+            self.trigger_drops(completedDrops)
 
         logger.info("Session %s is now RUNNING", self._sessionId)
 
@@ -489,6 +496,8 @@ class Session(object):
         self.finish()
 
     def trigger_drops(self, uids):
+        if self.status == SessionStates.FAILED:
+            return
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
@@ -604,6 +613,30 @@ class Session(object):
                 drop.setCompleted()
             if drop.status == DROPStates.ERROR:
                 self.status = SessionStates.FAILED
+
+    @track_current_session
+    def fail(self, failures):
+        """
+        Called in situations when the ErrorManager determines we have entered a fail stated
+        """
+        self.status = SessionStates.FAILED
+        logger.info("Session %s has failed", self._sessionId)
+        failed_drops = []
+        for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
+            downStreamDrops[:] = [
+                dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
+            ]
+            failed_drop_oids = [d['oid'] for d in failures]
+            if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
+                drop.cancel()
+            if drop.oid in failed_drop_oids:
+                failed_drops.append(drop)
+
+        for drop in failed_drops:
+            drop.status=DROPStates.ERROR
+            if isinstance(drop, AppDROP):
+                drop.execStatus=AppDROPStates.ERROR
+
 
     @track_current_session
     def end(self):
