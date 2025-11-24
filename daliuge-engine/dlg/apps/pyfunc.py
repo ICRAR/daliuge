@@ -37,8 +37,10 @@ from io import StringIO
 from contextlib import redirect_stdout
 
 from dlg import drop_loaders
+from dlg.ddap_protocol import DROPStates
 from dlg.data.path_builder import filepath_from_string
 from dlg.drop import track_current_drop
+from dlg.runtime.error_management import intercept_error, proxy_intercept
 from dlg.utils import deserialize_data
 from dlg.named_port_utils import (
     Argument,
@@ -134,7 +136,7 @@ def import_using_code_ser(func_code: Union[str, bytes], func_name: str):
         logger.warning("Unable to deserialize func_code: %s", err)
         raise
     if func_name and func_name.split(".")[-1] != func.__name__:
-        raise ValueError(
+        raise BadModuleException(
             f"Function with name '{func.__name__}' instead of '{func_name}' found!"
         )
     return func
@@ -158,7 +160,7 @@ def import_using_code(func_code: str, func_name: str, serialized: bool = True):
                 func = getattr(mod, func_name)
             else:
                 logger.warning("Function with name '%s' not found!", func_name)
-                raise ValueError(f"Function with name '{func_name}' not found!")
+                raise BadModuleException(f"Function with name '{func_name}' not found!")
     else:
         func = import_using_code_ser(func_code, func_name)
     logger.debug("Imported function: %s", func_name)
@@ -756,25 +758,31 @@ class PyFuncApp(BarrierAppDROP):
         self.name = f"{self.name}:{self.func_name}"  # PyFuncApp is parent
         logger.info("AppDROP name: %s", self.name)
         # Lookup function or import bytecode as a function
-        if inspect.isfunction(self.func):
-            self.argnames = list(inspect.signature(self.func).parameters)
-            self._init_fn_defaults()
-        elif not self.func and not self.func_code:
-            self.func = import_using_name(self, self.func_name, curr_depth=0)
-            self._init_fn_defaults()
-        else:
-            self.initialize_with_func_code()
+        try:
+            if inspect.isfunction(self.func):
+                self.argnames = list(inspect.signature(self.func).parameters)
+                self._init_fn_defaults()
+            elif not self.func and not self.func_code:
+                self.func = import_using_name(self, self.func_name, curr_depth=0)
+                self._init_fn_defaults()
+            else:
+                self.initialize_with_func_code()
 
-        logger.debug("Args summary for %s", self.func_name)
-        logger.debug("Args: %s", self.argnames)
-        logger.debug("Args defaults:  %s", self.fn_defaults)
-        logger.debug("Args pos/kw: %s", list(self.poskw.keys()))
-        logger.debug("Args keyword only: %s", list(self.kwonly.keys()))
-        logger.debug("VarArgs allowed:  %s", self.varargs)
-        logger.debug("VarKwds allowed:  %s", self.varkw)
+            logger.debug("Args summary for %s", self.func_name)
+            logger.debug("Args: %s", self.argnames)
+            logger.debug("Args defaults:  %s", self.fn_defaults)
+            logger.debug("Args pos/kw: %s", list(self.poskw.keys()))
+            logger.debug("Args keyword only: %s", list(self.kwonly.keys()))
+            logger.debug("VarArgs allowed:  %s", self.varargs)
+            logger.debug("VarKwds allowed:  %s", self.varkw)
 
-        # Mapping between argument name and input drop uids
-        logger.debug("Input mapping provided: %s", self.func_arg_mapping)
+            # Mapping between argument name and input drop uids
+            logger.debug("Input mapping provided: %s", self.func_arg_mapping)
+
+        except BadModuleException as e:
+            self.exception = BadModuleException
+            proxy_intercept(e)
+
         self._output_filepaths = {}
         self._recompute_data = {}
 
