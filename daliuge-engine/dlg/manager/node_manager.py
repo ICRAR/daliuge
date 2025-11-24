@@ -312,12 +312,12 @@ class NodeManagerBase(DROPManager):
 
     def start(self, rpc_endpoint):
         super().start()
-        logger.user("Running NodeManager")
+        logger.info("Running NodeManager")
         self.drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
-        logger.user("Stopping NodeManager")
+        logger.info("Stopping NodeManager")
         self._dlm.cleanup()
         self.drop_runner.close()
         super().shutdown()
