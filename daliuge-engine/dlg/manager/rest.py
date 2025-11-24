@@ -59,7 +59,7 @@ from dlg.manager.session import generateLogFileName
 from dlg.common.deployment_methods import DeploymentMethods
 from dlg.common.version import version as dlg_version
 from dlg.manager.manager_data import Node
-
+from skyfield.iokit import download
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -466,8 +466,10 @@ class ManagerRestServer(RestServer):
             filename = path.name
             root = path.parent
             if not path.suffix:
-                filename = f"{filename}.txt"
-            return static_file(filename, root=str(root), download=filename)
+                fdownload = f"{filename}.txt"
+            else:
+                fdownload = filename
+            return static_file(filename, root=str(root), download=fdownload)
 
 class NMRestServer(ManagerRestServer):
     """
