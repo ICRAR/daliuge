@@ -87,3 +87,5 @@ def setup_logger_class():
                 pass
 
             return record
+
+    logging.setLoggerClass(_DlgLogger)
