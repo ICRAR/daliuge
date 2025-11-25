@@ -376,6 +376,7 @@ def _process_config_options(parser, opts, graph):
         graph = change_active_configuration(graph, graph_id)
         return apply_active_configuration(graph)
     else:
+        parser.error(f"No graph configuration provided for graph!")
         return None
 
 def evaluate_graph_options(opts, parser):

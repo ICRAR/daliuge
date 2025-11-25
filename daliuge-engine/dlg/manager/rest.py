@@ -59,7 +59,6 @@ from dlg.manager.session import generateLogFileName
 from dlg.common.deployment_methods import DeploymentMethods
 from dlg.common.version import version as dlg_version
 from dlg.manager.manager_data import Node
-from skyfield.iokit import download
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
