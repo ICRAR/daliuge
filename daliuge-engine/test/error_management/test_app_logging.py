@@ -96,13 +96,15 @@ class TestAppLogStorage(unittest.TestCase):
         This means we would expect to see only Warnings or Errors, and nothing below (e.g.
         INFO or DEBUG).
         """
-        logger = logging.getLogger(self.name)
+        logger = logging.getLogger(f"dlg.{self.name}")
+        # logger.root.setLevel("WARNING")
         name = logging.getLevelName(logger.root.getEffectiveLevel())
+
         self.assertEqual("WARNING", name)
         with DROPWaiterCtx(self, self.result, 5):
             for drop in self.input_drops:
                 drop.setCompleted()
-        logs = filter_logs_by_level(self.app.getLogs(), "USER")
+        logs = filter_logs_by_level(self.app.getLogs(), "INFO")
         self.assertEqual(0, len(logs))
         logs = filter_logs_by_level(self.app.getLogs(), "DEBUG")
         self.assertEqual(0, len(logs))
@@ -121,7 +123,7 @@ class TestAppLogStorage(unittest.TestCase):
             for drop in self.input_drops:
                 drop.setCompleted()
 
-        logs = filter_logs_by_level(self.app.getLogs(), "USER")
+        logs = filter_logs_by_level(self.app.getLogs(), "INFO")
         self.assertLess(0, len(logs))
         logs = filter_logs_by_level(self.app.getLogs(), "DEBUG")
         self.assertLess(0, len(logs))

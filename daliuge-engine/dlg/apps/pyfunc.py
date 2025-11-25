@@ -835,8 +835,8 @@ class PyFuncApp(BarrierAppDROP):
                 and "self" in funcargs):
             funcargs.pop("self")
 
-        logger.user("Running %s", self.func_name)
-        logger.user("Arguments: *%s **%s", pargs, funcargs)
+        logger.info("Running %s", self.func_name)
+        logger.info("Arguments: *%s **%s", pargs, funcargs)
 
         # 4. prepare for execution
         # we capture and log whatever is produced on STDOUT
@@ -856,7 +856,7 @@ class PyFuncApp(BarrierAppDROP):
             else:
                 self.result = self.func(*pargs, **funcargs)
 
-        logger.user("Returned result from %s: %s", self.func_name, self.result)
+        logger.info("Returned result from %s: %s", self.func_name, self.result)
         if capture.getvalue():
             msg = f"STDOUT/STDERR output from function: '{self.func_name}': {capture.getvalue()}"
         else:

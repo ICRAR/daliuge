@@ -376,6 +376,7 @@ def _process_config_options(parser, opts, graph):
         graph = change_active_configuration(graph, graph_id)
         return apply_active_configuration(graph)
     else:
+        parser.error("No graph configuration provided for graph!")
         return None
 
 def evaluate_graph_options(opts, parser):
@@ -393,7 +394,9 @@ def evaluate_graph_options(opts, parser):
 
     from dlg.deploy.remote_graph import github_request, gitlab_request
 
-    use_remote_graph = opts.github or opts.gitlab
+    use_github = bool(opts.github)
+    use_gitlab = bool(opts.gitlab)
+    use_remote_graph = use_github or use_gitlab
     use_local_graph = opts.logical_graph or opts.physical_graph
 
     if use_local_graph and use_remote_graph:
@@ -406,11 +409,11 @@ def evaluate_graph_options(opts, parser):
             graph_content = json.load(fp)
             lg = _process_config_options(parser, opts, graph_content)
             return _translate_graph(parser, opts, lg_graph=lg)
-    elif opts.github:
+    elif use_github:
         content = github_request(opts.user_org, opts.repo, opts.branch, opts.path)
         lg = _process_config_options(parser, opts, content)
         return _translate_graph(parser, opts, lg)
-    elif opts.gitlab:
+    elif use_gitlab:
         content = gitlab_request(opts.user_org, opts.repo, opts.branch, opts.path)
         lg = _process_config_options(parser, opts, content)
         return  _translate_graph(parser, opts, lg)
