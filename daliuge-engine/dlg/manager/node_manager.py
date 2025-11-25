@@ -57,7 +57,8 @@ from dlg.exceptions import (
 )
 from ..lifecycle.dlm import DataLifecycleManager
 
-
+from dlg.dlg_logging import USER, USERSTR
+logging.addLevelName(USER, USERSTR)
 logger = logging.getLogger(f"dlg.{__name__}")
 
 class NMDropEventListener(object):
@@ -312,12 +313,14 @@ class NodeManagerBase(DROPManager):
 
     def start(self, rpc_endpoint):
         super().start()
-        logger.info("Running NodeManager")
+        logger.log(USER, "Running NodeManager")
+        # logger.info("Running NodeManager")
         self.drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
         logger.info("Stopping NodeManager")
+        logger.log(USER, "Running NodeManager")
         self._dlm.cleanup()
         self.drop_runner.close()
         super().shutdown()
