@@ -319,7 +319,6 @@ class NodeManagerBase(DROPManager):
         self._dlm.startup()
 
     def shutdown(self):
-        logger.info("Stopping NodeManager")
         logger.log(USER, "Running NodeManager")
         self._dlm.cleanup()
         self.drop_runner.close()

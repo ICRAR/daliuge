@@ -55,6 +55,7 @@ from .rest import (
 from dlg import utils
 # import dlg.runtime
 from dlg.runtime import version
+from dlg.dlg_logging import USER, USERSTR
 
 _terminating = False
 MAX_WATCHDOG_RESTART = 10
@@ -81,11 +82,12 @@ def run_server(server, host, port):
 
 def launchServer(opts):
     # we might be called via __main__, but we want a nice logger name
+    logging.addLevelName(USER, USERSTR)
     logger = logging.getLogger(f"dlg.{__name__}")
     dmName = opts.dmType.__name__
 
-    logger.warning("DALiuGE version %s running at %s", version.full_version, os.getcwd())
-    logger.warning("Creating %s", dmName)
+    logger.log(USER,"DALiuGE version %s running at %s", version.full_version, os.getcwd())
+    logger.log(USER,"Creating %s", dmName)
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
     except Exception as e:
@@ -338,7 +340,7 @@ def setupLogging(opts):
         logging.NOTSET,
         logging.DEBUG,
         logging.INFO,
-        logging.USER,
+        USER,
         logging.WARNING,
         logging.ERROR,
         logging.CRITICAL,
@@ -384,6 +386,7 @@ def setupLogging(opts):
     logging.root.addHandler(fileHandler)
 
     # Per-package/module specific levels
+    logging.addLevelName(USER, USERSTR)
     logger = logging.getLogger("dlg")
     logger.setLevel(level)
     logging.getLogger("zerorpc").setLevel(logging.WARN)
@@ -391,8 +394,8 @@ def setupLogging(opts):
     # Assuming we have selected the default, info-level messages will not show to the
     # user. A Warning message here let's the user know something is happening without
     # us needing to modify the default logging level.
-    logger.warning("Log level: %s", logging.getLevelName(level))
-    logger.warning("Logging in: %s time", time_fmt)
+    logger.log(USER, "Log level: %s", logging.getLevelName(level))
+    logger.log(USER,"Logging in: %s time", time_fmt)
 
     return fileHandler
 
