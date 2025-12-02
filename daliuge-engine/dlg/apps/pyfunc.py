@@ -675,7 +675,7 @@ class PyFuncApp(BarrierAppDROP):
                 value = parser(input_drop)
                 if self.argnames:
                     logger.debug("Port value pair: %s, %s",
-                                 self.argnames[i],
+                                 self.argnames,
                                  value)
 
         logger.debug(
