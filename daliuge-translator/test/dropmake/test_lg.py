@@ -54,6 +54,8 @@ class TestLGInit(unittest.TestCase):
                              f"object using: {lg_name}")
 
 
+
+
 def _calc_num_drops(drop_values):
     """
     Get the number of drops created during the lgn_to_pgn method.
@@ -64,6 +66,9 @@ def _calc_num_drops(drop_values):
     """
     return sum(len(drop_list) for drop_list in drop_values)
 
+def lg_init(graph_name):
+    fp = path_utils.get_lg_fpath("logical_graphs", graph_name)
+    return LG(fp, ssid=TEST_SSID)
 
 class TestLGNToPGN(unittest.TestCase):
     """
@@ -152,12 +157,16 @@ class TestLGNToPGN(unittest.TestCase):
         lg_name = "branchTest.graph"
 
         lg = LG(path_utils.get_lg_fpath("logical_graphs", lg_name), ssid="TEST")
-        outputPorts = lg._lgn_list[0].jd["outputPorts"]
-        trueTargetId = [outputPorts[k]["target_id"] for k,v in outputPorts.items() if outputPorts[k]["name"]=="true"][0]
-        trueTargetName = [n.name for n in lg._lgn_list if n.id == trueTargetId][0]
-        lg.unroll_to_tpl()
-        self.assertEqual("true",
-                         trueTargetName)
+        branch_oid = "TEST_0be2db7d-8958-4670-b9d5-8414ba6f6871_0"
+        true_oid = "TEST_3cabd2b0-d0ef-4117-b009-f7496e976535_0"
+        false_oid = "TEST_7771b9dd-0d82-42ab-8553-203d2f35e17f_0"
+        pg = lg.unroll_to_tpl()
+        drop= next((ds for ds in pg if ds['oid']==branch_oid))
+        for o in drop["outputs"]:
+            if true_oid in o:
+                self.assertEqual(o[true_oid], 'true')
+            else: 
+                self.assertEqual(o[false_oid], 'false')
 
 class TestLGNodeLoading(unittest.TestCase):
 
@@ -258,3 +267,24 @@ class TestLGUnroll(unittest.TestCase):
         for drop in drop_list:
             if drop["categoryType"] in [CategoryType.DATA, "data"]:
                 self.assertEqual("SharedMemory", drop["category"])
+
+
+class TestLGPorts(unittest.TestCase):
+
+    def test_hello_world_unroll(self):
+        graph = {"name": "HelloWorld_simple.graph","nodes": 2, "edges": 1}
+        lg = lg_init(graph["name"])
+        drop_list = lg.unroll_to_tpl()
+        x = 5
+
+    def test_loop_unroll(self):
+        graph = {"name": "testLoop.graph", "nodes": 11, "edges": 10}
+        lg = lg_init(graph["name"])
+        drop_list = lg.unroll_to_tpl()
+        x = 5
+
+    def test_arrayloop_unroll(self):
+        graph = {"name": "ArrayLoop.graph", "nodes": 11, "edges": 10}
+        lg = lg_init(graph["name"])
+        drop_list = lg.unroll_to_tpl()
+        x = 5
