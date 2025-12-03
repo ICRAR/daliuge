@@ -580,7 +580,6 @@ class InputFiredAppDROP(AppDROP):
             else:
                 logger.warning("None of the inputs COMPLETED, falling back to default value.")
 
-
         named_outputs = self._generateNamedPorts("outputs")
         logger.debug("named outputs identified: %s", named_outputs)
         for attr_name in named_outputs:

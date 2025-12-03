@@ -955,6 +955,14 @@ class Branch(PyFuncApp):
     bufsize = dlg_int_param("bufsize", 65536)
     result = dlg_bool_param("result", False)
 
+    def _get_drop_from_port(self, result):
+        for output in self.outputs:
+            for value in self.parameters['outputPorts'].values():
+                if value['target_id'] in output.oid:
+                    if value['name'] == result:
+                        return output
+        raise RuntimeError
+
     def write_results(self,result:bool=False):
         """
         Copy the input to the output identified by the condition function.
@@ -964,25 +972,16 @@ class Branch(PyFuncApp):
         if not self.outputs:
             return
 
+
         go_result = str(self.result).lower()
         nogo_result = str(not self.result).lower()
 
-        try:
-            nogo_drop = getattr(self, nogo_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the False condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
-        try:
-            go_drop = getattr(self, go_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the True condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
+        # if nogo_result == 'true':
+        #     raise Exception
+        go_drop = self._get_drop_from_port(go_result)
+        nogo_drop = self._get_drop_from_port(nogo_result)
+        # go_drop = next(o for o in self.outputs if o.name == go_result)
 
-        logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
         nogo_drop.skip()  # send skip to correct branch
 
         if self.inputs and hasattr(go_drop, "write"):
@@ -1029,7 +1028,13 @@ class PickOne(BarrierAppDROP):
 
     def readData(self):
         ipt = self.inputs[0]
-        data = pickle.loads(droputils.allDropContents(ipt))
+        contents = droputils.allDropContents(ipt)
+        data = []
+        try:
+            data = pickle.loads(contents)
+        except EOFError:
+            # No data stored in drop
+            logger.error("There was no data in the Memory drop %s", ipt.oid)
         # data = droputils.allDropContents(input)
         # data = dill.loads(base64.b64decode(data))
         logger.warning("Data type is: %s", type(data))
@@ -1038,7 +1043,7 @@ class PickOne(BarrierAppDROP):
         if type(data) not in (list, tuple) and not isinstance(data, (np.ndarray)):
             logger.warning("Data type not in [list, tuple]: %s", data)
             if not data:
-                raise RuntimeError("You need to change the loop structure!")
+                return None, []
             raise TypeError
         if isinstance(data, np.ndarray) and data.ndim == 0:
             data = np.array([data])
