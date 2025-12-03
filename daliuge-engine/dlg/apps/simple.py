@@ -989,7 +989,7 @@ class Branch(PyFuncApp):
                     self.x, go_drop, bufsize=self.bufsize
             )
             logger.debug("Sent the following data to correct branch: %s",
-                         pickle.loads(droputils.allDropContents(self.x)))
+                         droputils.allDropContents(self.x))
 
         else:  # this enables a branch based only on the condition function
             d = pickle.dumps(self.parameters['x'])

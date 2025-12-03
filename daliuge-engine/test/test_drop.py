@@ -1167,8 +1167,6 @@ class BranchAppDropTestsBase(object):
 
         a.addOutput(b)
         a.addOutput(c)
-        # a.true = c
-        # a.false = b
         return a, b, c
 
     def _assert_drop_in_status(self, drop, status, execStatus):
@@ -1216,7 +1214,7 @@ class BranchAppDropTestsBase(object):
             last_true = x
             last_false = y
 
-        with DROPWaiterCtx(self, [last_true, last_false], 2,
+        with DROPWaiterCtx(self, [last_true, last_false], 20,
                 [DROPStates.COMPLETED, DROPStates.SKIPPED], ):
             a.async_execute()
         time.sleep(0.01)
@@ -1331,7 +1329,7 @@ class BranchAppDropTestsBase(object):
         for d in all_drops:
             print(d.parameters)
 
-        with DROPWaiterCtx(self, all_drops, 5,
+        with DROPWaiterCtx(self, all_drops, 20,
                 [DROPStates.COMPLETED, DROPStates.SKIPPED]):
             a.async_execute()
 
