@@ -957,7 +957,7 @@ class Branch(PyFuncApp):
 
     def _get_drop_from_port(self, result):
         for output in self.outputs:
-            for oid, value in self.parameters['outputPorts'].items():
+            for value in self.parameters['outputPorts'].values():
                 if value['target_id'] in output.oid:
                     if value['name'] == result:
                         return output
@@ -1029,12 +1029,12 @@ class PickOne(BarrierAppDROP):
     def readData(self):
         ipt = self.inputs[0]
         contents = droputils.allDropContents(ipt)
+        data = []
         try:
             data = pickle.loads(contents)
         except EOFError:
             # No data stored in drop
-            logger.error("There was no data in the memory drop", type(data))
-            data = []
+            logger.error("There was no data in the Memory drop %s", ipt.oid)
         # data = droputils.allDropContents(input)
         # data = dill.loads(base64.b64decode(data))
         logger.warning("Data type is: %s", type(data))

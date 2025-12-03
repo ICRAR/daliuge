@@ -666,7 +666,7 @@ class PyFuncApp(BarrierAppDROP):
 
             # portargs.update(keyPortArgs)
         else:
-            for i, input_drop in enumerate(self._inputs.values()):
+            for input_drop in self._inputs.values():
                 parser = (
                     get_port_reader_function(self.input_parser)
                     if hasattr(self, "input_parser")
