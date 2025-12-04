@@ -714,3 +714,4 @@ class DockerApp(BarrierAppDROP):
 
     def generate_recompute_data(self):
         return self._recompute_data
+
