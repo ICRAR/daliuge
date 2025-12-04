@@ -596,7 +596,10 @@ class DockerApp(BarrierAppDROP):
             # registered listeners
             inspection = c.api.inspect_container(cId)
             logger.debug("Docker inspection: %r", inspection)
-            self.containerIp = inspection["NetworkSettings"]["IPAddress"]
+            try:
+                self.containerIp = inspection["NetworkSettings"]['Networks']['bridge']["IPAddress"]
+            except KeyError: # fall-back to old path
+                self.containerIp = inspection["NetworkSettings"]["IPAddress"]
 
             # Wait until it finishes
             # In docker-py < 3 the .wait() method returns the exit code directly
@@ -711,3 +714,4 @@ class DockerApp(BarrierAppDROP):
 
     def generate_recompute_data(self):
         return self._recompute_data
+
