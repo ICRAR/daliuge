@@ -536,8 +536,8 @@ class LG:
                 # sname is dictionary of all output ports on the sDROP.
                 # output_portname = sname[llink["fromPort"]]
                 # input_portname = tname[llink["toPort"]]
-                sdrop.addOutput(tdrop, name=sname)
-                tdrop.addProducer(sdrop, name=tname)
+                # sdrop.addOutput(tdrop, name=sname)
+                # tdrop.addProducer(sdrop, name=tname)
 
                 if llink.get("is_stream", False):
                     logger.debug(
@@ -545,12 +545,12 @@ class LG:
                         sdrop["oid"],
                         tdrop["oid"],
                     )
-                    sdrop.addStreamingConsumer(tdrop, name=output_portname)
-                    tdrop.addStreamingInput(sdrop, name=input_portname)
+                    sdrop.addStreamingConsumer(tdrop, name=sname)
+                    tdrop.addStreamingInput(sdrop, name=tname)
 
                 else:
-                    sdrop.addConsumer(tdrop, name=output_portname)
-                    tdrop.addInput(sdrop, name=input_portname)
+                    sdrop.addConsumer(tdrop, name=sname)
+                    tdrop.addInput(sdrop, name=tname)
 
             if Categories.BASH_SHELL_APP == t_type:
                 bc = tgt_drop["command"]
