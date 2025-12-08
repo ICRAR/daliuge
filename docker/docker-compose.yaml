@@ -7,8 +7,9 @@ services:
 # =============================================================
 
   traefik:
-    image: traefik:v3.5.0
+    image: traefik:v3.6.4
     container_name: traefik
+    hostname: traefik.localhost
     networks:
       - dlg-demo
     command:
@@ -49,10 +50,12 @@ services:
     image: icrar/dlg_full:latest
     user: ${MY_UID}:${MY_GID}
     container_name: dlg-dim
-    hostname: dlg-dim.localhost
     command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm1,dlg-nm2"]
     networks:
       - dlg-demo
+    links:
+      - traefik:dlg-nm1.localhost
+      - traefik:dlg-nm2.localhost
     labels:
       - "traefik.http.routers.dim.rule=Host(`dlg-dim.localhost`)"
       - "traefik.http.services.dim.loadbalancer.server.port=8001"
@@ -71,7 +74,6 @@ services:
   dlg-nm1:
     image: icrar/dlg_full:latest
     container_name: dlg-nm1
-    hostname: dlg-nm1.localhost
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
@@ -93,7 +95,6 @@ services:
   dlg-nm2:
     image: icrar/dlg_full:latest
     container_name: dlg-nm2
-    hostname: dlg-nm2.localhost
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
@@ -120,6 +121,8 @@ services:
     command: ["dlg", "daemon", "--tm"]
     networks:
       - dlg-demo
+    links:
+      - traefik:dlg-dim.localhost
     labels:
       - "traefik.http.routers.tm.rule=Host(`dlg-tm.localhost`)"
       - "traefik.http.services.tm.loadbalancer.server.port=8084"
