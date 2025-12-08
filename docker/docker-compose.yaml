@@ -53,6 +53,7 @@ services:
     command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm1,dlg-nm2"]
     networks:
       dlg-local:
+        # always route through traefik
         aliases:
           - traefik
     labels:
@@ -77,6 +78,7 @@ services:
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
       dlg-local:
+        # always route through traefik
         aliases:
           - traefik
     labels:
@@ -100,6 +102,7 @@ services:
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
       dlg-local:
+        # always route through traefik
         aliases:
           - traefik
     labels:
@@ -124,6 +127,7 @@ services:
     command: ["dlg", "daemon", "--tm"]
     networks:
       dlg-local:
+        # always route through traefik
         aliases:
           - traefik
     labels:
