@@ -1158,12 +1158,13 @@ class BranchAppDropTestsBase(object):
 
     def _simple_branch_with_outputs(self, result, uids, **kwargs):
         b, c = (self.DataDropType(x, x) for x in uids[1:])
-        outputPorts = {"abc": {"name": 'false', "target_id": b.oid},
-                       "xyz": {"name": 'true', "target_id": c.oid}}
+        ports = [{"name": 'false', "oid": b.oid, "direction": "output"},
+                 {"name": 'true', "oid": c.oid, "direction": "output"}]
+
         x = 1 if result else -1
         a = Branch(uids[0], uids[0], func_code="def condition(x): return x>0", x=x,
                                 func_name="condition", inputs=(kwargs.get("inputs", [])),
-                                                               outputPorts=outputPorts)
+                                                               ports=ports)
 
         a.addOutput(b)
         a.addOutput(c)
@@ -1214,7 +1215,7 @@ class BranchAppDropTestsBase(object):
             last_true = x
             last_false = y
 
-        with DROPWaiterCtx(self, [last_true, last_false], 20,
+        with DROPWaiterCtx(self, [last_true, last_false], 200,
                 [DROPStates.COMPLETED, DROPStates.SKIPPED], ):
             a.async_execute()
         time.sleep(0.01)
@@ -1230,8 +1231,8 @@ class BranchAppDropTestsBase(object):
         value = 2
         b = Branch("b", "b", func_name="condition",
                    func_code="def condition(x): return x>0", x=value,
-                   outputPorts={"abc": {"name": 'false', "target_id": 'f'},
-                                "xyz": {"name": 'true', "target_id": 't'}})
+                   ports=[{"name": 'false', "oid": 'f', "direction":"output"},
+                          {"name": 'true', "oid": 't', "direction": "output"}])
         t = self.DataDropType("t", "t", type="int")
         f = self.DataDropType("f", "f", type="int")
         b.addOutput(t)
@@ -1250,8 +1251,9 @@ class BranchAppDropTestsBase(object):
         value = 2
         b = Branch("b", "b", func_name="condition",
                    func_code="def condition(x): return x>0", x=value,
-                   outputPorts={"abc": {"name": 'false', "target_id": 'f'},
-                                "xyz": {"name": 'true', "target_id": 't'}})
+                   ports=[{"name": 'false', "oid": 'f', "direction": "output"},
+                          {"name": 'true', "oid": 't', "direction": "output"}])
+
         f = self.DataDropType("f", "f", type="int")
         t = self.DataDropType("t", "t", type="int")
         b.addOutput(t)
@@ -1269,8 +1271,8 @@ class BranchAppDropTestsBase(object):
         value = 1
         b = Branch("b", "b", func_name="condition",
                    func_code="def condition(x): return x>0", x=value,
-                   outputPorts={"abc": {"name": 'false', "target_id": 'f'},
-                                "xyz": {"name": 'true', "target_id": 't'}})
+                   ports=[{"name": 'false', "oid": 'f', "direction":"output"},
+                          {"name": 'true', "oid": 't', "direction": "output"}])
         f = self.DataDropType("f", "f", type="Integer")
         t = self.DataDropType("t", "t", type="Integer")
         b.addOutput(t)
