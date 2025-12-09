@@ -7,10 +7,11 @@ services:
 # =============================================================
 
   traefik:
-    image: traefik:v3.5.0
+    image: traefik:v3.6.4
     container_name: traefik
+    hostname: traefik.localhost
     networks:
-      - dlg-demo
+      - dlg-local
     command:
       - "--log.level=DEBUG"
       - "--api=true"
@@ -49,10 +50,12 @@ services:
     image: icrar/dlg_full:latest
     user: ${MY_UID}:${MY_GID}
     container_name: dlg-dim
-    hostname: dlg-dim.localhost
     command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm1,dlg-nm2"]
     networks:
-      - dlg-demo
+      dlg-local:
+        # always route through traefik
+        aliases:
+          - traefik
     labels:
       - "traefik.http.routers.dim.rule=Host(`dlg-dim.localhost`)"
       - "traefik.http.services.dim.loadbalancer.server.port=8001"
@@ -71,11 +74,13 @@ services:
   dlg-nm1:
     image: icrar/dlg_full:latest
     container_name: dlg-nm1
-    hostname: dlg-nm1.localhost
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
-      - dlg-demo
+      dlg-local:
+        # always route through traefik
+        aliases:
+          - traefik
     labels:
       - "traefik.http.routers.nm1.rule=Host(`dlg-nm1.localhost`)"
       - "traefik.http.services.nm1.loadbalancer.server.port=8000"
@@ -93,11 +98,13 @@ services:
   dlg-nm2:
     image: icrar/dlg_full:latest
     container_name: dlg-nm2
-    hostname: dlg-nm2.localhost
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
-      - dlg-demo
+      dlg-local:
+        # always route through traefik
+        aliases:
+          - traefik
     labels:
       - "traefik.http.routers.nm2.rule=Host(`dlg-nm2.localhost`)"
       - "traefik.http.services.nm2.loadbalancer.server.port=8000"
@@ -119,7 +126,10 @@ services:
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "daemon", "--tm"]
     networks:
-      - dlg-demo
+      dlg-local:
+        # always route through traefik
+        aliases:
+          - traefik
     labels:
       - "traefik.http.routers.tm.rule=Host(`dlg-tm.localhost`)"
       - "traefik.http.services.tm.loadbalancer.server.port=8084"
@@ -129,5 +139,5 @@ services:
       - /etc/group:/etc/group:ro
 
 networks:
-  dlg-demo:
+  dlg-local:
 
