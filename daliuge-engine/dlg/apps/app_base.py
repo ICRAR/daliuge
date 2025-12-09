@@ -563,22 +563,23 @@ class InputFiredAppDROP(AppDROP):
                     break # we use the first completed
             else:
                 ni = named_inputs[attr_name]
-            logger.debug("Identified input: %s", ni.name)
+
             # Ignore NullDROPs: This is the current work-around to pass-on events
             # In reality we want to check whether the port is an event port, but
             # that is really hard with the current node data structure.
-            if  "componentParams" not in ni.parameters or (
-                ni.parameters["componentParams"]["dropclass"]["value"] !=
-                "dlg.data.drops.data_base.NullDROP" and ni.status == DROPStates.COMPLETED
-            ):
-                if not hasattr(self, attr_name):
-                    self.__setattr__(attr_name, named_inputs[attr_name])
+            if not isinstance(ni, dict):
+                if  "componentParams" not in ni.parameters or (
+                    ni.parameters["componentParams"]["dropclass"]["value"] !=
+                    "dlg.data.drops.data_base.NullDROP" and ni.status == DROPStates.COMPLETED
+                ):
+                    if not hasattr(self, attr_name):
+                        self.__setattr__(attr_name, named_inputs[attr_name])
+                    else:
+                        # TODO: need to check for parser before reading
+                        self.__setattr__(attr_name, load_dill(ni))
+                        logger.debug("Input read: %s",getattr(self, attr_name))
                 else:
-                    # TODO: need to check for parser before reading
-                    self.__setattr__(attr_name, load_dill(ni))
-                    logger.debug("Input read: %s",getattr(self, attr_name))
-            else:
-                logger.warning("None of the inputs COMPLETED, falling back to default value.")
+                    logger.warning("None of the inputs COMPLETED, falling back to default value.")
 
         named_outputs = self._generateNamedPorts("outputs")
         logger.debug("named outputs identified: %s", named_outputs)
