@@ -330,7 +330,7 @@ class LG:
                 miid = f"{iid}-{i}"
                 if multikey_grpby:
                     # set up more refined hierarchical context for group by with multiple keys
-                    #dd recover multl-dimension indexes from i
+                    # recover multl-dimension indexes from i
                     grp_h = np.unravel_index(i, shape)
                     grp_h = [str(x) for x in grp_h]
                     miid += "${0}".format("-".join(grp_h))
@@ -532,7 +532,6 @@ class LG:
                 else:
                     sdrop.addConsumer(tdrop, name=sname)
                     tdrop.addInput(sdrop, name=tname)
-
             if Categories.BASH_SHELL_APP == t_type:
                 bc = tgt_drop["command"]
                 bc.add_input_param(slgn.id, src_drop["oid"])

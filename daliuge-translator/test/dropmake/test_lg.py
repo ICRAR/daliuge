@@ -54,8 +54,6 @@ class TestLGInit(unittest.TestCase):
                              f"object using: {lg_name}")
 
 
-
-
 def _calc_num_drops(drop_values):
     """
     Get the number of drops created during the lgn_to_pgn method.
@@ -267,24 +265,3 @@ class TestLGUnroll(unittest.TestCase):
         for drop in drop_list:
             if drop["categoryType"] in [CategoryType.DATA, "data"]:
                 self.assertEqual("SharedMemory", drop["category"])
-
-
-class TestLGPorts(unittest.TestCase):
-
-    def test_hello_world_unroll(self):
-        graph = {"name": "HelloWorld_simple.graph","nodes": 2, "edges": 1}
-        lg = lg_init(graph["name"])
-        drop_list = lg.unroll_to_tpl()
-        x = 5
-
-    def test_loop_unroll(self):
-        graph = {"name": "testLoop.graph", "nodes": 11, "edges": 10}
-        lg = lg_init(graph["name"])
-        drop_list = lg.unroll_to_tpl()
-        x = 5
-
-    def test_arrayloop_unroll(self):
-        graph = {"name": "ArrayLoop.graph", "nodes": 11, "edges": 10}
-        lg = lg_init(graph["name"])
-        drop_list = lg.unroll_to_tpl()
-        x = 5

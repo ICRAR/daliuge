@@ -454,7 +454,6 @@ class AbstractDROP(EventFirer, EventHandler):
         ports = self._popArg(kwargs, "ports", {})
         self._port_ids, self._port_names = self._construct_port_lookup(ports)
 
-
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
         self.autofill_environment_variables()
@@ -1335,13 +1334,6 @@ class AbstractDROP(EventFirer, EventHandler):
 
         return port_ids, port_names
 
-
-    @property
-    def get_port_from_id(self, oid, direction):
-        self._port_ids.get(direction, {}).get(oid, None)
-
-    def get_oid_from_port(self, name, direction):
-        return self._port_names.get(direction, {}).get(name, None)
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods
 # used to append a a DROP into a relationship collection of another
