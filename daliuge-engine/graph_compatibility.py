@@ -19,6 +19,8 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import os
+import sys
 import time
 import unittest
 import pytest
@@ -38,37 +40,38 @@ from dlg.testutils import ManagerStarter
 from test.dlg_engine_testutils import NMTestsMixIn, DROPManagerUtils
 
 
+
 def create_full_hostname(server_info, event_port, rpc_port):
 
-    return (f"{server_info.server._server.listen}:"
-            f"{server_info.server._server.port}:{event_port}:{rpc_port}")
+    return (f"{server_info.server.listen}:"
+            f"{server_info.server.port}:{event_port}:{rpc_port}")
 
-class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCase):
-    def setUp(self):
-        """
-        Initialise the Managers
-        """
+class Runner(ManagerStarter):
+
+    def run(self, lg_path):
+        os.makedirs("/tmp/compatibility/", exist_ok=True)
+        os.environ["DLG_ROOT"] = "/tmp/compatibility/"
+
         events_port, rpc_port = (5566, 6688)
-        self.ms1_info = self.start_nm_in_thread(port=8000,
+        ms1_info = self.start_nm_in_thread(port=8000,
                                                 events_port=5566,
                                                 rpc_port=6688)
-        ms1_hostname = create_full_hostname(self.ms1_info, events_port, rpc_port)
+        ms1_hostname = create_full_hostname(ms1_info, events_port, rpc_port)
 
         events_port, rpc_port = (5555, 6666)
-        self.ms2_info = self.start_nm_in_thread(port=8999,
+        ms2_info = self.start_nm_in_thread(port=8999,
                                            events_port=constants.NODE_DEFAULT_EVENTS_PORT,
                                            rpc_port=constants.NODE_DEFAULT_RPC_PORT)
-        ms2_hostname = create_full_hostname(self.ms2_info, events_port, rpc_port)
+        ms2_hostname = create_full_hostname(ms2_info, events_port, rpc_port)
 
-        self.manager_host_names = [ms1_hostname, ms2_hostname]
-        self.dim = DataIslandManager(self.manager_host_names)
+        manager_host_names = [ms1_hostname, ms2_hostname]
+        dim = DataIslandManager(manager_host_names)
 
-    def test_input_in_remote_nm(self):
         """
         A test similar in spirit to TestDM.test_runGraphOneDOPerDom, but where
         application B is a PyFuncApp. This makes sure that PyFuncApp work fine
         across Node Managers.
-
+    
         NM #1      NM #2
         =======    =============
         | A --|----|-> B --> C |
@@ -83,11 +86,9 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
         #
         # NOTE: if this test fails to run with an zerorpc error 'port already in use', try to
         # kill all python processes. Seems that sometimes the tear-down is not completed.
-        # TODO REDIRECT TO TEST GRAPHS
-        lg_path = "/home/00087932/github/EAGLE-graph-repo/examples/ArrayLoop.graph"
 
         # drop_list = lg.unroll_to_tpl()
-        lgt = prepare_lgt(lg_path, 0)
+        lgt = prepare_lgt(lg_path,0)
         pgt = unroll_and_partition_with_params(
             lgt=lgt,
             test=True,
@@ -97,31 +98,51 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
             par_label="Partition",
         )
         dim_host = f"localhost:{constants.NODE_DEFAULT_REST_PORT}"
-        pg_spec = pgt.to_pg_spec([dim_host] + self.manager_host_names, ret_str=False)
+        pg_spec = pgt.to_pg_spec([dim_host] + manager_host_names, ret_str=False)
         roots = common.get_roots(pg_spec)
-        self.dim.createSession("TestSession")
-        self.dim.addGraphSpec("TestSession", pg_spec)
-        self.dim.deploySession("TestSession", completedDrops=roots)
+        dim.createSession("TestSession")
+        dim.addGraphSpec("TestSession", pg_spec)
+        dim.deploySession("TestSession", completedDrops=roots)
+        passed = []
 
-        max_wait_time = 30  # seconds
+        max_wait_time = 60  # seconds
         poll_interval = 1  # second
         start_time = time.time()
         all_completed = False
         while time.time() - start_time < max_wait_time:
             all_completed = all(
                 status['status'] == DROPStates.COMPLETED
-                for status in self.dim.getGraphStatus("TestSession").values()
+                for status in dim.getGraphStatus("TestSession").values()
             )
             if all_completed:
                 break
             time.sleep(poll_interval)
-        self.assertTrue(all_completed)
+        passed.append(all_completed)
+
+        def try_stop(manager):
+            try:
+                manager.stop()
+            except AssertionError as e:
+                return False
+            return True
+
+        for m in [ms1_info, ms2_info]:
+            passed.append(try_stop(m))
+
+        try:
+            dim.shutdown()
+            passed.append(True)
+        except AssertionError as e:
+            passed.append(False)
+
+        return 0 if all(passed) else 1
 
 
-    def tearDown(self):
-        """
-        Clean up managers
-        """
-        self.ms1_info.stop()
-        self.ms2_info.stop()
-        self.dim.shutdown()
+if __name__ == '__main__':
+
+
+    lg_path = sys.argv[1]
+    runner = Runner()
+    result = runner.run(lg_path)
+
+    sys.exit(result)
