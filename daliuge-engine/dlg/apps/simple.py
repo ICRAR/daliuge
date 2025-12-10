@@ -978,8 +978,8 @@ class Branch(PyFuncApp):
 
         # if nogo_result == 'true':
         #     raise Exception
-        go_drop_oid = next(x for x in self._port_names['output'].get(go_result))
-        nogo_drop_oid = next(x for x in self._port_names['output'].get(nogo_result))
+        go_drop_oid = next(iter(self._port_names['output'].get(go_result,[])), None)
+        nogo_drop_oid = next(iter(self._port_names['output'].get(nogo_result,[])), None)
 
         go_drop = next(o for o in self.outputs if o.oid == go_drop_oid)
         nogo_drop = next(o for o in self.outputs if o.oid == nogo_drop_oid)

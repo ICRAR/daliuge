@@ -580,6 +580,10 @@ class InputFiredAppDROP(AppDROP):
                         logger.debug("Input read: %s",getattr(self, attr_name))
                 else:
                     logger.warning("None of the inputs COMPLETED, falling back to default value.")
+            else:
+                logger.warning("Named input provided was a dict instead of DROP; "
+                               "assuming this is a DropProxy and skipping attribute "
+                               "setting.")
 
         named_outputs = self._generateNamedPorts("outputs")
         logger.debug("named outputs identified: %s", named_outputs)
