@@ -499,16 +499,6 @@ class LG:
             input_portname = tname[llink["toPort"]]
             sdrop.addOutput(tdrop, name=output_portname)
             tdrop.addProducer(sdrop, name=input_portname)
-            # if "port_map" not in tdrop:
-            #     tdrop["port_map"] = {input_port:output_port}
-            # else:
-            #     tdrop["port_map"][input_port] = output_port
-
-            # for port_id, port_name in sname.items():
-            #     if tdrop["oid"] not in sout_ids:
-            #         sdrop.addOutput(tdrop, name=port_name)
-            #         tdrop.addProducer(sdrop, name=port_name)
-            #         sout_ids = [list(o.keys())[0] for o in sdrop["outputs"]]
 
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
@@ -528,16 +518,7 @@ class LG:
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
                 tname = tlgn.getPortName("inputPorts", portId=portId)
-                # logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
-                # sname = slgn.getPortName("outputPorts", index=-1)
-                # tname = tlgn.getPortName("inputPorts", index=-1)
-
-                sout_ids = []
-                # sname is dictionary of all output ports on the sDROP.
-                # output_portname = sname[llink["fromPort"]]
-                # input_portname = tname[llink["toPort"]]
-                # sdrop.addOutput(tdrop, name=sname)
-                # tdrop.addProducer(sdrop, name=tname)
+                logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
 
                 if llink.get("is_stream", False):
                     logger.debug(
