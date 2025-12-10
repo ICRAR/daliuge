@@ -129,7 +129,6 @@ class dropdict(dict):
         if key not in self:
             self[key] = []
         if other["oid"] not in self[key]:
-            port_name = None
             if reverse:
                 append = {'name':name, 'oid': other["oid"], 'direction': direction}
             else:

@@ -493,7 +493,6 @@ class LG:
             sname = slgn.getPortName("outputPorts", index=-1)
             tname = tlgn.getPortName("inputPorts", index=-1)
 
-            sout_ids = []
             # sname is dictionary of all output ports on the sDROP.
             output_portname = sname[llink["fromPort"]]
             input_portname = tname[llink["toPort"]]
