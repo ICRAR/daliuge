@@ -125,42 +125,43 @@ class dropdict(dict):
             self.update({"oid": None})
         super().__init_subclass__()
 
-    def _addSomething(self, other, key, name=None):
+    def _addSomething(self, other, key, name=None, reverse=False, direction=None):
         if key not in self:
             self[key] = []
         if other["oid"] not in self[key]:
-            port_name = None
-            if key in ["outputs", "consumers"] and self.get("outputPorts", None):
-                port_name = [v["name"] for k,v in self["outputPorts"].items() if other["oid"].find(v["target_id"])>-1]
-            if key in ["inputs", "producers"] and self.get("inputPorts", None):
-                port_name = [v["name"] for k,v in self["inputPorts"].items() if other["oid"].find(v["source_id"])>-1]
-            port_name = port_name[0] if port_name and len(port_name) > 0 else None
-            if port_name:
-                name = port_name
-            append = {other["oid"]: name} if name else other["oid"]
+            if reverse:
+                append = {'name':name, 'oid': other["oid"], 'direction': direction}
+            else:
+                append = {other["oid"]: name} if name else other["oid"]
             self[key].append(append)
             logger.debug(
                 "Adding %s %s to %s: %s",
                 key, other['oid'], self['oid'], self[key]
             )
 
+    def addProducer(self, other, name=None):
+        self._addSomething(other, "producers", name=name)
+        self._addSomething(other, "ports", name=name, reverse=True, direction='input')
+
     def addConsumer(self, other, name=None):
         self._addSomething(other, "consumers", name=name)
+        self._addSomething(other, "ports", name=name, reverse=True, direction='output')
 
     def addStreamingConsumer(self, other, name=None):
         self._addSomething(other, "streamingConsumers", name=name)
+        self._addSomething(other, "ports", name=name, reverse=True, direction='output')
 
     def addInput(self, other, name=None):
         self._addSomething(other, "inputs", name=name)
+        self._addSomething(other, "ports",name=name, reverse=True, direction='input')
 
     def addStreamingInput(self, other, name=None):
         self._addSomething(other, "streamingInputs", name=name)
+        self._addSomething(other, "ports", name=name, reverse=True, direction='input')
 
     def addOutput(self, other, name=None):
         self._addSomething(other, "outputs", name=name)
-
-    def addProducer(self, other, name=None):
-        self._addSomething(other, "producers", name=name)
+        self._addSomething(other, "ports",name=name, reverse=True, direction='output')
 
     def _hasSomething(self, key, name):
         """
