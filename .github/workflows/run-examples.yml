@@ -7,7 +7,7 @@ on:
 
 name: run-examples.yml
 jobs:
-  process-files:
+  run-examples:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout reference graphs repository
         uses: actions/checkout@v4
         with:
-          repo: ICRAR/dlg-reference-graphs
+          repository: ICRAR/dlg-reference-graphs
           path: dlg-reference-graphs
 
       - name: Set up Python
