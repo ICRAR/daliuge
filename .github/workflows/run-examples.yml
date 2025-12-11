@@ -35,4 +35,4 @@ jobs:
       - name: Process all files
         run: |
           cd daliuge-engine/
-          ./compatibility_runner.sh dlg-reference-graphs
+          ./compatibility_runner.sh $GITHUB_WORKSPACE/dlg-reference-graphs
