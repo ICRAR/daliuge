@@ -34,4 +34,5 @@ jobs:
 
       - name: Process all files
         run: |
+          cd daliuge-engine/
           ./compatibility_runner.sh external-data-repo
