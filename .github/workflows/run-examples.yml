@@ -1,0 +1,37 @@
+on:
+  push:
+    branches:
+      - master  #  Only run on pushes to master
+  pull_request:
+    types: [opened, synchronize]  # Run on PRs from any branch
+
+name: run-examples.yml
+jobs:
+  process-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout reference graphs repository
+        uses: actions/checkout@v4
+        with:
+          repo: ICRAR/dlg-reference-graphs
+          path: dlg-reference-graphs
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install daliuge-common
+        run: pip install -e daliuge-common/
+
+      - name: Install daliuge-translator
+        run: pip install -e daliuge-translator/
+
+      - name: Install daliuge-engine
+        run: pip install -e daliuge-engine/
+
+      - name: Process all files
+        run: |
+          ./compatibility_runner.sh external-data-repo

@@ -19,15 +19,15 @@
 #    Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 #    MA 02111-1307  USA
 #
+import datetime
 import os
 import sys
 import time
-import unittest
 import pytest
 
-from importlib.resources import files
 from dlg import common
 from dlg import constants
+from dlg.utils import DlgFormatter
 
 # Note this test will only run with a full installation of DALiuGE.
 pexpect = pytest.importorskip("dlg.dropmake.web.translator_utils")
@@ -39,6 +39,11 @@ from dlg.ddap_protocol import DROPStates
 from dlg.testutils import ManagerStarter
 from test.dlg_engine_testutils import NMTestsMixIn, DROPManagerUtils
 
+import logging
+
+
+LOG_FMT =  ("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "  
+            "%(name)s#%(funcName)s:%(lineno)s %(message)s")
 
 
 def create_full_hostname(server_info, event_port, rpc_port):
@@ -46,103 +51,148 @@ def create_full_hostname(server_info, event_port, rpc_port):
     return (f"{server_info.server.listen}:"
             f"{server_info.server.port}:{event_port}:{rpc_port}")
 
+
 class Runner(ManagerStarter):
+    """Runner class for executing DALiuGE logical graphs with multiple managers.
 
-    def run(self, lg_path):
-        os.makedirs("/tmp/compatibility/", exist_ok=True)
-        os.environ["DLG_ROOT"] = "/tmp/compatibility/"
+    This class handles the setup and execution of DALiuGE graphs using multiple node managers.
+    It manages the lifecycle of managers and monitors graph execution.
+    """
 
-        events_port, rpc_port = (5566, 6688)
-        ms1_info = self.start_nm_in_thread(port=8000,
-                                                events_port=5566,
-                                                rpc_port=6688)
-        ms1_hostname = create_full_hostname(ms1_info, events_port, rpc_port)
+    BASE_DIR = "/tmp/compatibility/"
+    LOGS_DIR = "logs"
+    DEFAULT_LOG_LEVEL = 'DEBUG'
+    MAX_WAIT_TIME = 30  # seconds
+    POLL_INTERVAL = 1  # second
 
-        events_port, rpc_port = (5555, 6666)
-        ms2_info = self.start_nm_in_thread(port=8999,
+    def __init__(self, lg_path: str):
+        """
+        Initialize the runner with a logical graph path.
+
+        :param lg_path: Path to the logical graph file to execute
+        """
+        # Setup base directory
+        self.lg_path = lg_path
+        lgname = os.path.basename(lg_path)
+        try:
+            os.makedirs(self.BASE_DIR, exist_ok=True)
+            os.environ["DLG_ROOT"] = self.BASE_DIR
+
+            # Setup log management 
+            os.makedirs(self.LOGS_DIR, exist_ok=True)
+            logfile = f"{self.LOGS_DIR}/dlg_{lgname}.log"
+            file_handler = logging.FileHandler(logfile)
+            fmt = DlgFormatter(LOG_FMT)
+            file_handler.setFormatter(fmt)
+            logging.root.addHandler(file_handler)
+            self.logger = logging.getLogger("dlg")
+            self.logger.setLevel(self.DEFAULT_LOG_LEVEL)
+        except OSError as e:
+            raise RuntimeError(f"Failed to setup directories/logging: {e}")
+
+
+    def _wait_for_completion(self, dim: DataIslandManager, session_id: str) -> bool:
+        """Wait for all drops to complete execution.
+
+
+        :param dim: Data island manager instance
+        :param session_id: Current session ID
+
+        :reurn bool: True if all drops completed successfully
+        """
+        start_time = time.time()
+        while time.time() - start_time < self.MAX_WAIT_TIME:
+            all_completed = all(
+                status['status'] == DROPStates.COMPLETED
+                for status in dim.getGraphStatus(session_id).values()
+            )
+            if all_completed:
+                return True
+            time.sleep(self.POLL_INTERVAL)
+        self.logger.error("Failed to finish successfully.")
+        return False
+
+    def run(self) -> int:
+        """Execute the logical graph using multiple node managers.
+        :return:
+            int: 0 if successful, 1 if any errors occurred
+        """
+        self.logger.info("Setting DLG root to %s", os.environ["DLG_ROOT"])
+
+        # Start first node manager
+        nm1_events_port, nm1_rpc_port = (5566, 6688)
+        nm1_info = self.start_nm_in_thread(port=8000,
+                                           events_port=nm1_events_port,
+                                           rpc_port=nm1_rpc_port)
+
+        nm1_hostname = create_full_hostname(nm1_info, nm1_events_port, nm1_rpc_port)
+
+        # Start second node manager
+        nm2_events_port, nm2_rpc_port = (5555, 6666)
+        nm2_info = self.start_nm_in_thread(port=8999,
                                            events_port=constants.NODE_DEFAULT_EVENTS_PORT,
                                            rpc_port=constants.NODE_DEFAULT_RPC_PORT)
-        ms2_hostname = create_full_hostname(ms2_info, events_port, rpc_port)
+        nm2_hostname = create_full_hostname(nm2_info, nm2_events_port, nm2_rpc_port)
 
-        manager_host_names = [ms1_hostname, ms2_hostname]
-        dim = DataIslandManager(manager_host_names)
+        manager_hostnames = [nm1_hostname, nm2_hostname]
+        dim = DataIslandManager(manager_hostnames)
 
-        """
-        A test similar in spirit to TestDM.test_runGraphOneDOPerDom, but where
-        application B is a PyFuncApp. This makes sure that PyFuncApp work fine
-        across Node Managers.
-    
-        NM #1      NM #2
-        =======    =============
-        | A --|----|-> B --> C |
-        =======    =============
-        """
-        # TODO go from logical_graph and partition the graph first,
-        # then load it with the graph_loader
-
-        # Partitioning currently requires the to_go_js + to_pg_spec approach
-        # We will partition using METIS, as the base PGT class doesn't actually partition
-        # anything.
-        #
-        # NOTE: if this test fails to run with an zerorpc error 'port already in use', try to
-        # kill all python processes. Seems that sometimes the tear-down is not completed.
-
-        # drop_list = lg.unroll_to_tpl()
-        lgt = prepare_lgt(lg_path,0)
-        pgt = unroll_and_partition_with_params(
-            lgt=lgt,
+        # Prepare and partition graph
+        logical_graph = prepare_lgt(self.lg_path, 0)
+        partitioned_graph = unroll_and_partition_with_params(
+            lgt=logical_graph,
             test=True,
             algorithm="metis",
             num_partitions=2,
             num_islands=1,
             par_label="Partition",
         )
-        dim_host = f"localhost:{constants.NODE_DEFAULT_REST_PORT}"
-        pg_spec = pgt.to_pg_spec([dim_host] + manager_host_names, ret_str=False)
-        roots = common.get_roots(pg_spec)
-        dim.createSession("TestSession")
-        dim.addGraphSpec("TestSession", pg_spec)
-        dim.deploySession("TestSession", completedDrops=roots)
-        passed = []
 
-        max_wait_time = 60  # seconds
-        poll_interval = 1  # second
-        start_time = time.time()
-        all_completed = False
-        while time.time() - start_time < max_wait_time:
-            all_completed = all(
-                status['status'] == DROPStates.COMPLETED
-                for status in dim.getGraphStatus("TestSession").values()
-            )
-            if all_completed:
-                break
-            time.sleep(poll_interval)
-        passed.append(all_completed)
+        # Deploy graph
+        dim_host = f"localhost:{constants.NODE_DEFAULT_REST_PORT}"
+        pg_spec = partitioned_graph.to_pg_spec([dim_host] + manager_hostnames,
+                                               ret_str=False)
+        root_drops = common.get_roots(pg_spec)
+
+        session_id = f"TestSession_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+        dim.createSession(session_id)
+        dim.addGraphSpec(session_id, pg_spec)
+        dim.deploySession(session_id, completedDrops=root_drops)
+
+        # Monitor execution and cleanup
+        execution_results = []
+        execution_results.append(self._wait_for_completion(dim, session_id))
 
         def try_stop(manager):
             try:
                 manager.stop()
-            except AssertionError as e:
+                return True
+            except AssertionError:
                 return False
-            return True
 
-        for m in [ms1_info, ms2_info]:
-            passed.append(try_stop(m))
+        for manager in [nm1_info, nm2_info]:
+            execution_results.append(try_stop(manager))
 
         try:
             dim.shutdown()
-            passed.append(True)
-        except AssertionError as e:
-            passed.append(False)
+            execution_results.append(True)
+        except AssertionError:
+            execution_results.append(False)
 
-        return 0 if all(passed) else 1
+        return 0 if all(execution_results) else 1
+
+
+    def __call__(self, *args, **kwargs) -> None:
+        """Make the class callable, executing the run method.
+
+        Args:
+            *args: Positional arguments
+            **kwargs: Keyword arguments
+        """
+        return self.run()
 
 
 if __name__ == '__main__':
+    runner = Runner(sys.argv[1])
+    sys.exit(runner())
 
-
-    lg_path = sys.argv[1]
-    runner = Runner()
-    result = runner.run(lg_path)
-
-    sys.exit(result)
