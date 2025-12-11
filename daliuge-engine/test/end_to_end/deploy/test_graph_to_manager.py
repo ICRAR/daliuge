@@ -83,7 +83,8 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
         #
         # NOTE: if this test fails to run with an zerorpc error 'port already in use', try to
         # kill all python processes. Seems that sometimes the tear-down is not completed.
-        lg_path = str(files(__package__) / "ArrayLoop.graph")
+        # TODO REDIRECT TO TEST GRAPHS
+        lg_path = "/home/00087932/github/EAGLE-graph-repo/examples/ArrayLoop.graph"
 
         # drop_list = lg.unroll_to_tpl()
         lgt = prepare_lgt(lg_path, 0)

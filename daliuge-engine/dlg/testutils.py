@@ -46,7 +46,7 @@ class ManagerInfo(object):
         self.server.stop()
         self.thread.join()
         self.manager.shutdown()
-        self.test.assertFalse(self.thread.is_alive())
+        assert self.thread.is_alive() == False
 
 
 class ManagerStarter(object):
@@ -57,7 +57,7 @@ class ManagerStarter(object):
         server = rest_class(manager)
         thread = threading.Thread(target=server.start, args=("localhost", port))
         thread.start()
-        self.assertTrue(portIsOpen("localhost", port, 5))
+        assert portIsOpen("localhost", port, 5) == True
         return ManagerInfo(manager, server, thread, self)
 
     def start_nm_in_thread(self,
