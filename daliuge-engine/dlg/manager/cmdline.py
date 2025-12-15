@@ -30,7 +30,6 @@ import signal
 import socket
 import sys
 import time
-import re
 
 import daemon
 from lockfile.pidlockfile import PIDLockFile

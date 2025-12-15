@@ -20,26 +20,22 @@
 #    MA 02111-1307  USA
 #
 import datetime
+import logging
 import os
 import sys
 import time
-import pytest
 
 from dlg import common
 from dlg import constants
 from dlg.utils import DlgFormatter
 
 # Note this test will only run with a full installation of DALiuGE.
-pexpect = pytest.importorskip("dlg.dropmake.web.translator_utils")
 
 from dlg.dropmake.web.translator_utils import (unroll_and_partition_with_params,
                                                prepare_lgt)
 from dlg.manager.composite_manager import DataIslandManager
 from dlg.ddap_protocol import DROPStates
 from dlg.testutils import ManagerStarter
-from test.dlg_engine_testutils import NMTestsMixIn, DROPManagerUtils
-
-import logging
 
 
 LOG_FMT =  ("%(asctime)-15s [%(levelname)5.5s] [%(threadName)15.15s] "  
@@ -88,7 +84,7 @@ class Runner(ManagerStarter):
             self.logger = logging.getLogger("dlg")
             self.logger.setLevel(self.DEFAULT_LOG_LEVEL)
         except OSError as e:
-            raise RuntimeError(f"Failed to setup directories/logging: {e}")
+            raise RuntimeError(f"Failed to setup directories/logging: {e}") from e
 
 
     def _wait_for_completion(self, dim: DataIslandManager, session_id: str) -> bool:
