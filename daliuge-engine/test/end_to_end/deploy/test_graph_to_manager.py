@@ -30,6 +30,7 @@ from dlg import constants
 # Note this test will only run with a full installation of DALiuGE.
 pexpect = pytest.importorskip("dlg.dropmake.web.translator_utils")
 
+from dlg.common.path_utils import get_lg_fpath
 from dlg.dropmake.web.translator_utils import (unroll_and_partition_with_params,
                                                prepare_lgt)
 from dlg.manager.composite_manager import DataIslandManager
@@ -83,9 +84,7 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
         #
         # NOTE: if this test fails to run with an zerorpc error 'port already in use', try to
         # kill all python processes. Seems that sometimes the tear-down is not completed.
-        # TODO REDIRECT TO TEST GRAPHS
-        lg_path = "/home/00087932/github/EAGLE-graph-repo/examples/ArrayLoop.graph"
-
+        lg_path = get_lg_fpath("logical_graphs", "ArrayLoop.graph")
         # drop_list = lg.unroll_to_tpl()
         lgt = prepare_lgt(lg_path, 0)
         pgt = unroll_and_partition_with_params(
