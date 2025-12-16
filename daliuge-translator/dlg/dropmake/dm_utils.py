@@ -138,12 +138,6 @@ def convert_fields(lgo:dict) -> dict:
                 node[name] = field.get("value", "")
                 if node[name] == "":
                     node[name] = field.get("defaultValue", "")
-            port = field.get("usage", "")
-            if port in ["InputPort", "OutputPort", "InputOutput"]:
-                if port in ["InputPort", "InputOutput"]:
-                    node["inputPorts"][field["id"]] = {"type":port, "name": name, "source_id": ""}
-                elif port in ["OutputPort", "InputOutput"]:
-                    node["outputPorts"][field["id"]] = {"type":port, "name": name, "target_id": ""}
     return lgo
 
 
