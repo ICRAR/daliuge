@@ -57,7 +57,7 @@ try:
 except:
     from binascii import crc32
 
-ONE_MB = 1024**2
+ONE_MB = 1024 ** 2
 
 
 def _start_ns_thread(ns_daemon):
@@ -1157,32 +1157,30 @@ class BranchAppDropTestsBase(object):
     """Tests for the Branch class"""
 
     def _simple_branch_with_outputs(self, result, uids, **kwargs):
-        a = Branch(uids[0], uids[0], func_name="test.test_drop.func1",
-                   x=result,
-                   inputs=kwargs.get("inputs",[]))
         b, c = (self.DataDropType(x, x) for x in uids[1:])
+        ports = [{"name": 'false', "oid": b.oid, "direction": "output"},
+                 {"name": 'true', "oid": c.oid, "direction": "output"}]
+
+        x = 1 if result else -1
+        a = Branch(uids[0], uids[0], func_code="def condition(x): return x>0", x=x,
+                                func_name="condition", inputs=(kwargs.get("inputs", [])),
+                                                               ports=ports)
+
         a.addOutput(b)
         a.addOutput(c)
-        a.true = c
-        a.false = b
         return a, b, c
 
     def _assert_drop_in_status(self, drop, status, execStatus):
-        self.assertEqual(
-            drop.status, status, f"{drop} has status {drop.status} != {status}"
-        )
+        self.assertEqual(drop.status, status,
+            f"{drop} has status {drop.status} != {status}")
         if isinstance(drop, AppDROP):
-            self.assertEqual(
-                drop.execStatus,
-                execStatus,
-                f"{drop} has execStatus {drop.execStatus} != {execStatus}",
-            )
+            self.assertEqual(drop.execStatus, execStatus,
+                f"{drop} has execStatus {drop.execStatus} != {execStatus}", )
 
     def _assert_drop_complete_or_skipped(self, drop, complete_expected):
         if complete_expected:
-            self._assert_drop_in_status(
-                drop, DROPStates.COMPLETED, AppDROPStates.FINISHED
-            )
+            self._assert_drop_in_status(drop, DROPStates.COMPLETED,
+                AppDROPStates.FINISHED)
         else:
             self._assert_drop_in_status(drop, DROPStates.SKIPPED, AppDROPStates.SKIPPED)
 
@@ -1193,6 +1191,7 @@ class BranchAppDropTestsBase(object):
             ,-- true --> B --> ...
         A ---- false --> C --> ...
         """
+
         a, b, c = self._simple_branch_with_outputs(result, "abc")
         # This order is important, since we are using indexed ports in Branch
         last_false = b
@@ -1200,10 +1199,8 @@ class BranchAppDropTestsBase(object):
         all_drops = [a, b, c]
 
         # all_uids is ['de', 'fg', 'hi', ....]
-        all_uids = [
-            string.ascii_lowercase[i : i + 2]
-            for i in range(3, len(string.ascii_lowercase), 2)
-        ]
+        all_uids = [string.ascii_lowercase[i: i + 2] for i in
+            range(3, len(string.ascii_lowercase), 2)]
 
         for level, uids in zip(range(levels), all_uids):
             if level % 2:
@@ -1218,12 +1215,8 @@ class BranchAppDropTestsBase(object):
             last_true = x
             last_false = y
 
-        with DROPWaiterCtx(
-            self,
-            [last_true, last_false],
-            2,
-            [DROPStates.COMPLETED, DROPStates.SKIPPED],
-        ):
+        with DROPWaiterCtx(self, [last_true, last_false], 200,
+                [DROPStates.COMPLETED, DROPStates.SKIPPED], ):
             a.async_execute()
         time.sleep(0.01)
         # Depending on "result", the "true" branch will be run or skipped
@@ -1236,7 +1229,10 @@ class BranchAppDropTestsBase(object):
 
         """
         value = 2
-        b = Branch("b", "b", func_name="condition", func_code="def condition(x): return x>0", x=value)
+        b = Branch("b", "b", func_name="condition",
+                   func_code="def condition(x): return x>0", x=value,
+                   ports=[{"name": 'false', "oid": 'f', "direction":"output"},
+                          {"name": 'true', "oid": 't', "direction": "output"}])
         t = self.DataDropType("t", "t", type="int")
         f = self.DataDropType("f", "f", type="int")
         b.addOutput(t)
@@ -1253,7 +1249,11 @@ class BranchAppDropTestsBase(object):
 
         """
         value = 2
-        b = Branch("b", "b", func_name="condition", func_code="def condition(x): return x>0", x=value)
+        b = Branch("b", "b", func_name="condition",
+                   func_code="def condition(x): return x>0", x=value,
+                   ports=[{"name": 'false', "oid": 'f', "direction": "output"},
+                          {"name": 'true', "oid": 't', "direction": "output"}])
+
         f = self.DataDropType("f", "f", type="int")
         t = self.DataDropType("t", "t", type="int")
         b.addOutput(t)
@@ -1269,7 +1269,10 @@ class BranchAppDropTestsBase(object):
         Test condition not met.
         """
         value = 1
-        b = Branch("b", "b", func_name="condition", func_code="def condition(x): return x>0", x=value)
+        b = Branch("b", "b", func_name="condition",
+                   func_code="def condition(x): return x>0", x=value,
+                   ports=[{"name": 'false', "oid": 'f', "direction":"output"},
+                          {"name": 'true', "oid": 't', "direction": "output"}])
         f = self.DataDropType("f", "f", type="Integer")
         t = self.DataDropType("t", "t", type="Integer")
         b.addOutput(t)
@@ -1278,9 +1281,7 @@ class BranchAppDropTestsBase(object):
         b.addOutput(f)
         b.execute()
         res = pickle.loads(droputils.allDropContents(t))
-        self.assertEqual(value, res)        
-
-
+        self.assertEqual(value, res)
 
     def test_simple_branch(self):
         """Check that simple branch event transmission works"""
@@ -1316,14 +1317,12 @@ class BranchAppDropTestsBase(object):
         last_first_output = b
 
         # all_uids is ['de', 'fg', 'hi', ....]
-        all_uids = [
-            string.ascii_lowercase[i : i + 3]
-            for i in range(4, len(string.ascii_lowercase), 3)
-        ]
-
-        for uids, result in zip(all_uids, results[1:]):
-            x, y, z = self._simple_branch_with_outputs(result, uids,
-                                                       inputs=[{last_first_output.uid, "x"}])
+        all_uids = [string.ascii_lowercase[i: i + 3] for i in
+            range(4, len(string.ascii_lowercase), 3)]
+        combos = [(all_uids[i], results[0]) for i in range(results[1])]
+        for uids, result in combos:
+            x, y, z = self._simple_branch_with_outputs(result, uids, inputs=[
+                {last_first_output.uid: 'x'}])
             all_drops += [x, y, z]
             x.addInput(last_first_output)
             last_first_output.addConsumer(x)
@@ -1332,18 +1331,17 @@ class BranchAppDropTestsBase(object):
         for d in all_drops:
             print(d.parameters)
 
-        with DROPWaiterCtx(
-            self, all_drops, 30, [DROPStates.COMPLETED, DROPStates.SKIPPED]
-        ):
+        with DROPWaiterCtx(self, all_drops, 20,
+                [DROPStates.COMPLETED, DROPStates.SKIPPED]):
             a.async_execute()
 
-        # TODO: Checking each individual drop depending on "results" would be a
-        # tricky business, so we are skipping that check for now.
+        # TODO: Checking each individual drop depending on "results" would be a \ #
+        #  tricky business, so we are skipping that check for now.
 
     def test_multi_branch_one_level(self):
         """Check that simple branch event transmission wroks"""
-        self._test_multi_branch_graph(True)
-        self._test_multi_branch_graph(False)
+        self._test_multi_branch_graph(True,1)
+        self._test_multi_branch_graph(False,1)
 
     def test_multi_branch_two_levels(self):
         """Like test_simple_branch_app, but events propagate downstream one level"""

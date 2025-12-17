@@ -1,6 +1,16 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.4.2 
+- [Fixed] Fix branch not working across multiple NodeManagers: https://github.com/ICRAR/daliuge/pull/378
+
+# v6.4.1 
+- [Fixed] Fix issue with prefix-less files not downloading: https://github.com/ICRAR/daliuge/pull/375
+
+# v6.4.0
+- [Feature] Add support for file downloads in DIM interface: https://github.com/ICRAR/daliuge/pull/374
+- [Fixed] Add wildcard to .slurm file installation: https://github.com/ICRAR/daliuge/pull/375
+
 # v6.4.0
 - [Feature] Add support for file downloads in DIM interface: https://github.com/ICRAR/daliuge/pull/374
 - [Fixed] Add wildcard to .slurm file installation: https://github.com/ICRAR/daliuge/pull/375

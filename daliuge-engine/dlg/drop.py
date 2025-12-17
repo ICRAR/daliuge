@@ -31,6 +31,7 @@ import time
 import re
 import sys
 from abc import ABCMeta
+from collections import defaultdict
 
 from dlg.common.reproducibility.constants import (
     ReproducibilityFlags,
@@ -449,6 +450,9 @@ class AbstractDROP(EventFirer, EventHandler):
         # the first call to skip will close the drop and also skip the following
         # drops.
         self.block_skip = self._popArg(kwargs, "block_skip", False)
+
+        ports = self._popArg(kwargs, "ports", {})
+        self._port_ids, self._port_names = self._construct_port_lookup(ports)
 
         # Useful to have access to all EAGLE parameters without a prior knowledge
         self._parameters = dict(kwargs)
@@ -1304,6 +1308,31 @@ class AbstractDROP(EventFirer, EventHandler):
         Get the log level for this DROP
         """
         return self._log_level
+
+    def _construct_port_lookup(self, ports):
+        """
+        Take list[{direction: input/output, oid, name}] and turn it into a useful lookup
+        dictionary.
+
+        :param ports:
+        :return:
+        """
+
+        port_ids = {
+            'input': {port['oid']: port['name']
+                for port in ports if port['direction'] == 'input'},
+            'output': {port['oid']: port['name']
+                for port in ports if port['direction'] == 'output'}
+        }
+
+        port_names = {'input': defaultdict(list), 'output': defaultdict(list)}
+        for portd in ports:
+            if portd['direction'] == 'input':
+                port_names['input'][portd['name']].append(portd['oid'])
+            if portd['direction'] == 'output':
+                port_names['output'][portd['name']].append(portd['oid'])
+
+        return port_ids, port_names
 
 
 # Dictionary mapping 1-to-many DROPLinkType constants to the corresponding methods

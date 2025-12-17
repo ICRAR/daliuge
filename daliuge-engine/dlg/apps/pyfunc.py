@@ -668,7 +668,7 @@ class PyFuncApp(BarrierAppDROP):
 
             # portargs.update(keyPortArgs)
         else:
-            for i, input_drop in enumerate(self._inputs.values()):
+            for input_drop in self._inputs.values():
                 parser = (
                     get_port_reader_function(self.input_parser)
                     if hasattr(self, "input_parser")
@@ -677,7 +677,7 @@ class PyFuncApp(BarrierAppDROP):
                 value = parser(input_drop)
                 if self.argnames:
                     logger.debug("Port value pair: %s, %s",
-                                 self.argnames[i],
+                                 self.argnames,
                                  value)
 
         logger.debug(
@@ -844,8 +844,8 @@ class PyFuncApp(BarrierAppDROP):
                 and "self" in funcargs):
             funcargs.pop("self")
 
-        logger.user("Running %s", self.func_name)
-        logger.user("Arguments: *%s **%s", pargs, funcargs)
+        logger.info("Running %s", self.func_name)
+        logger.info("Arguments: *%s **%s", pargs, funcargs)
 
         # 4. prepare for execution
         # we capture and log whatever is produced on STDOUT
@@ -865,7 +865,7 @@ class PyFuncApp(BarrierAppDROP):
             else:
                 self.result = self.func(*pargs, **funcargs)
 
-        logger.user("Returned result from %s: %s", self.func_name, self.result)
+        logger.info("Returned result from %s: %s", self.func_name, self.result)
         if capture.getvalue():
             msg = f"STDOUT/STDERR output from function: '{self.func_name}': {capture.getvalue()}"
         else:
