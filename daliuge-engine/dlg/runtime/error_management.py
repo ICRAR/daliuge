@@ -155,9 +155,9 @@ class ErrorCode(Enum):
 
     @property
     def doc_url(self) -> str:
+
         log_message = f"Error [{self.value}] - {self.name}"
-        path = (f"https://daliuge--344.org.readthedocs.build/page/debugging/errors"
-                   f".html"
+        path = (f"https://daliuge.readthedocs.io/en/latest/debugging/errors.html"
                 f"#{__name__}.{str(self)}")
         # if os.environ.get('READTHEDOCS', None) == 'True':
         # path =  f"https://daliuge.readthedocs.org/page/errors.html#{self.name}"
@@ -213,6 +213,7 @@ def intercept_error(e: Exception):
     logger = logging.getLogger(f"dlg.{__name__}")
     if type(e) != ex.ErrorManagerCaughtException:
         errorno = EXCEPTION_MAP.get(type(e), ErrorCode.DROP_ERROR)
+        logger.error(e)
         logger.warning(errorno.doc_url)
     raise ex.ErrorManagerCaughtException from e
 

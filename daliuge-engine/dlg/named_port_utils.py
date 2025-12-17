@@ -437,7 +437,7 @@ def _get_args(appArgs, positional=False):
             positional=positional
         )
         for arg in appArgs
-        if (appArgs[arg]["positional"] == positional)
+        if (appArgs[arg]["positional"] == positional and appArgs[arg]["type"] != "Event")
     }
 
     argType = "Positional" if positional else "Keyword"
