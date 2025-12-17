@@ -562,7 +562,7 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 	url += '/sessions/' + sessionId;
 	var updateGraphDelayTimerActive = false;
 	var updateGraphDelayTimer;
-
+    var prevStatus = 0;
 	function updateGraph() {
 		d3.json(url).then(function (sessionInfo, error) {
 			if (error) {
@@ -583,21 +583,22 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 				graph_update_handler(oids, doSpecs, url);
 			}
 
+            var keys = Object.keys(doSpecs);
+            keys.sort();
+            var statuses = keys.map(function (k) { return {"status": status} });
 			// During PRISITINE and BUILDING we need to update the graph structure
 			// During DEPLOYING we call ourselves again anyway, because we need
 			// to know when we go to RUNNING.
 			// During RUNNING (or potentially FINISHED/CANCELLED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
 			if (status === 3 || status === 4 || status === 5 || status === 6) {
-				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
-					status_update_handler);
+                startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
+                status_update_handler);
 			}
 			else if (status === 0 || status === 1 || status === 2 || status === -1) {
+				prevStatus = status;
 				if (status === 2) {
 					// Visualise the drops if we are trying to 'deploy' them.
-					var keys = Object.keys(doSpecs);
-					keys.sort();
-					var statuses = keys.map(function (k) { return {"status": 0} });
 					status_update_handler(statuses);
 				}
 				// schedule a new JSON request

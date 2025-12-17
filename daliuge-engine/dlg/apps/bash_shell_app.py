@@ -284,6 +284,9 @@ class BashShellBase:
             os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
         except OSError:
             logger.exception("Error while terminating process %r", self.proc)
+        except AttributeError:
+            # self.proc has not been set...
+            logger.warning("Cancelled BashShellApp without process...")
 
     def generate_recompute_data(self):
         self._recompute_data["command"] = self.command

@@ -197,8 +197,10 @@ EXCEPTION_MAP = {
     dill.PickleError: ErrorCode.ENCODING_ERROR
 }
 
+def proxy_intercept(e: Exception):
+    intercept_error(e, raise_exception=False)
 
-def intercept_error(e: Exception):
+def intercept_error(e: Exception, raise_exception=True):
     """
     Intercept DALiuGEExceptions during App/DataDROP runtime.
 
@@ -213,8 +215,9 @@ def intercept_error(e: Exception):
     logger = logging.getLogger(f"dlg.{__name__}")
     if type(e) != ex.ErrorManagerCaughtException:
         errorno = EXCEPTION_MAP.get(type(e), ErrorCode.DROP_ERROR)
-        logger.warning(errorno.doc_url)
-    raise ex.ErrorManagerCaughtException from e
+        logger.user(errorno.doc_url)
+    if raise_exception:
+        raise ex.ErrorManagerCaughtException from e
 
 
 def manage_session_failure(func):
