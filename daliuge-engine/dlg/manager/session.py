@@ -621,12 +621,12 @@ class Session(object):
         """
         self.status = SessionStates.FAILED
         logger.info("Session %s has failed", self._sessionId)
+        failed_drop_oids = {d['oid'] for d in failures}
         failed_drops = []
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
-            failed_drop_oids = [d['oid'] for d in failures]
             if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.cancel()
             if drop.oid in failed_drop_oids:
