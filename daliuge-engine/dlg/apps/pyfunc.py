@@ -780,7 +780,8 @@ class PyFuncApp(BarrierAppDROP):
             logger.debug("Input mapping provided: %s", self.func_arg_mapping)
 
         except BadModuleException as e:
-            self.exception = BadModuleException
+            # Store the actual exception instance for better diagnostics downstream
+            self.exception = e
             proxy_intercept(e)
 
         self._output_filepaths = {}
