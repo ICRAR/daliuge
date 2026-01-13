@@ -33,6 +33,7 @@ from dlg.apps.app_base import AppDROP
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
 from dlg.data.drops.directory import DirectoryDROP
 from dlg.apps.simple import RandomArrayApp
+from dlg.exceptions import BadModuleException
 
 
 # Used in the textual representation of the graphs in these tests
@@ -135,6 +136,35 @@ class TestGraphLoader(unittest.TestCase):
         self.assertEqual("B", b.oid)
         self.assertEqual("B", b.uid)
         self.assertEqual(a, b.inputs[0])
+
+    def test_pyfuncLoadFailure(self):
+        """
+        Ensure createGraphFromDropSpecList returns load_failures entries for DROPs
+        that raise during initialisation, while still including them in the graph.
+        """
+        dropSpecList = [
+            {
+                "oid": "A",
+                "uid": "A",
+                "categoryType": "Application",
+                "dropclass": "dlg.apps.pyfunc.PyFuncApp",
+                # Intentionally invalid function reference to trigger an exception on init
+                "func_name": "nonexistent.module:nonexistent_func",
+            }
+        ]
+
+        roots, load_failures = graph_loader.createGraphFromDropSpecList(dropSpecList)
+
+        # Problematic DROP is still present in the graph
+        self.assertEqual(1, len(roots))
+        self.assertEqual("A", roots[0].oid)
+
+        # load_failures should contain an entry for this DROP with an exception instance
+        a_oid = load_failures[0]["oid"]
+        a_exception = load_failures[0]["exception"]
+        self.assertIn("A", a_oid)
+        failure = load_failures[0]
+        self.assertIsInstance(a_exception, BadModuleException)
 
     def test_removeUnmetRelationships(self):
         # Unmet relationsips are

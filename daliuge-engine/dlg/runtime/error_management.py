@@ -108,6 +108,20 @@ class ErrorCode(Enum):
           example, incorrect flags, or the wrong redirect was used. 
     """
 
+    OUTPUT_DROPPED_CANCELLED = auto()
+    """
+    During the runtime of this DROP, the output DROP was cancelled before it could 
+    be written to.     
+    
+    This is likely the result of a distributed session failure in which a graph 
+    distributed across multiple nodes has failed during the session. Current 
+    known causes of this are: 
+        
+        - A PyFuncAppDROP failed to be initialised during deployment and the session 
+        failed. Please review other FAILED nodes (red) in the graph to see if they 
+        report a BAD_IMPORT code. 
+    """
+
     GRAPH_ERROR = 200
     """
     An error has occured during graph execution that was not expected. Please 
@@ -163,8 +177,9 @@ class ErrorCode(Enum):
         # if os.environ.get('READTHEDOCS', None) == 'True':
         path = (
             f"https://daliuge.readthedocs.io/en/v{dlgversion}/debugging/errors.html"
-            f"#{self.name}")
-        href = f"<a href={path} target='_blank' rel='noopener noreferrer'>{path}</a>'"
+            f"#{__name__}.{str(self)}"
+        )
+        href = f"<a href={path} target='_blank' rel='noopener noreferrer'>{path}</a>"
         return f"{log_message} occured: Please review potential issues at\n {href}"
 
 
@@ -183,6 +198,7 @@ EXCEPTION_MAP = {
     ex.InvalidPathException: ErrorCode.PATH_ERROR,
     ex.IncompleteDROPSpec: ErrorCode.INCOMPLETE_DROP_SPEC,
     ex.BashAppRuntimeError: ErrorCode.BASH_COMMAND_FAILED,
+    ex.OutputDROPCancelled: ErrorCode.OUTPUT_DROPPED_CANCELLED,
     ex.InvalidGraphException: ErrorCode.GRAPH_ERROR,
     ex.IncompleteGraphError: ErrorCode.INVALID_GRAPH_CONFIGURATION,
     ex.InvalidRelationshipException: ErrorCode.INVALID_GRAPH_CONFIGURATION,

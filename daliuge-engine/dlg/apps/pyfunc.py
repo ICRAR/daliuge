@@ -52,7 +52,7 @@ from dlg.named_port_utils import (
 )
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException, \
-    DaliugeException
+    DaliugeException, OutputDROPCancelled
 from dlg.meta import (
     dlg_string_param,
     dlg_dict_param,
@@ -927,7 +927,7 @@ class PyFuncApp(BarrierAppDROP):
             tmp_parser = self._match_parser(o)
             parser = resolve_drop_parser(tmp_parser)
             if o.status == DROPStates.CANCELLED:
-                raise DaliugeException
+                raise OutputDROPCancelled(o, f"{o.oid} cancelled before write.")
             if parser is DropParser.PICKLE:
                 o.write(pickle.dumps(result))
             elif parser is DropParser.DILL:
