@@ -118,8 +118,8 @@ class ErrorCode(Enum):
     known causes of this are: 
         
         - A PyFuncAppDROP failed to be initialised during deployment and the session 
-        failed. Please review other FAILED nodes (red) in the graph to see if they 
-        report a BAD_IMPORT code. 
+          failed. Please review other FAILED nodes (red) in the graph to see if they 
+          report a BAD_IMPORT code.
     """
 
     GRAPH_ERROR = 200

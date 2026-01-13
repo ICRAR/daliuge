@@ -52,7 +52,7 @@ from dlg.named_port_utils import (
 )
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException, \
-    DaliugeException, OutputDROPCancelled
+     OutputDROPCancelled
 from dlg.meta import (
     dlg_string_param,
     dlg_dict_param,
