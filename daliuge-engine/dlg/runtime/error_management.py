@@ -29,6 +29,10 @@ import pickle
 import logging
 import dlg.exceptions as ex
 
+from dlg.common.version import version as dlgversion
+from dlg.dlg_logging import USER, USERSTR
+
+logging.addLevelName(USER, USERSTR)
 from enum import Enum, auto
 
 
@@ -156,11 +160,10 @@ class ErrorCode(Enum):
     @property
     def doc_url(self) -> str:
         log_message = f"Error [{self.value}] - {self.name}"
-        path = (f"https://daliuge--344.org.readthedocs.build/page/debugging/errors"
-                   f".html"
-                f"#{__name__}.{str(self)}")
         # if os.environ.get('READTHEDOCS', None) == 'True':
-        # path =  f"https://daliuge.readthedocs.org/page/errors.html#{self.name}"
+        path = (
+            f"https://daliuge.readthedocs.io/en/v{dlgversion}/debugging/errors.html"
+            f"#{self.name}")
         href = f"<a href={path} target='_blank' rel='noopener noreferrer'>{path}</a>'"
         return f"{log_message} occured: Please review potential issues at\n {href}"
 
@@ -197,8 +200,10 @@ EXCEPTION_MAP = {
     dill.PickleError: ErrorCode.ENCODING_ERROR
 }
 
+
 def proxy_intercept(e: Exception):
     intercept_error(e, raise_exception=False)
+
 
 def intercept_error(e: Exception, raise_exception=True):
     """
@@ -215,7 +220,7 @@ def intercept_error(e: Exception, raise_exception=True):
     logger = logging.getLogger(f"dlg.{__name__}")
     if type(e) != ex.ErrorManagerCaughtException:
         errorno = EXCEPTION_MAP.get(type(e), ErrorCode.DROP_ERROR)
-        logger.user(errorno.doc_url)
+        logger.log(USER, errorno.doc_url)
     if raise_exception:
         raise ex.ErrorManagerCaughtException from e
 
@@ -233,6 +238,7 @@ def manage_session_failure(func):
     :param func: The function to which we have added this dectorator
     :return:
     """
+
     def manage_session(self, *args, **kwargs):
         """
         Attempt to run the decorated function 

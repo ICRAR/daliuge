@@ -116,32 +116,31 @@ class TestPyFuncApp(unittest.TestCase):
 
     def test_invalid_function_param(self):
         # The function doesn't have a module
-        self.assertRaises(
-            ErrorManagerCaughtException, pyfunc.PyFuncApp, "a", "a", func_name="func1"
-        )
+        drop = pyfunc.PyFuncApp( "a", "a", func_name="func1")
+        self.assertTrue(hasattr(drop, "exception"))
 
     def test_function_invalid_module(self):
         # The function lives in an unknown module/package
-        self.assertRaises(
-            ErrorManagerCaughtException,
-            pyfunc.PyFuncApp,
+        drop = pyfunc.PyFuncApp(
             "a",
             "a",
-            func_name="doesnt_exist.func1",
+            func_name="doesnt_exist.func1"
         )
+        self.assertTrue(hasattr(drop, "exception"))
 
     def test_function_builtin_module(self):
         # The function lives in an unknown module/package
-        pyfunc.PyFuncApp("a", "a", func_name="object.__init__")
+        drop = pyfunc.PyFuncApp("a", "a", func_name="object.__init__")
+        self.assertFalse(hasattr(drop, "exception"))
 
     def test_function_invalid_fname(self):
         # The function lives in an unknown module/package
-        self.assertRaises(
-            ErrorManagerCaughtException,
-            pyfunc.PyFuncApp,
-            "a",
-            "a",
-            func_name = "test.apps.test_pyfunc.doesnt_exist",)
+
+        drop = pyfunc.PyFuncApp(
+        "a",
+        "a",
+        func_name = "test.apps.test_pyfunc.doesnt_exist")
+        self.assertTrue(hasattr(drop, "exception"))
 
     def test_valid_creation(self):
         _PyFuncApp("a", "a", func1)
@@ -585,6 +584,6 @@ class PyFuncAppIntraNMTest(NMTestsMixIn, unittest.TestCase):
         ]
         rels = [DROPRel("A", DROPLinkType.INPUT, "B")]
         a_data = os.urandom(32)
-        self.assertRaises(SessionInterruptError,
-                          self._test_runGraphInTwoNMs,g1, g2, rels,
-                          pickle.dumps(a_data), None)
+        self._test_runGraphInTwoNMs(g1, g2, rels,
+                          pickle.dumps(a_data), None,
+                          expected_failures=['B','C'], wait_for_event=False)

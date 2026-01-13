@@ -53,7 +53,7 @@ from dlg.apps.app_base import AppDROP, DropRunner
 from dlg.exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
-    DaliugeException, ErrorManagerCaughtException, SessionInterruptError,
+    DaliugeException,
 )
 from ..lifecycle.dlm import DataLifecycleManager
 

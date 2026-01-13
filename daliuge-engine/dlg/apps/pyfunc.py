@@ -37,10 +37,10 @@ from io import StringIO
 from contextlib import redirect_stdout
 
 from dlg import drop_loaders
-from dlg.ddap_protocol import DROPStates
 from dlg.data.path_builder import filepath_from_string
+from dlg.ddap_protocol import DROPStates
 from dlg.drop import track_current_drop
-from dlg.runtime.error_management import intercept_error, proxy_intercept
+from dlg.runtime.error_management import proxy_intercept
 from dlg.utils import deserialize_data
 from dlg.named_port_utils import (
     Argument,
@@ -51,7 +51,8 @@ from dlg.named_port_utils import (
     resolve_drop_parser,
 )
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException
+from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException, \
+    DaliugeException
 from dlg.meta import (
     dlg_string_param,
     dlg_dict_param,
@@ -588,7 +589,7 @@ class PyFuncApp(BarrierAppDROP):
 
         attr_uid_map = {}
         output_port_count = {}
-        for output in self.parameters["outputs"]:
+        for output in self.parameters.get("outputs",[]):
             for key, value in output.items():
                 attr_uid_map[value] = key
                 if key in output_port_count:
@@ -781,6 +782,8 @@ class PyFuncApp(BarrierAppDROP):
 
         except BadModuleException as e:
             # Store the actual exception instance for better diagnostics downstream
+            # Note: We check for this attribute's existence when initializing drops to
+            # determine if the initialisation has failed.
             self.exception = e
             proxy_intercept(e)
 
@@ -923,6 +926,8 @@ class PyFuncApp(BarrierAppDROP):
             result = self.result
             tmp_parser = self._match_parser(o)
             parser = resolve_drop_parser(tmp_parser)
+            if o.status == DROPStates.CANCELLED:
+                raise DaliugeException
             if parser is DropParser.PICKLE:
                 o.write(pickle.dumps(result))
             elif parser is DropParser.DILL:
@@ -948,7 +953,8 @@ class PyFuncApp(BarrierAppDROP):
             elif parser is DropParser.BINARY:
                 drop_loaders.save_binary(o, result)
             else:
-                raise ValueError(parser.__repr__())
+                raise ValueError((parser))
+
 
     def generate_recompute_data(self):
         for name, val in self._recompute_data.items():

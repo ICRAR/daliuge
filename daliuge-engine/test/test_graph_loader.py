@@ -49,7 +49,8 @@ class TestGraphLoader(unittest.TestCase):
                 "dropclass": "dlg.data.drops.memory.InMemoryDROP",
             }
         ]
-        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
+        roots , _ = graph_loader.createGraphFromDropSpecList(dropSpecList)
+        a = roots[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEqual("A", a.oid)
         self.assertEqual("A", a.uid)
@@ -62,7 +63,8 @@ class TestGraphLoader(unittest.TestCase):
                 "dropclass": "dlg.data.drops.memory.SharedMemoryDROP",
             }
         ]
-        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
+        roots, _ = graph_loader.createGraphFromDropSpecList(dropSpecList)
+        a = roots[0]
         self.assertIsInstance(a, SharedMemoryDROP)
         self.assertEqual("A", a.oid)
         self.assertEqual("A", a.uid)
@@ -81,7 +83,8 @@ class TestGraphLoader(unittest.TestCase):
                 "children": ["A"],
             },
         ]
-        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
+        roots, _ = graph_loader.createGraphFromDropSpecList(dropSpecList)
+        a = roots[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEqual("A", a.oid)
         self.assertEqual("A", a.uid)
@@ -102,7 +105,8 @@ class TestGraphLoader(unittest.TestCase):
                 "dirname": "/tmp/testdir"
             },
         ]
-        b = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
+        roots, _ = graph_loader.createGraphFromDropSpecList(dropSpecList)
+        b = roots[0]
         self.assertIsInstance(b, DirectoryDROP)
         self.assertEqual("/tmp/testdir", b.path)
 
@@ -120,7 +124,8 @@ class TestGraphLoader(unittest.TestCase):
                 "dropclass": "test.test_graph_loader.DummyApp",
             },
         ]
-        a = graph_loader.createGraphFromDropSpecList(dropSpecList)[0]
+        roots, _ = graph_loader.createGraphFromDropSpecList(dropSpecList)
+        a = roots[0]
         self.assertIsInstance(a, InMemoryDROP)
         self.assertEqual("A", a.oid)
         self.assertEqual("A", a.uid)
@@ -182,7 +187,7 @@ class TestGraphLoader(unittest.TestCase):
         """
         with (files(test_graphs) / "funcTestPG.graph").open() as f:
             graphSpec = json.load(f)
-        a = graph_loader.createGraphFromDropSpecList(graphSpec)
+        a, _ = graph_loader.createGraphFromDropSpecList(graphSpec)
         dummy = a
 
     def test_namedPorts(self):
@@ -191,7 +196,7 @@ class TestGraphLoader(unittest.TestCase):
         """
         with (files(test_graphs) / "funcTestPG_namedPorts.graph").open() as f:
             graphSpec = json.load(f)
-        a = graph_loader.createGraphFromDropSpecList(graphSpec)
+        a, _ = graph_loader.createGraphFromDropSpecList(graphSpec)
         dummy = a
 
     def test_applicationArgs(self):
@@ -201,8 +206,8 @@ class TestGraphLoader(unittest.TestCase):
         """
         with (files(test_graphs) / "application_args.graph").open() as f:
             graphSpec = json.load(f)
-        graph = graph_loader.createGraphFromDropSpecList(graphSpec)
-        app = graph[0]
+        roots, _ = graph_loader.createGraphFromDropSpecList(graphSpec)
+        app = roots[0]
         self.assertEqual(app.__class__, RandomArrayApp)
         self.assertEqual(app.size, 50)
         self.assertEqual(app.integer, True)
@@ -230,8 +235,8 @@ class TestGraphLoader(unittest.TestCase):
                 if key is not None:
                     dropSpec[key] = value
 
-                graph = graph_loader.createGraphFromDropSpecList([dropSpec])
-                data = graph[0]
+                roots, _ = graph_loader.createGraphFromDropSpecList([dropSpec])
+                data = roots[0]
                 self.assertIsInstance(data, InMemoryDROP)
                 self.assertEqual(value, data.persist)
                 self.assertFalse(hasattr(data, "precious"))

@@ -485,10 +485,11 @@ class Session(object):
 
         if load_failures:
             self.fail(load_failures)
+            logger.critical("Session %s is has FAILED deployment", self._sessionId)
+            return
         else:
             self.trigger_drops(completedDrops)
-
-        logger.info("Session %s is now RUNNING", self._sessionId)
+            logger.info("Session %s is now RUNNING", self._sessionId)
 
     def _run(self, worker):
         worker.run()
@@ -636,6 +637,8 @@ class Session(object):
             drop.status=DROPStates.ERROR
             if isinstance(drop, AppDROP):
                 drop.execStatus=AppDROPStates.ERROR
+
+        # self.finish()
 
 
     @track_current_session
