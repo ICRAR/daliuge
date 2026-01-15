@@ -33,7 +33,7 @@ import unittest
 
 from dlg.ddap_protocol import DROPStates, DROPPhases
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.data.drops.directorycontainer import DirectoryContainer
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.lifecycle import dlm
@@ -142,20 +142,20 @@ class TestDataLifecycleManager(unittest.TestCase):
                 pass
 
         with dlm.DataLifecycleManager(check_period=0.5, cleanup_period=2) as manager:
-            a = DirectoryContainer(
+            a = FileDROP(
                 "a",
                 "a",
                 persist=False,
                 expireAfterUse=True,
-                dirname=tempfile.mkdtemp(),
+                filename=tempfile.mktemp(),
             )
-            b_dirname = tempfile.mkdtemp()
-            b = DirectoryContainer(
+
+            b = FileDROP(
                 "b",
                 "b",
                 persist=False,
                 expireAfterUse=False,
-                dirname=b_dirname,
+                filename=tempfile.mktemp(),
             )
             c = MyApp("c", "c")
             d = MyApp("d", "d")

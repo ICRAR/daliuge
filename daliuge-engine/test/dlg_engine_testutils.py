@@ -33,6 +33,7 @@ from dlg import utils
 from dlg import droputils
 from dlg.data.drops import DataDROP
 from dlg.ddap_protocol import DROPStates
+from dlg.exceptions import ErrorManagerCaughtException
 from dlg.manager.node_manager import NodeManager
 from dlg.manager.manager_data import Node
 
@@ -259,3 +260,25 @@ class AppArgsStore:
 
     def get_args(self):
         return self.application_args
+
+
+def run_errormanagement_exception_test(self, func, cause, *args, **kwargs):
+    """
+    Confirm that an ErrorManagerCaughtException is:
+
+    A) Thrown, and
+    B) Caused by the expected __cause__ exception (the original exception).
+
+    This ensures that the correct documentation and ErrorCode will be logged for the
+    expected error.
+
+    :param func:
+    :return:
+    """
+
+    try:
+         func(*args, **kwargs)
+    except ErrorManagerCaughtException as e:
+         self.assertTrue(cause, type(e.__cause__))
+    else:
+        return self.fail("Exception was not correctly identified")

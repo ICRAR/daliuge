@@ -20,7 +20,7 @@
 #    MA 02111-1307  USA
 #
 """Backwards compatibility for client"""
-from .. import clients
+from dlg import clients
 
 BaseDROPManagerClient = clients.BaseDROPManagerClient
 NodeManagerClient = clients.NodeManagerClient

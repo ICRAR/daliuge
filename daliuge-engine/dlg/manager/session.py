@@ -67,7 +67,7 @@ class SessionStates:
     any given point of time.
     """
 
-    PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED, CANCELLED = range(6)
+    PRISTINE, BUILDING, DEPLOYING, RUNNING, FINISHED, CANCELLED, FAILED = range(7)
 
 
 class LeavesCompletionListener(object):
@@ -167,6 +167,7 @@ class Session(object):
         self._statusLock = threading.Lock()
         self._roots = []
         self._proxyinfo = []
+        self.proxy_drops = {}
         self._worker = None
         self._status = SessionStates.PRISTINE
         self._error_status_listener = None
@@ -283,7 +284,7 @@ class Session(object):
                 "BUILDING status: %d",
                 status,
             )
-            raise InvalidSessionState
+            raise InvalidSessionState(self.sessionId)
 
         self.status = SessionStates.BUILDING
 
@@ -369,7 +370,7 @@ class Session(object):
             logger.exception(
                 "Can't deploy this session in its current status: %d", status
             )
-            raise InvalidSessionState
+            raise InvalidSessionState(self._sessionId)
 
         if not self._graph and completedDrops:
             logger.exception(
@@ -468,6 +469,8 @@ class Session(object):
             )
             method = getattr(self._drops[local_uid], relname)
             method(proxy, False)
+
+            self.proxy_drops[proxy.uid] = proxy
 
         # We move to COMPLETED the DROPs that we were requested to
         # InputFiredAppDROP are here considered as having to be executed and
@@ -599,6 +602,8 @@ class Session(object):
             ]
             if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
                 drop.setCompleted()
+            if drop.status == DROPStates.ERROR:
+                self.status = SessionStates.FAILED
 
     @track_current_session
     def end(self):
@@ -616,6 +621,7 @@ class Session(object):
             SessionStates.RUNNING,
             SessionStates.FINISHED,
             SessionStates.CANCELLED,
+            SessionStates.FAILED
         ):
             raise InvalidSessionState(
                 "The session is currently not running, cannot get graph status"
@@ -638,6 +644,15 @@ class Session(object):
 
         return statusDict
 
+    def _getLogsFromDrop(self, drop_oid: str):
+        if drop_oid in self._drops:
+            return self._drops[drop_oid].getLogs()
+        if drop_oid in self.proxy_drops:
+            return self.proxy_drops[drop_oid].getLogs()
+
+        # Return an empty list to maintain consistent return type
+        return []
+
     def getDropLogs(self, drop_oid: str):
         """
         Retrieve the logs stored in the given DROP
@@ -645,21 +660,43 @@ class Session(object):
 
         :return:
         """
+        # TODO Look into DropProxies to avoid issues with multiple nodes.
         return {"session": self.sessionId,
                 "status": self.status,
                 "oid": drop_oid,
-                "logs": self._drops[drop_oid].getLogs()}
-                # "stderr": self._drops[drop_oid].getStdError(),
-                # "stdout": self._drops[drop_oid].getStdOut()}
+                "logs": self._getLogsFromDrop(drop_oid)}
 
+    def _getDataFromDrop(self, drop_oid: str):
+        def get_path(drop):
+            if hasattr(drop, 'path'):
+                return drop.path
+            else:
+                return ''
+
+        if drop_oid in self._drops:
+            d = self._drops[drop_oid]
+            return get_path(d)
+        if drop_oid in self.proxy_drops:
+            d = self._drops[drop_oid]
+            return get_path(d)
+
+        return ''
+
+    def getDropData(self, drop_oid: str):
+        return {"filepath": self._getDataFromDrop(drop_oid)}
 
     @track_current_session
-    def cancel(self):
+    def cancel(self, interrupt=False):
         status = self.status
-        if status != SessionStates.RUNNING:
-            raise InvalidSessionState(
-                "Can't cancel this session in its current status: %d" % (status)
-            )
+        if not interrupt:
+            if status != SessionStates.RUNNING and status != SessionStates.CANCELLED:
+                raise InvalidSessionState(
+                    "Can't cancel this session in its current status: %d" % (status)
+                )
+        else:
+            logger.warning("Session %s has been interrupted when in state %s. This was "
+                           "likely triggered by a runtime error that has been caught by "
+                           "the DALiuGE runtime environment to ensure smoother shutdown.")
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
@@ -712,9 +749,9 @@ class Session(object):
         try:
             drop = self._drops[uid]
             return getattr(drop, prop_name)
-        except AttributeError as e:
-            raise DaliugeException(
-                "%r has no property called %s" % (drop, prop_name)) from e
+        except AttributeError:
+            logger.critical("%s has no property called %s", drop, prop_name)
+            return getattr(drop, "name")
 
     def call_drop(self, uid, method, *args):
         if uid not in self._drops:

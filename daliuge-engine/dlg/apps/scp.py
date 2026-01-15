@@ -20,6 +20,7 @@
 #    MA 02111-1307  USA
 #
 from dlg.remote import copyTo, copyFrom
+from dlg.drop import track_current_drop
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.data_base import NullDROP
 from dlg.data.drops.container import ContainerDROP
@@ -110,6 +111,7 @@ class ScpApp(BarrierAppDROP):
     def initialize(self, **kwargs):
         BarrierAppDROP.initialize(self, **kwargs)
 
+    @track_current_drop
     def run(self):
         # Check inputs/outputs are of a valid type
         for i in self.inputs + self.outputs:

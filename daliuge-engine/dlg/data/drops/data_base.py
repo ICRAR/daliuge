@@ -26,6 +26,7 @@ import logging
 from typing import Union
 
 from dlg.drop import AbstractDROP, track_current_drop
+from dlg.data.path_builder import PathType
 from dlg.data.io import (
     DataIO,
     OpenMode,
@@ -49,7 +50,6 @@ except ImportError:
     _checksumType = ChecksumTypes.CRC_32
 
 logger = logging.getLogger(f"dlg.{__name__}")
-
 
 ##
 # @brief Data
@@ -357,7 +357,7 @@ class DataDROP(AbstractDROP):
         try:
             dropInputPorts = self.parameters["producers"]
         except KeyError:
-            logging.debug("No producers available for drop: %s", self.uid)
+            logger.debug("No producers available for drop: %s", self.uid)
             return
 
         producerPortValueMap = {}  # Map Producer UIDs to a portname
@@ -371,7 +371,7 @@ class DataDROP(AbstractDROP):
                 try:
                     key = list(param.keys())[0]
                 except AttributeError:
-                    logging.debug("Producer %s does not have named ports", p.uid)
+                    logger.debug("Producer %s does not have named ports", p.uid)
                     continue
                 portName = param[key]
                 portValue = ""
@@ -383,7 +383,7 @@ class DataDROP(AbstractDROP):
             try:
                 port.items()
             except AttributeError:
-                logging.debug("Producer %s does not have named ports", port.uid)
+                logger.debug("Producer %s does not have named ports", port.uid)
                 continue
             for uid, input_port_name in port.items():
                 try:
@@ -392,11 +392,18 @@ class DataDROP(AbstractDROP):
                         finalDropPortMap[input_port_name] = producerPortValueMap[uid][
                             ouput_port_name]
                 except KeyError:
-                    logging.warning("%s not available.", input_port_name)
+                    logger.warning("%s not available.", input_port_name)
 
         for portname in finalDropPortMap:
             if portname in self.parameters:
                 self.parameters[portname] = finalDropPortMap[portname]
+
+    def getLogs(self):
+        """
+        :return: Return the logs stored in the logging handler
+        """
+
+        return self.log_storage
 
     @abstractmethod
     def getIO(self) -> DataIO:
@@ -426,6 +433,10 @@ class DataDROP(AbstractDROP):
         DROP implementations will use different URI schemes.
         """
 
+    @property
+    def buftype(self):
+        return None
+
 
 class PathBasedDrop(object):
     """
@@ -433,8 +444,9 @@ class PathBasedDrop(object):
     """
 
     _path: str = None
+    _path_type: PathType = PathType.File
 
-    def get_dir(self, dirname):
+    def get_dir(self, dirname, create_if_missing=True):
         """
         dirname will be based on the current working directory
         If we have a session, it goes into the path as well
@@ -445,26 +457,31 @@ class PathBasedDrop(object):
 
         :returns dir
         """
+
         if isabs(dirname):
-            return dirname
-
-        parts = []
-        if self._dlg_session_id:
-            parts.append(".")
+            the_dir = dirname
         else:
-            parts.append("/tmp/daliuge_tfiles")
-        if dirname:
-            parts.append(dirname)
+            parts = []
+            if self._dlg_session_id:
+                parts.append(".")
+            else:
+                parts.append("/tmp/daliuge_tfiles")
+            if dirname:
+                parts.append(dirname)
 
-        the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
+            the_dir = os.path.abspath(os.path.normpath(os.path.join(*parts)))
         logger.debug("Path used for drop: %s", the_dir)
-        createDirIfMissing(the_dir)
+        if create_if_missing:
+            createDirIfMissing(the_dir)
         return the_dir
 
     @property
     def path(self) -> str:
         return self._path
 
+    @property
+    def path_type(self) -> PathType:
+        return self._path_type
 
 ##
 # @brief NULL

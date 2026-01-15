@@ -15,7 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python-version: "3.9"
           - python-version: "3.10"
           - python-version:  "3.11"
           - python-version:  "3.12"
@@ -55,10 +54,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - python-version: "3.9"
           - python-version: "3.10"
           - python-version:  "3.11"
           - python-version:  "3.12"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -95,7 +94,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - python-version: "3.9"
           - python-version: "3.10"
           - python-version:  "3.11"
           - python-version:  "3.12"
@@ -124,7 +122,8 @@ jobs:
 
       - name: Run tests
         run: |
-          py.test daliuge-engine/test/deploy/ daliuge-engine/test/named_ports daliuge-engine/test/apps/test_branch.py daliuge-engine/test/test_tool.py --cov --show-capture=no
+          py.test daliuge-engine/test/end_to_end/ --cov --show-capture=no
+
 
       - name: Update to coveralls
         env:

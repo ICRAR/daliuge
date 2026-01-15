@@ -28,59 +28,28 @@ the system.
 # It is of utmost importance that this is the *first* thing we do any time
 # we load daliuge up. Most modules in daliuge that have a logger create it at
 # import time, so we need to perform this setup before doing any other imports
-def setup_logger_class():
 
-    # Doc building is failing due with "ValueError: Empty module name" in
-    # "from . import drop" further below, which I can't easily explain.
-    # Just skip this setup in RTD for the time being
-    import os
+import logging
 
-    if os.environ.get("READTHEDOCS", None) == "True":
-        return
+try:
+    # Avoid circular import problems if called during documentation or setup
+    from dlg.dlg_logging import setup_logger_class
+except ImportError:
+    setup_logger_class = None
 
-    import logging
+if setup_logger_class is not None:
+    current_logger_class = logging.getLoggerClass()
+    if current_logger_class.__name__ != "_DlgLogger":
+        # This ensures the USER level and DlgLogger class are always set up
+        setup_logger_class()
+        del setup_logger_class
+else:
+    # If we can’t import it (e.g. in docs), just continue gracefully
+    print("Warning: dlg.runtime.dlg_logging not available, skipping logger setup")
 
-    # To avoid 'No handlers could be found for logger' messages during testing
-    logging.getLogger(__name__).addHandler(logging.NullHandler())
-
-    # Use our own logger class, which knows about the currently executing app
-    class _DlgLogger(logging.Logger):
-        def makeRecord(self, *args, **kwargs):
-            record = super(_DlgLogger, self).makeRecord(*args, **kwargs)
-
-            from .. import drop
-            from ..manager import session
-
-            # Try to get the UID of the drop ultimately in charge of sending this
-            # log record, if any
-            try:
-                drop = drop.track_current_drop.tlocal.drop
-            except AttributeError:
-                drop = None
-            try:
-                drop_uid = drop.humanKey if drop else ""
-            except AttributeError:
-                drop_uid = ""
-
-            # Do the same with the session_id, which can be found via the drop (if any)
-            # or checking if there is a session currently executing something
-            session_id = ""
-            if drop and hasattr(drop, "dlg_session_id"):
-                session_id = drop.dlg_session_id
-            else:
-                try:
-                    session_id = session.track_current_session.tlocal.session.sessionId
-                except AttributeError:
-                    pass
-            record.drop_uid = drop_uid
-            record.session_id = session_id
-            return record
-
-    logging.setLoggerClass(_DlgLogger)
-
-
-setup_logger_class()
-del setup_logger_class
+# -------------------------------------------------------------------------
+# Continue with the rest of the runtime imports
+# -------------------------------------------------------------------------
 
 from dlg.common.version import git_version as __git_version__
 from dlg.common.version import version as __version__

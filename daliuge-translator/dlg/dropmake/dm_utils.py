@@ -55,23 +55,6 @@ class GInvalidNode(GraphException):
     pass
 
 
-class Port(dict):
-    """
-    Class to represent a port of a node
-    """
-
-    def __init__(self, port_type, port_name, port_id):
-        self.port_type = port_type
-        self.port_name = port_name
-        self.port_id = port_id
-        self.target_id = ""
-
-    def __str__(self):
-        return f'{{"{self.port_name}":{{"id":"{self.port_id}", "type":"{self.port_type}", "target_id": "{self.target_id}"}}}}'
-
-    def __repr__(self):
-        return f'{{"{self.port_name}":{{"id":"{self.port_id}", "type":"{self.port_type}", "target_id": "{self.target_id}"}}}}'
-
 def get_lg_ver_type(lgo):
     """
     Get the version type of this logical graph
@@ -155,13 +138,6 @@ def convert_fields(lgo:dict) -> dict:
                 node[name] = field.get("value", "")
                 if node[name] == "":
                     node[name] = field.get("defaultValue", "")
-            port = field.get("usage", "")
-            if port in ["InputPort", "OutputPort", "InputOutput"]:
-                node[name] = f"<port>: {Port(port, name, field['id'])}"
-                if port in ["InputPort", "InputOutput"]:
-                    node["inputPorts"][field["id"]] = {"type":port, "name": name, "source_id": ""}
-                elif port in ["OutputPort", "InputOutput"]:
-                    node["outputPorts"][field["id"]] = {"type":port, "name": name, "target_id": ""}
     return lgo
 
 
@@ -304,11 +280,6 @@ def convert_mkn(lgo):
 
         for mok in mkn_output_keys:
             n_products_map[mok] = new_id
-
-        #        del node_split_n["inputApplicationName"]
-        #        del node_split_n["outputApplicationName"]
-        #        del node_split_n["outputAppFields"]
-        # del node_split_n['intputAppFields']
 
         new_field_kn = {
             "name": "num_of_copies",
@@ -793,6 +764,7 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
         "fields": "inputAppFields",
         "inputApp": True,
     }
+
     input_node = _create_from_node(
         subgraph_node, subgraph_node["inputApplicationType"], input_app_args
     )
@@ -812,6 +784,55 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
     )
 
     return input_node, output_node
+
+def extract_globals(logical_graph: dict):
+    """
+    Extract variables defined in the GlobalVariableDROP and replace them across the
+    graph. Once all globals are extracted/replaced, we remove the GlobalVariableDrop from
+    the Logical Graph.
+
+    :param logical_graph:
+    :return:
+    """
+    type_converter = {
+        "Integer": int,
+        "Float": float,
+        "String": str,
+        "Boolean": lambda x: x.lower() in ("true", "1")
+    }
+
+    global_nodes = [
+        node
+        for node in logical_graph["nodeDataArray"]
+        if node["category"] == "GlobalVariable"
+    ]
+
+    # Remove all globals from graph
+    for gn in global_nodes:
+        logical_graph["nodeDataArray"].remove(gn)
+
+    global_map = {}
+    for gn in global_nodes:
+        for fields in gn["fields"]:
+            global_map[fields["name"]] = {
+                'value': fields["value"],
+                'type': fields['type']
+            }
+
+    for node in logical_graph["nodeDataArray"]:
+        for field in node['fields']:
+            for gn, gv in global_map.items():
+                if isinstance(field['value'], str) and f"{{{gn}}}" in field["value"]:
+                    if gv['type'] in type_converter:
+                        converter = type_converter[gv['type']]
+                    else:
+                        raise ValueError(f"Unknown field type '{gv['type']}' in globals")
+                    field['type'] = gv['type']
+                    field['value'] = converter(field['value'].replace(
+                        f"{{{gn}}}", str(gv['value'])
+                    ))
+
+    return logical_graph
 
 
 def convert_subgraphs(lgo: dict) -> dict:

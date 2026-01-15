@@ -21,13 +21,12 @@
 #
 import logging
 import unittest
-import base64
-import pickle
 
 from dlg.apps import pyfunc
 from dlg.droputils import DROPWaiterCtx
 from dlg.data.drops import InMemoryDROP
 
+from dlg.utils import serialize_func
 from test.dlg_engine_testutils import AppArgsStore
 
 # func_code = (
@@ -42,8 +41,6 @@ def multiplier(x, y):
 
 def multiplier_error(x,y):
     return x["test"]
-
-translate = lambda x: base64.b64encode(pickle.dumps(x))
 
 def filter_logs_by_level(logs: list[dict], level: str):
     return [record for record in logs if record["Level"]==level]
@@ -62,12 +59,12 @@ class TestAppLogStorage(unittest.TestCase):
         self.logger = logging.getLogger(self.name)
         self.logger.root.setLevel("WARNING")
 
-        xDrop = InMemoryDROP("xDrop", "xDrop", pydata=translate(4))
-        yDrop = InMemoryDROP("yDrop", "yDrop", pydata=translate(2))
+        xDrop = InMemoryDROP("xDrop", "xDrop", pydata={"value":4, "type":"int"})
+        yDrop = InMemoryDROP("yDrop", "yDrop", pydata={"value":2, "type":"int"})
         self.result = InMemoryDROP("result", "result")
         self.input_drops = [xDrop, yDrop]
         func_name = "test.error_management.test_app_logging.multiplier_error"
-        fcode, fdefaults = pyfunc.serialize_func(func_name)
+        fcode, fdefaults = serialize_func(func_name)
 
         application_args = AppArgsStore()
         application_args.add_args(name="x",usage="InputPort")
@@ -99,8 +96,10 @@ class TestAppLogStorage(unittest.TestCase):
         This means we would expect to see only Warnings or Errors, and nothing below (e.g.
         INFO or DEBUG).
         """
-        logger = logging.getLogger(self.name)
+        logger = logging.getLogger(f"dlg.{self.name}")
+        # logger.root.setLevel("WARNING")
         name = logging.getLevelName(logger.root.getEffectiveLevel())
+
         self.assertEqual("WARNING", name)
         with DROPWaiterCtx(self, self.result, 5):
             for drop in self.input_drops:

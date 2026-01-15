@@ -47,6 +47,7 @@ from dlg.dropmake.dm_utils import (
     GInvalidLink,
     GInvalidNode,
     load_lg,
+    extract_globals
 )
 from dlg.dropmake.definition_classes import Categories
 from dlg.dropmake.lg_node import LGNode
@@ -87,6 +88,7 @@ class LG:
             lg = apply_active_configuration(lg)
 
         if LG_VER_EAGLE == lgver:
+            lg = extract_globals(lg)
             lg = convert_fields(lg)
             lg = convert_construct(lg)
             lg = convert_subgraphs(lg)
@@ -491,22 +493,12 @@ class LG:
             sname = slgn.getPortName("outputPorts", index=-1)
             tname = tlgn.getPortName("inputPorts", index=-1)
 
-            sout_ids = []
             # sname is dictionary of all output ports on the sDROP.
-            output_port = sname[llink["fromPort"]]
-            input_port = tname[llink["toPort"]]
-            # sdrop.addOutput(tdrop, name=output_port)
-            # tdrop.addProducer(sdrop, name=input_port)
-            if "port_map" not in tdrop:
-                tdrop["port_map"] = {input_port:output_port}
-            else:
-                tdrop["port_map"][input_port] = output_port
+            output_portname = sname[llink["fromPort"]]
+            input_portname = tname[llink["toPort"]]
+            sdrop.addOutput(tdrop, name=output_portname)
+            tdrop.addProducer(sdrop, name=input_portname)
 
-            for output_port in sname.keys():
-                if tdrop["oid"] not in sout_ids:
-                    sdrop.addOutput(tdrop, name=output_port)
-                    tdrop.addProducer(sdrop, name=output_port)
-                    sout_ids = [list(o.keys())[0] for o in sdrop["outputs"]]
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]
                 bc.add_output_param(tlgn.id, tgt_drop["oid"])
@@ -525,14 +517,8 @@ class LG:
                 # could be multiple ports, need to identify
                 portId = llink["toPort"] if "toPort" in llink else None
                 tname = tlgn.getPortName("inputPorts", portId=portId)
-                # logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
-                # logger.debug(
-                #     ">>> link from %s to %s (%s) (%s)",
-                #     sname,
-                #     tname,
-                #     llink,
-                #     portId,
-                # )
+                logger.debug("Found port names: IN: %s, OUT: %s", sname, tname)
+
                 if llink.get("is_stream", False):
                     logger.debug(
                         "link stream connection %s to %s",
@@ -540,7 +526,8 @@ class LG:
                         tdrop["oid"],
                     )
                     sdrop.addStreamingConsumer(tdrop, name=sname)
-                    tdrop.addStreamingInput(sdrop, name=sname)
+                    tdrop.addStreamingInput(sdrop, name=tname)
+
                 else:
                     sdrop.addConsumer(tdrop, name=sname)
                     tdrop.addInput(sdrop, name=tname)

@@ -21,17 +21,17 @@
 	<!-- custom bootstrap navbar -->
 	<nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #004085;">
 		<!-- Navbar content -->
-		<a href="/" class="navbar-brand inactiveLink" href="#" disabled>
+		<a href="/" class="navbar-brand inactiveLinkchat" href="#" disabled>
 			<object data="/static/icons/liu.svg" type="image/svg+xml" width="30" height="30" class="d-inline-block align-top" alt="LiuIcon"></object>
 			<img src="/static/icons/engine.svg" width="auto" height="30" class="d-inline-block align-top" alt="EngineIcon">
-			<span>{{dmType}}</span>
-		</a>
-		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span>{{dmType}}</span>
+            <span class="navbar-text text-muted">{{version}}</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
 		</button>
 		<div class="collapse navbar-collapse" id="navbarNav">
 			<ul class="nav navbar-nav navbar-center">
-
 			</ul>
 			<ul class="nav navbar-nav  ml-auto">
 			</ul>
@@ -57,7 +57,6 @@
 					<tbody>
 					</tbody>
 				</table>
-			<button id="addSessionBtn"  type="button" class="btn btn-secondary"><span class="fa fa-plus"></span> Add Session</button>
 			<button id="refreshListBtn" type="button" class="btn btn-secondary"><span class="fa fa-refresh"></span> Refresh</button>
 			<button id="resetBtn"       type="button" class="btn btn-secondary"><span class="fa fa-power-off"></span> Reset</button>
 		</div>
@@ -70,7 +69,6 @@
 
     var tbodyEl = d3.select("#sessionsTable tbody");
     var refreshBtn = d3.select('#refreshListBtn');
-    var addSessionBtn = d3.select('#addSessionBtn');
     var resetBtn = d3.select('#resetBtn');
 
 var dimUrlQuery = new URL(window.location.href);
@@ -84,7 +82,6 @@ if(dimUrl){
 }
 
 // Listeners for the two buttons
-addSessionBtn.on('click', function(){ promptNewSession(serverUrl, tbodyEl, refreshBtn); } );
 refreshBtn.on('click', function(){ loadSessions(serverUrl, tbodyEl, refreshBtn, null); } );
 if( reset ) {
 	resetBtn.on('click', function() {

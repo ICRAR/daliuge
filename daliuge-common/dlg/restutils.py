@@ -192,7 +192,7 @@ class RestClient(object):
 
         if content and hasattr(content, "read"):
             headers["Transfer-Encoding"] = "chunked"
-            headers["Origin"] = "http://dlg-trans.local:8084"
+            headers["Origin"] = "http://dlg-tm.localhost"
             content = chunked(content)
 
         self._conn = http.client.HTTPConnection(self.host, self.port)
@@ -213,6 +213,7 @@ class RestClient(object):
                 error = json.loads(self._resp.read().decode("utf-8"))
                 etype = getattr(exceptions, error["type"])
                 eargs = error["args"]
+
                 if etype == SubManagerException:
                     for host, args in eargs.items():
                         subetype = getattr(exceptions, args["type"])

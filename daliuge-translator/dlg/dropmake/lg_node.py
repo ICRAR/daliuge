@@ -1005,8 +1005,6 @@ class LGNode:
         # Behaviour is that child-nodes inherit reproducibility data from their parents.
         if self._reprodata is not None:
             kwargs["reprodata"] = self._reprodata.copy()
-        kwargs["outputPorts"] = self.jd.get("outputPorts", {})
-        kwargs["inputPorts"] = self.jd.get("inputPorts", {})
         drop_spec.update(kwargs)
         return drop_spec
 

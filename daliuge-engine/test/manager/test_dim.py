@@ -28,8 +28,6 @@ import unittest
 import shutil
 from asyncio.log import logger
 
-# import pkg_resources
-
 from dlg import utils, droputils
 from dlg.testutils import ManagerStarter
 from dlg.common import tool

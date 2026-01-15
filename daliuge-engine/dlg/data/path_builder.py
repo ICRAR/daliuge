@@ -36,19 +36,31 @@ import re
 import os
 import uuid
 
+from pathlib import Path
+from enum import Enum, auto
+
 NON_FILENAME_CHARACTERS = re.compile(fr":|{os.sep}")
 
-def default_map():
+class PathType(Enum):
+
+    File = auto()
+    Directory = auto()
+
+
+def construct_map(**kwargs):
     """
     Get the default map for the FSTRING replacement keywords
     """
-    return {
+    fstring_map = {
         "dlg": "DALIGUE",
         "datetime": datetime.date.today().strftime("%Y-%m-%d"),
         "uid": str(uuid.uuid4()),
-    } 
+        "auto": base_uid_pathname(kwargs.get("uid"), kwargs.get("humanKey"))
+    }
+    fstring_map.update(**kwargs)
+    return fstring_map
 
-def base_uid_filename(uid: str, humanKey: str):
+def base_uid_pathname(uid: str, humanKey: str):
     """
     This a basic filename generator, using the UID and humandReadableKey. The function
     returns only the name of the file, and expects the full filepath to be handled by
@@ -121,27 +133,62 @@ def find_dlg_fstrings(filename: str) -> list[str]:
         logging.warning("Data not in expected format %s",e)
         return opts
 
-
-def filepath_from_string(filename: str, dirname: str = "", **kwargs) -> str:
+def replace_dlg_fstring(path: str, dlg_strings: dict) -> str:
     """
-    Attempts to construct a filename from filename and possible mappings, which are
-    built from a combination of FSTRING_MAP and **kwargs.
+    Perform the replacement for each dlg fstring found in path
+
+    :param path: the path 'template' we are modifying
+    :param dlg_strings: the dictionary of strings
+    :return: modified path with all possible strings replaced
+    """
+
+    opts=[]
+    opts.extend(find_dlg_fstrings(path))
+    for fp in opts:
+        path = path.replace(f"{{{fp}}}", dlg_strings[fp])
+    return path
+
+
+def filepath_from_string(path: str,
+                         path_type: PathType,
+                         dirname: str = "",
+                         relative=False,
+                         **kwargs) -> (
+        str):
+    """
+    Attempts to construct a path from path, dirname, and possible string replacements.
+    The replacements are built from a combination of FSTRING_MAP and **kwargs.
+
+    If path_type is PathType.Directory and we do not have a 'path', we do not create a
+    base_uid_pathname, for we do not need to create a filename. Instead, we use dirname
+    only to construct the final path.
 
     Returns
     -------
-    filename
+    path: The provisional path provided. This may be empty, a file-path, or a directory path.
+    path_type: An indicator of what
+    dirname
     """
 
-    opts = []
-    fstring_map = default_map() 
-    fstring_map.update(kwargs)
-    if not filename and "humanKey" in fstring_map:
-        return base_uid_filename(fstring_map["uid"], fstring_map["humanKey"])
-    elif not filename:
-        return filename
+    fstring_map = construct_map(**kwargs)
+    if path_type == PathType.Directory and not path:
+        path = "" # The path we want is a directory DROP and we do not care about
+    elif not path and "humanKey" in fstring_map:
+        return base_uid_pathname(fstring_map["uid"], fstring_map["humanKey"])
+    elif not path:
+        return path
 
-    opts.extend(find_dlg_fstrings(filename))
-    for fp in opts:
-        filename = filename.replace(f"{{{fp}}}", fstring_map[fp])
+    expanded_path = os.path.expandvars(path)
+    expanded_dirname = os.path.expandvars(dirname)
 
-    return f"{dirname}/{filename}" if dirname else filename
+    if expanded_path == path and "$" in expanded_path:
+        raise RuntimeError(f"Environment variable in path {path} not set!")
+    if expanded_dirname == dirname and "$" in expanded_dirname:
+        raise RuntimeError(f"Environment variable in path {dirname} not set!")
+
+    expanded_path = replace_dlg_fstring(expanded_path, fstring_map)
+
+    if Path(expanded_path).is_absolute() or relative:
+        return expanded_path
+    else:
+        return f"{expanded_dirname}/{expanded_path}" if expanded_dirname else expanded_path

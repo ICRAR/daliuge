@@ -20,7 +20,7 @@
 //    MA 02111-1307  USA
 //
 
-var SESSION_STATUS = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished', 'Cancelled']
+var SESSION_STATUS = ['Pristine', 'Building', 'Deploying', 'Running', 'Finished', 'Cancelled', 'Failed']
 var STATUS_CLASSES = ['initialized', 'writing', 'completed', 'error', 'expired', 'deleted', 'cancelled', 'skipped']
 var EXECSTATUS_CLASSES = ['not_run', 'running', 'finished', 'error', 'cancelled', 'skipped']
 var TYPE_CLASSES = ['app', 'container', 'socket', 'plain']
@@ -82,7 +82,7 @@ function uniqueSessionStatus(status) {
 			function (prev, v, idx, array) {
 				if (prev == -1) {
 					return -1;
-				} else if (prev == 3 && v == 4 || prev == 4 && v == 3) {
+				} else if (prev == 3 && v == 4 || prev == 4 && v == 3 || prev == 3 && v == 6) {
 					return 3;
 				}
 				return (prev == v) ? v : -1;
@@ -273,6 +273,12 @@ function loadSessions(serverUrl, tbodyEl, refreshBtn, selectedNode, delay) {
 				$(this).parent().removeClass("progressRunning")
 			} else if (currentStatus === "Pristine") {
 				$(this).css("color", "#b93a46");
+				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled", true)
+				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled", false)
+				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled", true)
+				$(this).parent().removeClass("progressRunning")
+			} else if (currentStatus === "Failed") {
+				$(this).css("color", "#FF0000");
 				$(this).parent().find(".actions").find("button.cancelSession").attr("disabled", true)
 				$(this).parent().find(".actions").find("button.deleteSession").attr("disabled", false)
 				$(this).parent().find(".actions").find("button.sessionLogs").attr("disabled", true)
@@ -525,6 +531,8 @@ function setStatusColor(status) {
 		$("#cancelBtn").hide();
 	} else if (status === "Running") {
 		$("#session-status").css("color", "#ecde7b");
+	} else if (status === "Failed") {
+		$("#session-status").css("color", "#ff0000");
 	} else {
 		$("#session-status").css("color", "lime");
 		$("#cancelBtn").hide();
@@ -580,7 +588,7 @@ function startStatusQuery(serverUrl, sessionId, selectedNode, graph_update_handl
 			// to know when we go to RUNNING.
 			// During RUNNING (or potentially FINISHED/CANCELLED, if the execution is
 			// extremely fast) we need to start updating the status of the graph
-			if (status === 3 || status === 4 || status === 5) {
+			if (status === 3 || status === 4 || status === 5 || status === 6) {
 				startGraphStatusUpdates(serverUrl, sessionId, selectedNode, delay,
 					status_update_handler);
 			}
@@ -621,7 +629,7 @@ function _addNode(g, doSpec, url) {
 	var typeClass = doSpec.type;
 	var typeShape = TYPE_SHAPES[doSpec.type];
 	var notes = '';
-	// console.log('Drop type', doSpec.type)
+	console.log('Drop type', doSpec.type)
 	if (doSpec.name) {
 		notes = "<span>" + doSpec.name + "</span>"
 	}
@@ -635,16 +643,21 @@ function _addNode(g, doSpec, url) {
 	else if (doSpec.type == 'plain') {
 		notes += 'storage: ' + doSpec.storage;
 	}
-    url = url.replace("api/","") + "/graph/drop/" +  doSpec.oid;
-    let link = "<a href=" + url +  " target='_blank'>Details</a>";
+    log_url = url.replace("api/","") + "/graph/drop/" +  doSpec.oid;
+    file_url = url.replace("api/","") + "/graph/drop/" + "data/" + doSpec.oid ;
+//    url = url + "/graph/drop/" +  doSpec.oid;
+    let log_link = "<a href=" + log_url +  " target='_blank'>Details</a>";
 	var html = '<div class="drop-label ' + typeShape + '" id="id_' + oid + '">';
 	html += '<span class="notes">' + notes + '</span>';
     oid_date = doSpec.oid.split("_")[0];
 	human_readable_id = oid_date + "_" + doSpec.humanReadableKey.toString()
 	html += '<span style="font-size: 13px;">' + human_readable_id + '</span>';
-	if (doSpec.categoryType != "Data") {
-	    html += '<span style="font-size: 13px;">' + link + '</span>';
+	html += '<span style="font-size: 13px;float: left">' + log_link + '</span>';
+	if (doSpec.category == 'File'){
+	    let file_link = "<a href=" + file_url +  " target='_blank'>Download</a>";
+	    html += '<span style="font-size: 13px;float: right">' + file_link + '</span>';
 	}
+
 	html += "</div>";
 	g.setNode(oid, {
 		labelType: "html",

@@ -119,7 +119,7 @@ Running the development version of the engine and the translator follows the sam
 
     make docker-run
 
-You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://localhost:8084. Congratulations! You now have access to a complete |daliuge| system on your local computer!
+You can use EAGLE on the URL: https://eagle.icrar.org and point your EAGLE configuration for the translator to http://dlg-tm.localhost. Congratulations! You now have access to a complete |daliuge| system on your local computer!
 
 More detailed information about running and controlling the |daliuge| system can be found in the :ref:`running`.
 

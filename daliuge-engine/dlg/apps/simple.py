@@ -26,6 +26,7 @@ from numbers import Number
 import pickle
 import random
 from typing import List, Optional
+import dill
 import requests
 import logging
 import time
@@ -35,6 +36,7 @@ from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
+from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
 from dlg.apps.branch import BranchAppDrop
 from dlg.drop import track_current_drop
@@ -50,7 +52,7 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
-from dlg.exceptions import DaliugeException
+from dlg.exceptions import DaliugeException, InvalidDropException
 from dlg.rpc import DropProxy
 
 logger = logging.getLogger(f"dlg.{__name__}")
@@ -175,12 +177,13 @@ class CopyApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
+    @track_current_drop
     def run(self):
         logger.debug("Using buffer size %d", self.bufsize)
         logger.info(
             "Copying data from inputs %s to outputs %s",
-            [x.name for x in self.inputs],
-            [x.name for x in self.outputs],
+            [(getattr(x, "path", "") or x.name) for x in self.inputs],
+            [(getattr(x, "path", "") or x.name) for x in self.outputs],
         )
         self.copyAll()
         logger.info(
@@ -197,6 +200,15 @@ class CopyApp(BarrierAppDROP):
         if isinstance(inputDrop, ContainerDROP):
             for child in inputDrop.children:
                 self.copyRecursive(child)
+        elif isinstance(inputDrop, DirectoryDROP):
+            for outputDrop in self.outputs:
+                if isinstance(outputDrop, DirectoryDROP):
+                    droputils.copyDirectoryContents(inputDrop,outputDrop)
+                else:
+                    raise InvalidDropException(
+                        self,
+                        "Can't copy directory to non-DirectoryDROP"
+                    )
         else:
             for outputDrop in self.outputs:
                 droputils.copyDropContents(inputDrop, outputDrop, bufsize=self.bufsize)
@@ -277,7 +289,6 @@ class RandomArrayApp(BarrierAppDROP):
         super(RandomArrayApp, self).initialize(**kwargs)
         self._keep_array = keep_array
 
-
     @track_current_drop
     def run(self):
         self._run()
@@ -340,8 +351,6 @@ class AverageArraysApp(BarrierAppDROP):
     method:  string <['mean']|'median'>, use mean or median as method.
     """
 
-    from numpy import mean, median
-
     component_meta = dlg_component(
         "AverageArraysApp",
         "Average Array App.",
@@ -354,10 +363,11 @@ class AverageArraysApp(BarrierAppDROP):
     methods = ["mean", "median"]
     method = dlg_string_param("method", methods[0])
 
-    def __init__(self, oid, uid, **kwargs):
-        super().__init__(oid, kwargs)
+    def initialize(self, **kwargs):
+        super(AverageArraysApp, self).initialize(**kwargs)
         self.marray = []
 
+    @track_current_drop
     def run(self):
         # At least one output should have been added
 
@@ -439,6 +449,7 @@ class GenericGatherApp(BarrierAppDROP):
                 value = droputils.allDropContents(ipt)
                 output.write(value)
 
+    @track_current_drop
     def run(self):
         self.readWriteData()
 
@@ -532,9 +543,14 @@ class ArrayGatherApp(BarrierAppDROP):
         for output in outputs:
             for ipt in inputs:
                 value = droputils.allDropContents(ipt)
-                self.value_list.append(pickle.loads(value))
-            output.write(pickle.dumps(self.value_list))
+                try:
+                    # TODO: This really needs to use the encoding but requires a drop data-type/encoding.
+                    self.value_list.append(dill.loads(value))
+                except _pickle.PickleError:
+                    self.value_list.append(value)
+            output.write(dill.dumps(self.value_list))
 
+    @track_current_drop
     def run(self):
         self.value_list = []
         self.readWriteData()
@@ -592,6 +608,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
     function: str = dlg_string_param("function", "sum")  # type: ignore
     reduce_axes: list = dlg_list_param("reduce_axes", "None")  # type: ignore
 
+    @track_current_drop
     def run(self):
         if len(self.inputs) < 1:
             raise Exception(f"At least one input should have been added to {self}")
@@ -676,6 +693,7 @@ class HelloWorldApp(BarrierAppDROP):
 
     greet = dlg_string_param("greet", "World")
 
+    @track_current_drop
     def run(self):
         ins = self.inputs
         # if no inputs use the parameter else use the input
@@ -685,10 +703,10 @@ class HelloWorldApp(BarrierAppDROP):
             raise Exception("Only one input expected for %r" % self)
         else:  # the input is expected to be a vector. We'll use the first element
             try:
-                phrase = str(pickle.loads(droputils.allDropContents(ins[0]))[0])
-            except _pickle.UnpicklingError:
-                phrase = str(droputils.allDropContents(ins[0]), encoding="utf-8")
-            self.greeting = f"Hello {phrase}"
+                phrase = pickle.loads(droputils.allDropContents(ins[0]))[0]
+            except (_pickle.UnpicklingError, TypeError, IndexError):
+                phrase = droputils.allDropContents(ins[0])
+            self.greeting = f"Hello, {phrase}"
         logger.debug("Greeting is %s", self.greeting)
 
         outs = self.outputs
@@ -733,6 +751,7 @@ class UrlRetrieveApp(BarrierAppDROP):
 
     url = dlg_string_param("url", "")
 
+    @track_current_drop
     def run(self):
         try:
             logger.info("Accessing URL %s", self.url)
@@ -853,6 +872,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
     num_of_copies: int = dlg_int_param("num_of_copies", 1)
     scatter_axes: List[int] = dlg_list_param("scatter_axes", "[0]")
 
+    @track_current_drop
     def run(self):
         if len(self.inputs) * self.num_of_copies != len(self.outputs):
             raise DaliugeException(
@@ -891,6 +911,7 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
         self.result = self._popArg(kwargs, "result", True)
         BranchAppDrop.initialize(self, **kwargs)
 
+    @track_current_drop
     def run(self):
         pass
 
@@ -911,7 +932,7 @@ class SimpleBranch(BranchAppDrop, NullBarrierApp):
 # @param tag daliuge
 # @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
 # @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
-# @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
+# @param x /Object/ApplicationParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
 # @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
 # @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
@@ -934,6 +955,14 @@ class Branch(PyFuncApp):
     bufsize = dlg_int_param("bufsize", 65536)
     result = dlg_bool_param("result", False)
 
+    def _get_drop_from_port(self, result):
+        for output in self.outputs:
+            for value in self.parameters['outputPorts'].values():
+                if value['target_id'] in output.oid:
+                    if value['name'] == result:
+                        return output
+        raise RuntimeError
+
     def write_results(self,result:bool=False):
         """
         Copy the input to the output identified by the condition function.
@@ -943,33 +972,30 @@ class Branch(PyFuncApp):
         if not self.outputs:
             return
 
+
         go_result = str(self.result).lower()
         nogo_result = str(not self.result).lower()
 
-        try:
-            nogo_drop = getattr(self, nogo_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the False condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
-        try:
-            go_drop = getattr(self, go_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the True condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
+        # if nogo_result == 'true':
+        #     raise Exception
+        go_drop_oid = next(iter(self._port_names['output'].get(go_result,[])), None)
+        nogo_drop_oid = next(iter(self._port_names['output'].get(nogo_result,[])), None)
 
-        logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
+        go_drop = next(o for o in self.outputs if o.oid == go_drop_oid)
+        nogo_drop = next(o for o in self.outputs if o.oid == nogo_drop_oid)
+
         nogo_drop.skip()  # send skip to correct branch
 
         if self.inputs and hasattr(go_drop, "write"):
             droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], go_drop, bufsize=self.bufsize
+                    self.x, go_drop, bufsize=self.bufsize
             )
+            logger.debug("Sent the following data to correct branch: %s",
+                         droputils.allDropContents(self.x))
+
         else:  # this enables a branch based only on the condition function
-            d = pickle.dumps(self.parameters[self.argnames[0]])
+            d = pickle.dumps(self.parameters['x'])
+            logger.debug("Sending following data to correct branch: %s", self.parameters['x'])
             # d = self.parameters[self.argnames[0]]
             if hasattr(go_drop, "write"):
                 go_drop.write(d)
@@ -1004,13 +1030,22 @@ class PickOne(BarrierAppDROP):
 
     def readData(self):
         ipt = self.inputs[0]
-        data = pickle.loads(droputils.allDropContents(ipt))
+        contents = droputils.allDropContents(ipt)
+        data = []
+        try:
+            data = pickle.loads(contents)
+        except EOFError:
+            # No data stored in drop
+            logger.error("There was no data in the Memory drop %s", ipt.oid)
         # data = droputils.allDropContents(input)
         # data = dill.loads(base64.b64decode(data))
+        logger.warning("Data type is: %s", type(data))
 
         # make sure we always have a ndarray with at least 1dim.
         if type(data) not in (list, tuple) and not isinstance(data, (np.ndarray)):
             logger.warning("Data type not in [list, tuple]: %s", data)
+            if not data:
+                return None, []
             raise TypeError
         if isinstance(data, np.ndarray) and data.ndim == 0:
             data = np.array([data])
@@ -1035,6 +1070,7 @@ class PickOne(BarrierAppDROP):
                 output.len = len(d)
             output.write(d)
 
+    @track_current_drop
     def run(self):
         value, rest = self.readData()
         self.writeData(value, rest)
@@ -1083,6 +1119,7 @@ class ListAppendThrashingApp(BarrierAppDROP):
         self.marray = []
         super(ListAppendThrashingApp, self).initialize(**kwargs)
 
+    @track_current_drop
     def run(self):
         # At least one output should have been added
         outs = self.outputs
