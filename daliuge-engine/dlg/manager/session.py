@@ -628,18 +628,18 @@ class Session(object):
             downStreamDrops[:] = [
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)
             ]
-            if drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
-                drop.cancel()
             if drop.oid in failed_drop_oids:
                 failed_drops.append(drop)
+            elif drop.status in (DROPStates.INITIALIZED, DROPStates.WRITING):
+                drop.cancel()
 
         for drop in failed_drops:
-            drop.status=DROPStates.ERROR
             if isinstance(drop, AppDROP):
-                drop.execStatus=AppDROPStates.ERROR
-
-        # self.finish()
-
+                drop.execStatus= AppDROPStates.ERROR
+                drop.notifyAppisFinished()
+            else:
+                drop.status = DROPStates.ERROR
+                drop.setError()
 
     @track_current_session
     def end(self):

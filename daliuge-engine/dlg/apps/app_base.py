@@ -7,10 +7,11 @@ import math
 import threading
 
 from dlg.exceptions import (InvalidDropException, InvalidRelationshipException,
-                            ErrorManagerCaughtException, InvalidDROPState)
+                            ErrorManagerCaughtException, InvalidDROPState,
+                            OutputDROPCancelled)
 from dlg.drop import track_current_drop
 from dlg.drop_loaders import load_dill
-from dlg.data.drops.data_base import DataDROP
+from dlg.data.drops.data_base import DataDROP, DataDROPError
 from dlg.data.drops.container import ContainerDROP
 from dlg.ddap_protocol import (
     AppDROPStates,
@@ -151,6 +152,7 @@ class AppDROP(ContainerDROP):
             self._inputs[uid] = inputDrop
             if back:
                 inputDrop.addConsumer(self, False)
+            self.subscribe(inputDrop, "dropFailed")
 
     @property
     def inputs(self) -> List[DataDROP]:
@@ -301,6 +303,9 @@ class AppDROP(ContainerDROP):
         """Moves this application drop to its CANCELLED state"""
         super(AppDROP, self).cancel()
         self.execStatus = AppDROPStates.CANCELLED
+
+    def notifyAppisFinished(self):
+        self._notifyAppIsFinished()
 
     def skip(self):
         """Moves this application drop to its SKIPPED state"""
@@ -597,6 +602,12 @@ class InputFiredAppDROP(AppDROP):
     def exists(self):
         return True
 
+    def _write(self, output, data):
+        retval = output.write(data)
+        if retval == DataDROPError.DROP_CANCELLED_BEFORE_WRITE:
+            raise OutputDROPCancelled(output, "Cancelled")
+        else:
+            return retval
 
 
 class BarrierAppDROP(InputFiredAppDROP):

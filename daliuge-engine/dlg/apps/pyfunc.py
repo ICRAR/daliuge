@@ -38,7 +38,6 @@ from contextlib import redirect_stdout
 
 from dlg import drop_loaders
 from dlg.data.path_builder import filepath_from_string
-from dlg.ddap_protocol import DROPStates
 from dlg.drop import track_current_drop
 from dlg.runtime.error_management import proxy_intercept
 from dlg.utils import deserialize_data
@@ -51,8 +50,7 @@ from dlg.named_port_utils import (
     resolve_drop_parser,
 )
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException, \
-     OutputDROPCancelled
+from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException
 from dlg.meta import (
     dlg_string_param,
     dlg_dict_param,
@@ -926,19 +924,23 @@ class PyFuncApp(BarrierAppDROP):
             result = self.result
             tmp_parser = self._match_parser(o)
             parser = resolve_drop_parser(tmp_parser)
-            if o.status == DROPStates.CANCELLED:
-                raise OutputDROPCancelled(o, f"{o.oid} cancelled before write.")
+            # if o.status == DROPStates.CANCELLED:
+            #     raise OutputDROPCancelled(o, f"{o.oid} cancelled before write.")
             if parser is DropParser.PICKLE:
-                o.write(pickle.dumps(result))
+                self._write(o, pickle.dumps(result))
+                # o.write(pickle.dumps(result))
             elif parser is DropParser.DILL:
                 logger.debug("Writing dilled result %s to %s", type(result), o)
-                o.write(dill.dumps(result))
+                self._write(o, dill.dumps(result))
+                # o.write(dill.dumps(result))
             elif parser is DropParser.EVAL or parser is DropParser.UTF8:
                 if isinstance(result, str):
-                    o.write(result)
+                    self._write(o, result)
+                    # o.write(result)
                 else:
                     encoded_result = repr(result).encode("utf-8")
-                    o.write(encoded_result)
+                    self._write(o, encoded_result)
+                    # o.write(encoded_result)
             elif parser is DropParser.NPY:
                 import numpy as np
 
@@ -949,7 +951,8 @@ class PyFuncApp(BarrierAppDROP):
                         raise (e)
                 drop_loaders.save_npy(o, result)
             elif parser is DropParser.RAW:
-                o.write(result)
+                self._write(o, result)
+                # o.write(result)
             elif parser is DropParser.BINARY:
                 drop_loaders.save_binary(o, result)
             else:

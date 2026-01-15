@@ -83,8 +83,12 @@ function uniqueSessionStatus(status) {
 				if (prev == -1) {
 					return -1;
 				} else if (prev == 3 && v == 4 || prev == 4 && v == 3 || prev == 3 && v == 6) {
-					return 3;
-				}
+                    return 3;
+                } else if (prev === 6 && v === 4 || prev === 4 && v === 6 ) {
+                    // If we have ever marked ourselves as failed then we always
+                    // mark ourselves as failed.
+                    return 6;
+                }
 				return (prev == v) ? v : -1;
 			}
 		);
