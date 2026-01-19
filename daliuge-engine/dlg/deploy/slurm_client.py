@@ -34,8 +34,11 @@ import string
 import time
 import dlg.remote as dlg_remote
 
+from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
 from paramiko.ssh_exception import SSHException
+
+from dlg.exceptions import RemoteSessionRuntimeException
 from dlg.runtime import __git_version__ as git_commit
 
 from dlg.deploy.configs import ConfigFactory, init_tpl, dlg_exec_str
@@ -43,6 +46,31 @@ from dlg.deploy.configs import DEFAULT_MON_PORT, DEFAULT_MON_HOST
 from dlg.deploy.deployment_utils import find_numislands, label_job_dur
 
 LOGGER = logging.getLogger(f"dlg.{__name__}")
+
+def process_config(config_file: str):
+    """
+    Use configparser to process INI file
+
+    Current functionality: 
+        - Returns remote environment config (e.g. DLG_ROOT, HOME etc.)
+
+    Future Functionality: 
+        - Graph translation parameters
+        - Engine parameters
+
+    :returns: dict, config information
+    """
+    parser = ConfigParser(interpolation=ExtendedInterpolation())
+    all_opts = {}
+    parser.read(config_file)
+    for s in parser.sections():
+        all_opts |= (dict(parser[s]))
+    return {key: value for key, value in all_opts.items() if value}
+
+def process_slurm_template(template_file: str):
+    template = Path(template_file)
+    with template.open('r') as fp:
+        return fp.read()
 
 class SlurmClient:
     """
@@ -62,7 +90,6 @@ class SlurmClient:
     def __init__(
         self,
         dlg_root: str = "",
-        log_root: str = "",
         host: str = "",
         acc: str = "",
         physical_graph_template_file: str = "",  # filename of physical graph template
@@ -89,6 +116,8 @@ class SlurmClient:
         slurm_template=None,
         suffix=None,
     ):
+        """
+
         ## Here, we want to separate out the following
         ## Config derived from CONFIG Factory - we replace with ini file
         ## Config derived from CLI, intended for replacement in the SLURM job script
@@ -96,7 +125,37 @@ class SlurmClient:
         ## Config derived from CLI that is used in the final script call
         ## Any leftover config - we keep as normal
 
-        if config:
+        :param dlg_root:
+        :param host:
+        :param acc:
+        :param physical_graph_template_file:
+        :param logical_graph:
+        :param job_dur:
+        :param num_nodes:
+        :param run_proxy:
+        :param mon_host:
+        :param mon_port:
+        :param logv:
+        :param facility:
+        :param zerorun:
+        :param max_threads:
+        :param sleepncopy:
+        :param num_islands:
+        :param all_nics:
+        :param check_with_session:
+        :param submit:
+        :param remote:
+        :param pip_name:
+        :param username:
+        :param ssh_key:
+        :param config:
+        :param slurm_template:
+        :param suffix:
+        """
+
+        if os.path.isfile(config):
+            config = process_config(config)
+
             # Do the config from the config file
             try:
                 self.host = config.get('login_node')
@@ -115,7 +174,7 @@ class SlurmClient:
                       f"setup.")
                 sys.exit(1)
         else:
-            # Setup SLURM environment variables using config
+            # Setup SLURM environment variables using Factory
             config = ConfigFactory.create_config(facility=facility, user=username)
             self.host = config.getpar("host") if host is None else host
             self._acc = config.getpar("account") if (acc is None) else acc
@@ -128,7 +187,7 @@ class SlurmClient:
             self.exec_prefix = config.getpar("exec_prefix")
             self.username = username
         # sbatch 
-        self._slurm_template = slurm_template
+        self._slurm_template = process_slurm_template(slurm_template)
         self._job_dur = job_dur
         self._num_nodes = num_nodes if num_nodes else 1  # placeholder
 
@@ -159,11 +218,13 @@ class SlurmClient:
             if nn and nn >= self._num_nodes:
                 self._num_nodes = nn
 
-        self._logical_graph = ""
+        # self._logical_graph = ""
 
         # used for remote login/directory management.
         self._remote = remote
-        self.ssh_key = ssh_key
+        self.ssh_key = ssh_key if ssh_key else None
+
+        self.wait = True
     
     def create_session_suffix(self, suffix=None):
         """
@@ -405,7 +466,18 @@ class SlurmClient:
         else:
             print(f"Created job submission script {job_file_name}")
 
-        return self.fetch_remote_status(jobId)
+        if self.wait and self._submit:
+            jobId = self.fetch_remote_status(jobId)
+            return jobId
+        elif self.wait and not self._submit:
+            raise RemoteSessionRuntimeException(
+                self,
+                "Cannot wait for remote job submission without "
+                        "submitting. Make sure to set 'submit' to True if "
+                        "wanting to wait for SlurmClient (e.g. for a SubGraph.")
+        else:
+            return None
+
 
     def fetch_remote_status(self, jobId: str, timeout: int = 15):
         #Use sacct --jobs=jobID --format=state --noheader

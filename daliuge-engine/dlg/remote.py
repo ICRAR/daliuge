@@ -102,11 +102,11 @@ def createClient(host, username=None, pkeyPath=None):
     client.set_missing_host_key_policy(AutoAddPolicy())
     try:
         client.connect(host, username=username, key_filename=pkeyPath)
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         logger.warning(
             "File '%s' was not found, cannot create remote connection", pkeyPath
         )
-        sys.exit(1)
+        raise e
     return client
 
 

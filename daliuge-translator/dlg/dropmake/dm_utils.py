@@ -754,7 +754,9 @@ def _extract_subgraph_nodes(
     # This needs to take into account input/outputlinks, because these have the _ports_
     # that we want to keep track of.
 
+    # Get the application that goes into the output app and duplicate it completely?
     # Replace links from input node to the links in input_links
+
     for i, n in enumerate(input_links.values()):
         n['link']['from'] = links_from_input_node[i]['from']
         n['link']['fromPort'] = links_from_input_node[i]['fromPort']
@@ -789,11 +791,12 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
         "group_start": 1,
         "fields": "inputAppFields",
         "inputApp": True,
-        "name": subgraph_node["inputApplicationName"]
+        "name": subgraph_node["inputApplicationName"],
+        "categoryType": "Application",
     }
 
     input_node = _create_from_node(
-        subgraph_node, subgraph_node["inputApplicationType"], input_app_args
+        subgraph_node,  subgraph_node["inputApplicationType"], input_app_args
     )
 
     output_app_args = {
@@ -805,7 +808,8 @@ def _build_apps_from_subgraph_construct(subgraph_node: dict) -> (dict, dict):
         "group_start": 1,
         "fields": "outputAppFields",
         "outputApp": True,
-        "name": subgraph_node["outputApplicationName"]
+        "name": subgraph_node["outputApplicationName"],
+        "categoryType": "Application",
     }
     output_node = _create_from_node(
         subgraph_node, subgraph_node["outputApplicationType"], output_app_args

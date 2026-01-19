@@ -49,7 +49,7 @@ from dlg.named_port_utils import (
     resolve_drop_parser,
 )
 from dlg.apps.app_base import BarrierAppDROP
-from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException
+from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException, MemoryDROPTypeError
 from dlg.meta import (
     dlg_string_param,
     dlg_dict_param,
@@ -654,15 +654,19 @@ class PyFuncApp(BarrierAppDROP):
                 if hasattr(self, "input_parser")
                 else None
             )
-            keyargsDict, pargsDict = identify_named_ports(
-                inputs_dict,
-                pargsDict,
-                keyargsDict,
-                check_len=check_len,
-                mode="inputs",
-                addPositionalToKeyword=True,
-                parser=parser
-            )
+            try:
+                keyargsDict, pargsDict = identify_named_ports(
+                    inputs_dict,
+                    pargsDict,
+                    keyargsDict,
+                    check_len=check_len,
+                    mode="inputs",
+                    addPositionalToKeyword=True,
+                    parser=parser
+                )
+            except TypeError as e:
+                raise MemoryDROPTypeError(self, "Caused when trying to identify named "
+                                                "ports") from e
 
             # portargs.update(keyPortArgs)
         else:

@@ -89,6 +89,11 @@ class BashAppRuntimeError(DROPException):
     The BashShellApp has reported an error.
     """
 
+class MemoryDROPTypeError(DROPException):
+    """
+    There is an issue with writing pickle data
+    """
+
 class InvalidGraphException(DaliugeException):
     """
     An exception thrown when an invalid graph, or part of a graph, is given to
@@ -137,12 +142,12 @@ class NoDropException(DaliugeException):
     def __init__(self, drop_uid, reason=None):
         DaliugeException.__init__(self, drop_uid, reason)
         self._drop_uid = drop_uid
-        self._reason = reason
+        self.reason = reason
 
     def __str__(self):
         ret = f"NoDropException <drop_uid: {self._drop_uid}>"
-        if self._reason:
-            ret += f". Reason: {self._reason}"
+        if self.reason:
+            ret += f". Reason: {self.reason}"
         return ret
 
 class SessionException(DaliugeException):
@@ -151,12 +156,12 @@ class SessionException(DaliugeException):
     """
     def __init__(self, session_id, reason=None):
         self._session_id = session_id
-        self._reason = reason
+        self.reason = reason
 
     def __str__(self):
         ret = f"SessionException <session_id: {self._session_id}>"
-        if self._reason:
-            ret += f". Reason: {self._reason}"
+        if self.reason:
+            ret += f". Reason: {self.reason}"
         return ret
 
 
@@ -191,6 +196,10 @@ class InvalidSessionState(SessionException):
     in the expected state for that operation.
     """
 
+class RemoteSessionRuntimeException(SessionException):
+    """
+    An exception thrown when attempting to submit a remote exception
+    """
 
 class SubManagerException(DaliugeException):
     """

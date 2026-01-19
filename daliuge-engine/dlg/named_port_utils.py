@@ -109,6 +109,13 @@ def serialize_applicationArgs(applicationArgs):
     logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
     return pargs, kwargs
 
+def _evaluatePositionalArgs():
+    evaluatePositionalArgs
+    pass
+
+def _evaluateKeywordArgs():
+    pass
+
 def identify_named_ports(
     port_dict: dict,
     positionalArgs: list,
@@ -212,8 +219,6 @@ def identify_named_ports(
             if local_parser:
                 logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
                 value = local_parser(port_dict[keys[i]]["drop"])
-            # if not found in appArgs we don't put them into portargs either
-            # pargsDict.update({key: value})
                 keywordArgs[key].value = value
             keywordPortArgs.update({key: keywordArgs[key]})
             logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
