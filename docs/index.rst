@@ -26,11 +26,8 @@ Quick Start Guide
 
 Graph Patterns
 --------------
-:doc:`/graph_patterns/loop`
-   scatter
-   branch
-   subgraph
-   globals
+:doc:`/graph_patterns/app_data_patterns` |br|
+:doc:`/graph_patterns/construct_patterns` |br|
 
 Engine Fundamentals
 -----------------------
@@ -73,11 +70,8 @@ API Documentation
    :caption: Graph Patterns 
    :hidden: 
    
-   graph_patterns/loop
-   graph_patterns/branch
-   graph_patterns/scatter
-   graph_patterns/subgraph
-   graph_patterns/globals
+   graph_patterns/app_data_patterns
+   graph_patterns/construct_patterns
 
 .. toctree::
    :maxdepth: 2
