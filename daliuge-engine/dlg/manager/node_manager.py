@@ -39,6 +39,8 @@ import sys
 import threading
 import time
 import typing
+
+
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Future
 
 from dlg import constants
@@ -51,12 +53,13 @@ from dlg.apps.app_base import AppDROP, DropRunner
 from dlg.exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
-    DaliugeException,
+    DaliugeException, ErrorManagerCaughtException, SessionInterruptError,
 )
 from ..lifecycle.dlm import DataLifecycleManager
 
+from dlg.dlg_logging import USER, USERSTR
+logging.addLevelName(USER, USERSTR)
 logger = logging.getLogger(f"dlg.{__name__}")
-
 
 class NMDropEventListener(object):
     def __init__(self, nm, session_id):
@@ -310,10 +313,13 @@ class NodeManagerBase(DROPManager):
 
     def start(self, rpc_endpoint):
         super().start()
+        logger.log(USER, "Running NodeManager")
+        # logger.info("Running NodeManager")
         self.drop_runner.start(rpc_endpoint)
         self._dlm.startup()
 
     def shutdown(self):
+        logger.log(USER, "Running NodeManager")
         self._dlm.cleanup()
         self.drop_runner.close()
         super().shutdown()
@@ -343,7 +349,11 @@ class NodeManagerBase(DROPManager):
         logger.info("Created session %s", sessionId)
 
     def getSessionStatus(self, sessionId):
-        self._check_session_id(sessionId)
+        try:
+            self._check_session_id(sessionId)
+        except NoSessionException:
+            return None
+
         return self.sessions[sessionId].status
 
     def getSessionReproStatus(self, sessionId):
@@ -370,6 +380,9 @@ class NodeManagerBase(DROPManager):
     def getDropStatus(self, sessionId, dropId):
         return self.sessions[sessionId].getDropLogs(dropId)
 
+    def getDropData(self, sessionId, dropId):
+        return self.sessions[sessionId].getDropData(dropId)
+
     def getGraph(self, sessionId):
         self._check_session_id(sessionId)
         #  TODO: Ensure returns reproducibility data.
@@ -378,6 +391,9 @@ class NodeManagerBase(DROPManager):
     def getLogDir(self):
         return self.logdir
 
+    from dlg.runtime.error_management import manage_session_failure
+
+    @manage_session_failure
     def deploySession(self, sessionId, completedDrops: list[str] = None):
         self._check_session_id(sessionId)
         session = self.sessions[sessionId]
@@ -409,11 +425,17 @@ class NodeManagerBase(DROPManager):
         if self._error_listener:
             listeners.append(ErrorStatusListener(session, self._error_listener))
 
-        session.deploy(
-            completedDrops=completedDrops,
-            event_listeners=listeners,
-            foreach=foreach,
-        )
+        try:
+            session.deploy(
+                completedDrops=completedDrops,
+                event_listeners=listeners,
+                foreach=foreach,
+            )
+        except ErrorManagerCaughtException as exc:
+            session.cancel(interrupt=True)
+            raise SessionInterruptError(
+                "Session was interrupted due to Deploy failure"
+            ) from exc
 
     def cancelSession(self, sessionId):
         logger.info("Cancelling session: %s", sessionId)
@@ -433,7 +455,10 @@ class NodeManagerBase(DROPManager):
         return list(self.sessions.keys())
 
     def getGraphSize(self, sessionId):
-        self._check_session_id(sessionId)
+        try:
+            self._check_session_id(sessionId)
+        except NoSessionException:
+            return 0
         session = self.sessions[sessionId]
         return len(session.graph)
 
@@ -520,7 +545,7 @@ class ZMQPubSubMixIn(object):
         self._subscriptions = queue.Queue()
 
         # Starts background threads, but wait until their sockets are created
-        timeout = 30
+        timeout = 10
         self._event_publisher = self._start_thread(
             self._publish_events, "Evt pub", timeout
         )
@@ -629,8 +654,12 @@ class ZMQPubSubMixIn(object):
                     continue
                 endpoint = utils.b2s(msg["endpoint"])
                 sub_endpoints.add(endpoint)
-                finished_evt = pending_connections.pop(endpoint)
-                finished_evt.set()
+                try:
+                    finished_evt = pending_connections.pop(endpoint)
+                    finished_evt.set()
+                except KeyError:
+                    logger.warning("Issue removing endpoint '%s'; endpoint may have "
+                                   "shutdown unexpectedly", endpoint)
             except zmq.error.Again:
                 pass
 

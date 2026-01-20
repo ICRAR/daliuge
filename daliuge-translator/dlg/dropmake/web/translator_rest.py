@@ -30,6 +30,7 @@ import logging
 import os
 import pathlib
 import signal
+import socket
 import sys
 import threading
 import time
@@ -70,6 +71,7 @@ from dlg.common.reproducibility.reproducibility import (
 
 from dlg import utils
 from dlg.common.deployment_methods import DeploymentMethods
+from dlg.common.version import version as dlg_version
 from dlg.common.k8s_utils import check_k8s_env
 from dlg.dropmake.lg import GraphException
 from dlg.dropmake.pg_manager import PGManager
@@ -140,7 +142,7 @@ gen_pgt_sem = threading.Semaphore(1)
 global lg_dir
 global pgt_dir
 global pg_mgr
-LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", package="dlg.dropmake"))
+LG_SCHEMA = json.loads(file_as_string("lg.graph.schema", module="dlg.dropmake"))
 
 
 @app.post("/jsonbody", tags=["Original"])
@@ -251,6 +253,7 @@ def load_pg_viewer(
                 "partition_info": None,
                 "title": "Physical Graph Template",
                 "error": None,
+                "version": dlg_version
             },
         )
         return tpl
@@ -409,6 +412,7 @@ def gen_pgt(
                 "title": "Physical Graph Template%s"
                 % ("" if num_partitions == 0 else "Partitioning"),
                 "error": None,
+                "version": dlg_version
             },
         )
         return tpl
@@ -486,7 +490,6 @@ async def gen_pgt_post(
         except ValidationError as ve:
             error = "Validation Error {1}: {0}".format(str(ve), lg_name)
             logger.error(error)
-            # raise HTTPException(status_code=500, detail=error)
         logical_graph = prepare_lgt(logical_graph, rmode)
         # LG -> PGT
         # TODO: Warning: I dislike doing it this way with a passion, however without changing the tests/ usage of the api getting all form fields is difficult.
@@ -523,6 +526,7 @@ async def gen_pgt_post(
                 "title": "Physical Graph Template%s"
                 % ("" if num_par == 0 else "Partitioning"),
                 "error": None,
+                "version": dlg_version
             },
         )
         return tpl
@@ -1101,6 +1105,7 @@ def index(request: Request):
             "partition_info": None,
             "title": "Physical Graph Template",
             "error": None,
+            "version":dlg_version
         },
     )
     return tpl
@@ -1201,7 +1206,8 @@ def run(_, args):
             # This is the logfile we'll use from now on
             logdir = options.logdir
             utils.createDirIfMissing(logdir)
-            logfile = os.path.join(logdir, "dlgTranslator.log")
+            hostname = socket.gethostname().split('.')[0]
+            logfile = os.path.join(logdir, f"dlgTM.{hostname}.log")
             fileHandler = logging.FileHandler(logfile)
             fileHandler.setFormatter(fmt)
             logging.root.addHandler(fileHandler)

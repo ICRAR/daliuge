@@ -29,7 +29,7 @@ from setuptools import setup
 # here. If we find the git commit (either via "git" command execution or in a
 # dlg/version.py file) we append it to the VERSION later.
 # The RELEASE flag allows us to create development versions properly supported
-# by setuptools/pkg_resources or "final" versions.
+# by setuptools or "final" versions.
 
 
 def extract_version():
@@ -66,15 +66,15 @@ install_requires = [
     "pyzmq==25.1.1",
     "pydantic>=2.5",
     "boto3",
-    "phonenumbers",
-    "mailchecker",
-    "ftfy",
+    "phonenumbers", #
+    "mailchecker", #
+    "ftfy", #
     "toml",
     "pyyaml",
-    "beautifulsoup4",
-    "openpyxl",
-    "xlrd",
-    "xmltodict",
+    "beautifulsoup4", #
+    "openpyxl", #
+    "xlrd", #
+    "xmltodict", #
     "python-benedict[all]",
     "pylint",
 ]
@@ -85,10 +85,10 @@ setup(
     name="daliuge-common",
     version=do_versioning(),
     description="Data Activated \uf9ca (flow) Graph Engine - Common functionality",
-    long_description="The SKA-SDK prototype for the Execution Framework component",
+    long_description="This contains common functionality for both the dlg-engine and dlg-translator projects",
     author="ICRAR DIA Group",
-    author_email="dfms_prototype@googlegroups.com",
-    url="https://github.com/ICRAR/daliuge",
+    author_email="andreas.wicenec@icrar.org",
+    url="https://daliuge.icrar.org/",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Topic :: System :: Distributed Computing",
@@ -98,8 +98,6 @@ setup(
         "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",

@@ -11,7 +11,7 @@ RUN sudo apt-get update && sudo apt-get install -y python3-pip gcc && sudo apt-g
 RUN service avahi-daemon stop && \
     service dbus start && \
     service avahi-daemon start && \
-    avahi-set-host-name dlg-trans
+    avahi-set-host-name dlg-tm
 COPY / /daliuge
 
 RUN . ~/dlg/bin/activate && \
@@ -28,4 +28,4 @@ ENV VIRTUAL_ENV=/home/ray/dlg
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 EXPOSE 8084
-CMD [ "dlg", "lgweb", "-vv", "-d", "/daliuge/test/dropmake", "-t", "/tmp" ]
+CMD [ "dlg", "tm", "-vv", "-d", "/daliuge/test/dropmake", "-t", "/tmp" ]

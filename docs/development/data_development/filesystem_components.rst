@@ -6,28 +6,28 @@ Filesystem Components
 Path Based Drop
 ---------------
 
-:class:`PathBasedDrop <dlg.drop.PathBasedDrop>` is an interface for retreiving the path for drops that are backed by a
+:class:`PathBasedDrop <dlg.data.drops.data_base.PathBasedDrop>` is an interface for retreiving the path for drops that are backed by a
 filesystem such as local filesystem, NFS or MPFS. Many libraries either have or only have support for reading and writing
 with a filesystem path.
 
 File Drop
 ---------
 
-:class:`FileDROP <dlg.drop.FileDROP>` is a highly compatible data drop type that can be easily used as persistent volume I/O
+:class:`FileDROP <dlg.data.drops.file.FileDROP>` is a highly compatible data drop type that can be easily used as persistent volume I/O
 and inspection of individual app component I/O. The downside of using file drops is reduced I/O performance compared to
 alternative memory based drops that can instead utilize buffer protocol.
 
 Environment variables can be used in the the file path location using the '$' literal, e.g. '$DLG_ROOT' evaluates to '/home/username/dlg'
 
+Directory Drop
+-------------------------------------
+
+:class:`DirectoryDROP <dlg.data.drops.directory.DirectoryDROP>`
+
 Container Drop (Legacy)
 ---------------------------
 
-:class:`ContainerDROP <dlg.drop.ContainerDROP>`
-
-Directory Container Drop (Legacy)
--------------------------------------
-
-:class:`DirectoryContainer <dlg.drop.DirectoryContainer>`
+:class:`ContainerDROP <dlg.data.drops.container.ContainerDROP>`
 
 Using Filesystem Components as Persistent Volume Storage
 --------------------------------------------------------
@@ -45,4 +45,5 @@ Depending on DALiuGE settings, the relative workflow path will also be generated
 location will populate a new workflow directory with output after every successful execution.
 
 .. image:: img/filedrop_sample_2.png
+
 

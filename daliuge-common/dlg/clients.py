@@ -128,6 +128,16 @@ class BaseDROPManagerClient(RestClient):
         )
         return ret
 
+    def get_drop_data(self, sid, did):
+        ret = self._get_json(f"/sessions/{quote(sid)}/graph/drop/data/{quote(did)}")
+        logger.debug(
+            "Successfully retrieved graph data from session %s on %s:%s",
+            sid,
+            self.host,
+            self.port,
+        )
+        return ret
+
     def graph(self, sessionId):
         """
         Returns a dictionary where the key are the DROP UIDs, and the values are
@@ -246,7 +256,7 @@ class BaseDROPManagerClient(RestClient):
     getGraphSize = graph_size
     getGraph = graph
     getDropStatus = get_drop_status
-
+    getDropData = get_drop_data
 
 class NodeManagerClient(BaseDROPManagerClient):
     """

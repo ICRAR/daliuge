@@ -27,6 +27,7 @@ like DMs and DIMs.
 import logging
 import os
 import signal
+import socket
 import sys
 import time
 import re
@@ -52,8 +53,9 @@ from .rest import (
     MasterManagerRestServer,
 )
 from dlg import utils
-from ..runtime import version
-
+# import dlg.runtime
+from dlg.runtime import version
+from dlg.dlg_logging import USER, USERSTR
 
 _terminating = False
 MAX_WATCHDOG_RESTART = 10
@@ -80,11 +82,12 @@ def run_server(server, host, port):
 
 def launchServer(opts):
     # we might be called via __main__, but we want a nice logger name
+    logging.addLevelName(USER, USERSTR)
     logger = logging.getLogger(f"dlg.{__name__}")
     dmName = opts.dmType.__name__
 
-    logger.info("DALiuGE version %s running at %s", version.full_version, os.getcwd())
-    logger.info("Creating %s", dmName)
+    logger.log(USER,"DALiuGE version %s running at %s", version.full_version, os.getcwd())
+    logger.log(USER,"Creating %s", dmName)
     try:
         dm = opts.dmType(*opts.dmArgs, **opts.dmKwargs)
     except Exception as e:
@@ -109,7 +112,6 @@ def launchServer(opts):
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
-    # signal.signal(signal.SIGSEGV, handle_signal)
 
     if opts.watchdog_enabled:
         start_watchdog(server, opts, logger)
@@ -334,17 +336,17 @@ def setupLogging(opts):
         # Let's reset the root handlers
         for h in logging.root.handlers[:]:
             logging.root.removeHandler(h)
-
     levels = [
         logging.NOTSET,
         logging.DEBUG,
         logging.INFO,
+        USER,
         logging.WARNING,
         logging.ERROR,
         logging.CRITICAL,
     ]
 
-    # Default is WARNING
+    # Default is the DALiuGE custom USER level
     lidx = 3
     if opts.verbose:
         lidx -= min((opts.verbose, 3))
@@ -377,21 +379,23 @@ def setupLogging(opts):
     # This is the logfile we'll use from now on
     logdir = opts.logdir
     utils.createDirIfMissing(logdir)
-    logfile = os.path.join(logdir, "dlg%s.log" % (opts.dmAcronym))
+    hostname = socket.gethostname().split('.')[0]
+    logfile = os.path.join(logdir, "dlg%s.%s.log" % (opts.dmAcronym, hostname))
     fileHandler = logging.FileHandler(logfile)
     fileHandler.setFormatter(fmt)
     logging.root.addHandler(fileHandler)
 
     # Per-package/module specific levels
-    logging.root.setLevel(level)
-    logging.getLogger("dlg").setLevel(level)
+    logging.addLevelName(USER, USERSTR)
+    logger = logging.getLogger("dlg")
+    logger.setLevel(level)
     logging.getLogger("zerorpc").setLevel(logging.WARN)
 
     # Assuming we have selected the default, info-level messages will not show to the
     # user. A Warning message here let's the user know something is happening without
     # us needing to modify the default logging level.
-    logging.warning("Starting with level: %s...", logging.getLevelName(level))
-    logging.warning("Using %s Time for logging...", time_fmt)
+    logger.log(USER, "Log level: %s", logging.getLevelName(level))
+    logger.log(USER,"Logging in: %s time", time_fmt)
 
     return fileHandler
 

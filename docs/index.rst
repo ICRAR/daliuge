@@ -24,21 +24,32 @@ Quick Start Guide
 :doc:`/running` |br|
 :doc:`/basics`
 
-DALiuGE Fundamentals
---------------------
+Graph Patterns
+--------------
+:doc:`/graph_patterns/loop`
+   scatter
+   branch
+   subgraph
+   globals
+
+Engine Fundamentals
+-----------------------
 :doc:`/architecture/index` |br|
 :doc:`/deployment/overview` |br|
 
 Using the command line interface
 --------------------------------
-:doc:`/cli/cli_basics`
-:doc:`/cli/cli_engine`
-:doc:`/cli/cli_translator`
+:doc:`/cli/cli_basics` |br|
+:doc:`/cli/cli_engine` |br|
+:doc:`/cli/cli_translator` |br|
 
 Advanced DALiuGE Methods
 ------------------------
 :doc:`/advanced/delayed` |br| 
 
+Debugging
+---------
+:doc:`/debugging/errors` |br|
 
 API Documentation
 -----------------
@@ -56,10 +67,21 @@ API Documentation
    installing
    running
    basics
- 
+
 .. toctree::
    :maxdepth: 2
-   :caption: DALiuGE Fundamentals
+   :caption: Graph Patterns 
+   :hidden: 
+   
+   graph_patterns/loop
+   graph_patterns/branch
+   graph_patterns/scatter
+   graph_patterns/subgraph
+   graph_patterns/globals
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Engine Fundamentals
    :hidden: 
 
    architecture/index
@@ -81,6 +103,13 @@ API Documentation
    cli/cli_engine
    cli/cli_translator
    cli/cli_remote
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Debugging
+
+   debugging/errors
 
 .. toctree::
    :caption: Reference

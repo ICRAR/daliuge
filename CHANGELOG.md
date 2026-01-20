@@ -1,12 +1,79 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.5.0
+- [Feature] Add class-attribute for ports in AbstractDROP: https://github.com/ICRAR/daliuge/pull/382
+- [Fixed] Fix an issue with later types of the docker engine: https://github.com/ICRAR/daliuge/pull/380
+- [Fixed] Fix docker internal network resolution: https://github.com/ICRAR/daliuge/pull/381
+
+# v6.4.2 
+- [Fixed] Fix branch not working across multiple NodeManagers: https://github.com/ICRAR/daliuge/pull/378
+
+# v6.4.1 
+- [Fixed] Fix issue with prefix-less files not downloading: https://github.com/ICRAR/daliuge/pull/375
+
+# v6.4.0
+- [Feature] Add support for file downloads in DIM interface: https://github.com/ICRAR/daliuge/pull/374
+- [Fixed] Add wildcard to .slurm file installation: https://github.com/ICRAR/daliuge/pull/375
+
+# v6.4.0
+- [Feature] Add support for file downloads in DIM interface: https://github.com/ICRAR/daliuge/pull/374
+- [Fixed] Add wildcard to .slurm file installation: https://github.com/ICRAR/daliuge/pull/375
+
+# v6.3.2
+- [Fixed] Fix bug caused by using absolute path in DirectoryDROP: https://github.com/ICRAR/daliuge/pull/373 
+
+# v6.3.1
+- [Fixed] Fix PyFuncApp Object implementation failing: https://github.com/ICRAR/daliuge/pull/372 
+
+# v6.3.0
+- [Feature] Add version to DROPManagers web UI: https://github.com/ICRAR/daliuge/pull/371
+
+# v6.2.2
+- [Fixed] DROPLog errors when running multiple Node Managers: https://github.com/ICRAR/daliuge/pull/370
+
+# v6.2.1
+- [Fixed] Session reports as Failed rather than Finished when it fails: https://github.com/ICRAR/daliuge/pull/362
+
+# v6.2.0
+- [Feature] Added new remote-submit support for graph configurations: https://github.com/ICRAR/daliuge/pull/369
+
+# v6.1.0
+- [Feature] Improved daemon support and docker builds: https://github.com/ICRAR/daliuge/pull/365
+
+# v6.0.0
+- [Feature] Add support for DirectoryDROP: https://github.com/ICRAR/daliuge/pull/360
+  - [Deprecated] This has replaced DirectoryContainerDROP
+- [Feature] Add support for GlobalVariableDROP: https://github.com/ICRAR/daliuge/pull/357
+  - [Deprecated] This has replaced EnvironmentVarDROP
+- [Feature] LIU-457: Add USER log level and error intercept feature: https://github.com/ICRAR/daliuge/pull/344
+- [Feature] Add automatic directoryDROP naming: https://github.com/ICRAR/daliuge/pull/364
+- [Fixed] Fix pydata issues with Utf-8 pyfunc output: https://github.com/ICRAR/daliuge/pull/363
+
+
+# v5.6.3
+- [Fixed] Revert node_str parameter name in rest.py function definition: https://github.com/ICRAR/daliuge/pull/358
+
+# v5.6.2
+- [Fixed] Fix environment variable expansion not working: https://github.com/ICRAR/daliuge/pull/356
+
+## v5.6.1
+- [Fixed] Fix parse_pydata and make MemoryDROP Type consistent: https://github.com/ICRAR/daliuge/pull/354
+
+## v5.6.0
+
+- [Added]  HelloWorld Tutorials and Graph Patterns:  https://github.com/ICRAR/daliuge/pull/347
+- [Changed] Remove final pkg_resources references from code: https://github.com/ICRAR/daliuge/pull/350
+
+## v5.5.3
+- [Fixed] Fix Sessions disappearing in DIM page when restarting Node Manager: https://github.com/ICRAR/daliuge/pull/349
+
 ## v5.5.2
-- [Fix] Address issue #315 to make `dlg` remote deployment CLI more clear: https://github.com/ICRAR/daliuge/pull/342
-- [Fix] Fix multi-input  AppDROP failing after Branch False condition: https://github.com/ICRAR/daliuge/pull/346
+- [Fixed] Address issue #315 to make `dlg` remote deployment CLI more clear: https://github.com/ICRAR/daliuge/pull/342
+- [Fixed] Fix multi-input  AppDROP failing after Branch False condition: https://github.com/ICRAR/daliuge/pull/346
 
 ## v5.5.1
-- [Fix] Update `urllib3` to resolve Dependabot security issue: https://github.com/ICRAR/daliuge/pull/345
+- [Fixed] Update `urllib3` to resolve Dependabot security issue: https://github.com/ICRAR/daliuge/pull/345
 
 ## v5.5.0
 

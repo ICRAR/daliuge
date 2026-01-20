@@ -259,15 +259,15 @@ class CompositeManager(DROPManager):
         else:
             self._nodes.remove(node)
 
-    def get_node_from_json(self, node_str):
+    def get_node_from_json(self, node):
         """
         Given a node str, return the Node we have stored
         Return: Node
         Raises: ValueError if there is no existing Node added to the CompositeManager
         """
 
-        idx = self._nodes.index(Node(node_str))
-        return self._nodes[idx]
+        idx = self.nodes.index(node)
+        return self.nodes[idx]
 
     @property
     def dmPort(self):
@@ -594,7 +594,7 @@ class CompositeManager(DROPManager):
         return allStatus
 
     def getDropStatus(self, sessionId, dropId):
-        allstatus = {}
+        allstatus = []
         self.replicate(
             sessionId,
             # {"session": sessionId, "drop": dropId},
@@ -603,7 +603,25 @@ class CompositeManager(DROPManager):
             collect=allstatus,
             dropId=dropId
         )
-        return allstatus
+        for data in allstatus:
+            if data['logs']:
+                return data
+        return next(iter(allstatus))
+
+    def getDropData(self, sessionId, dropId):
+        allstatus = []
+        self.replicate(
+            sessionId,
+            # {"session": sessionId, "drop": dropId},
+            self._getDropData,
+            "getting graph data",
+            collect=allstatus,
+            dropId=dropId
+        )
+        for data in allstatus:
+            if data['filepath']:
+                return data
+        return next(iter(allstatus))
 
     def _getSessionDir(self, dm, host, sessionId):
         logger.debug("Retrieving directory for session %s on %s", sessionId, host)
@@ -634,6 +652,20 @@ class CompositeManager(DROPManager):
         """
         logger.info("Getting drop status from %s", host)
         return dm.getDropStatus(sessionId, dropId)
+
+    def _getDropData(self, dm, host, sessionId, dropId):
+        """
+        See session.getDropLogs()
+
+        :param dm:
+        :param host:
+        :param sessionId:
+        :param dropId:
+        :return: JSON of status logs and DROP information
+        """
+        logger.info("Getting drop data from %s", host)
+        return dm.getDropData(sessionId, dropId)
+
 
     def _getGraph(self, dm, host, sessionId):
         logger.info("Getting graph from %s", host)

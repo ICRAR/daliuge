@@ -211,7 +211,7 @@ class ZeroRPCClient(RPCClientBase):
             x = ZeroRPCClient.response(async_response.get_nowait(), False)
         except gevent.Timeout as e:
             raise RuntimeError("Timed out on AsyncResult.get_nowait") from e
-        except RuntimeError as e:
+        except (RuntimeError, TypeError) as e:
             x = ZeroRPCClient.response(e, True)
         req.queue.put(x)
 
@@ -243,7 +243,7 @@ class ZeroRPCServer(RPCServerBase):
         super(ZeroRPCServer, self).start()
 
         # Starts the single-threaded ZeroRPC server for RPC requests
-        timeout = 30
+        timeout = 10
         server_started = threading.Event()
         self._zrpcserverthread = threading.Thread(
             target=self.run_zrpcserver,

@@ -29,6 +29,7 @@ import sys
 import urllib.parse
 from abc import abstractmethod, ABCMeta
 from typing import Optional, Union
+from pathlib import Path
 
 from dlg import ngaslite
 from dlg.common import b2s
@@ -303,6 +304,9 @@ class MemoryIO(DataIO):
         # TODO: This may also be an issue
         return self._buf.getbuffer() if hasattr(self._buf,  "getbuffer") else self._buf.getvalue()
 
+    @property
+    def buftype(self):
+        return type(self._buf)
 
 # pylint: disable=possibly-used-before-assignment
 class SharedMemoryIO(DataIO):
@@ -329,17 +333,28 @@ class SharedMemoryIO(DataIO):
     @overrides
     def _write(self, data, **kwargs) -> int:
         total_size = len(data) + self._written
-        if total_size > self._buf.size:
-            self._buf.resize(total_size)
-            self._buf.buf[self._written : total_size] = data
-            self._written = total_size
-        else:
-            self._buf.buf[self._written : total_size] = data
-            self._written = total_size
-            self._buf.resize(total_size)
-            # It may be inefficient to resize many times, but assuming data is written 'once' this is
-            # might be tolerable and guarantees that the size of the underlying buffer is tight.
+        if isinstance(self._desc, io.BytesIO) and isinstance(data, str):
+            data = bytes(data, encoding="utf8")
+        elif isinstance(self._desc, io.StringIO) and isinstance(data, bytes):
+            data = b2s(base64.b64encode(data))
+        elif isinstance(data, memoryview):
+            data = bytes(data)
+        try:
+            if total_size > self._buf.size:
+                self._buf.resize(total_size)
+                self._buf.buf[self._written : total_size] = data
+                self._written = total_size
+            else:
+                self._buf.buf[self._written : total_size] = data
+                self._written = total_size
+                self._buf.resize(total_size)
+                # It may be inefficient to resize many times, but assuming data is written 'once' this is
+                # might be tolerable and guarantees that the size of the underlying buffer is tight.
+        except Exception:
+            logger.debug("Writing of data failed: %s", data)
+            raise
         return len(data)
+
 
     @overrides
     def _read(self, count=65536, **kwargs):
@@ -427,6 +442,79 @@ class FileIO(DataIO):
     @overrides
     def buffer(self) -> bytes:
         return self._desc.read(-1)
+
+
+def total_dir_size(path):
+    """
+    Get total sum of all files in the directory.
+
+    Taken from https://stackoverflow.com/a/1392549
+
+    :param path: directory path we want the size of
+    :return: size in int
+    """
+    total_size = 0
+    for dirpath, _, filenames in os.walk(path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+
+    return total_size
+
+
+class DirectoryIO(DataIO):
+    """
+    A directory-based implementation of DataIO
+    """
+
+    _desc: io.BufferedRWPair
+
+    def __init__(self, directory):
+        super().__init__()
+        self._dirnm = Path(directory)
+
+    def _open(self, **kwargs) -> None:
+        return None
+
+    @overrides
+    def _read(self, count=65536, **kwargs):
+        return None
+
+    @overrides
+    def _write(self, data, **kwargs) -> int:
+        if not isinstance(data,str):
+            raise TypeError("Unexpected data passed to DirectoryIO for _write")
+        try:
+            os.makedirs(data, exist_ok=True)
+            return total_dir_size(data)
+        except OSError as e:
+            logger.error("Attempted to make directory %s but failed due to %s",
+                         data, e)
+            return 0
+
+    @overrides
+    def _close(self, **kwargs):
+        pass
+
+    @overrides
+    def _size(self, **kwargs) -> int:
+        return os.path.getsize(self._dirnm)
+
+    def getDirName(self):
+        """
+        Returns the drop filename
+        """
+        return self._dirnm
+
+    @overrides
+    def exists(self) -> bool:
+        return self._dirnm.exists()
+
+    @overrides
+    def delete(self):
+        os.unlink(self._dirnm)
 
 
 class NgasIO(DataIO):
@@ -646,7 +734,7 @@ class NgasLiteIO(DataIO):
         return len(data)
 
     def exists(self) -> bool:
-        raise NotImplementedError("This method is not supported by this class")
+        return ngaslite.fileIdExists(self._ngasSrv, self._ngasPort, self._fileId)
 
     def fileStatus(self):
         logger.debug("Getting status of file %s", self._fileId)
@@ -655,6 +743,10 @@ class NgasLiteIO(DataIO):
     @overrides
     def delete(self):
         pass  # We never delete stuff from NGAS
+
+    @overrides
+    def _size(self, **kwargs) -> int:
+        return self._writtenDataSize
 
 
 def IOForURL(url):

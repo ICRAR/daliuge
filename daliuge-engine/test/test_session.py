@@ -30,7 +30,8 @@ from dlg.utils import getDlgWorkDir
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.ddap_protocol import DROPLinkType, DROPStates, AppDROPStates
 from dlg.droputils import DROPWaiterCtx
-from dlg.exceptions import InvalidGraphException
+from dlg.exceptions import ErrorManagerCaughtException, InvalidSessionState, \
+    InvalidGraphException
 from dlg.manager.session import SessionStates, Session
 
 from test.dlg_engine_testutils import DROPManagerUtils
@@ -40,7 +41,7 @@ class TestSession(unittest.TestCase):
     def test_sessionStates(self):
         with Session("1") as s:
             self.assertEqual(SessionStates.PRISTINE, s.status)
-            self.assertRaises(Exception, s.linkGraphParts, "", "", 0)
+            self.assertRaises(ErrorManagerCaughtException, s.linkGraphParts, "", "", 0)
             s.addGraphSpec(
                 DROPManagerUtils.add_test_reprodata([{"oid": "A", "categoryType": "container"}])
             )
@@ -50,9 +51,9 @@ class TestSession(unittest.TestCase):
             self.assertEqual(SessionStates.RUNNING, s.status)
 
             # Now we can't do any of these
-            self.assertRaises(Exception, s.deploy)
-            self.assertRaises(Exception, s.addGraphSpec, "")
-            self.assertRaises(Exception, s.linkGraphParts, "", "", 0)
+            self.assertRaises(ErrorManagerCaughtException, s.deploy)
+            self.assertRaises(ErrorManagerCaughtException, s.addGraphSpec, "")
+            self.assertRaises(ErrorManagerCaughtException, s.linkGraphParts, "", "", 0)
 
     def test_sessionStates_noDrops(self):
         # No drops created, we can deploy right away
@@ -62,7 +63,13 @@ class TestSession(unittest.TestCase):
             self.assertEqual(SessionStates.FINISHED, s.status)
 
         with Session("2") as s:
-            self.assertRaises(InvalidGraphException, s.deploy, completedDrops=["a"])
+            try:
+                s.deploy(completedDrops=["a"])
+            except ErrorManagerCaughtException as exp:
+                self.assertIsInstance(exp.__cause__, InvalidGraphException)
+            else:
+                self.fail(f"{ErrorManagerCaughtException} was not caught")
+            # self.assertRaises(ErrorManagerCaughtException, s.deploy, completedDrops=["a"])
 
     def test_addGraphSpec(self):
         with Session("1") as s:

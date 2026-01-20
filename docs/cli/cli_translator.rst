@@ -90,19 +90,19 @@ The `dlg` translator CLI allows for the piping of stdin to each subsequent step 
    dlg unroll-and-partition -L parallel_loop.graph -a mysarkar | dlg map -i 1 -N <island_a_hostname>,<node_a_hostname>,<node_b_hostname>  | dlg submit -H localhost -p 8001
 
 
-.. _lgweb_cli:
+.. _tm_cli:
    
 Translate and submit graphs through EAGLE UI
 ********************************************
 
 If you are building graphs and want to test and deploy them through the web interface, 
-you can use the `lgweb` server. This provides a user interface for the translation of a Logical Graph to a Physical Graph Template, as well as submission to the Data Island and Node Managers for graph execution. 
+you can use the `tm` server. This provides a user interface for the translation of a Logical Graph to a Physical Graph Template, as well as submission to the Data Island and Node Managers for graph execution. 
 
 To start with, simply start the server as follows::
 
-   dlg lgweb -d /tmp/ -t /tmp/ -v
+   dlg tm -d /tmp/ -t /tmp/ -v
 
-Full information on the options that may be provided to the `lgweb` interface are available :ref:`below <lgweb>`.
+Full information on the options that may be provided to the `tm` interface are available :ref:`below <tm>`.
 
 This allows you to translate and deploy from EAGLE, and visualise the progression of the graph.   
 
@@ -232,43 +232,38 @@ Help output::
                            Number of islands to use during the partitioning
    
 
-  
+Command: dlg fill-config
+========================
 
-Command: dlg fill
-=================
-Help output::
+Usage: fill-config [options]
 
-   Usage: fill [options]
-   
-   Fill a Logical Graph with parameters
-   
-   Options:
-     -h, --help            show this help message and exit
-     -v, --verbose         Become more verbose. The more flags, the more verbose
-     -q, --quiet           Be less verbose. The more flags, the quieter
-     -o OUTPUT, --output=OUTPUT
-                           Where the output should be written to (default:
-                           stdout)
-     -f, --format          Format JSON output (newline, 2-space indent)
-     -L LOGICAL_GRAPH, --logical-graph=LOGICAL_GRAPH
-                           Path to the Logical Graph (default: stdin)
-     -p PARAMETER, --parameter=PARAMETER
-                           Parameter specification (either 'name=value' or a JSON
-                           string)
-     -R, --reproducibility
-                           Level of reproducibility. Default 0 (NOTHING). Accepts '-1'-'8'"
-                           Refer to dlg.common.reproducibility.constants for more explanation.
-   
+Apply a graph config to the logical graph
 
-.. _lgweb:
+Options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Become more verbose. The more flags, the more verbose
+  -q, --quiet           Be less verbose. The more flags, the quieter
+  -o OUTPUT, --output=OUTPUT
+                        Where the output should be written to (default:
+                        stdout)
+  -f, --format          Format JSON output (newline, 2-space indent)
+  -L LOGICAL_GRAPH, --logical-graph=LOGICAL_GRAPH
+                        Path to the Logical Graph
+  --graph_config=GRAPH_CONFIG
+                        Graph configuration input
+  -R REPRODUCIBILITY, --reproducibility=REPRODUCIBILITY
+                        Level of reproducibility. Default 0 (NOTHING). Accepts
+                        '0,1,2,4,5,6,7,8'
 
-Command: dlg lgweb
+.. _tm:
+
+Command: dlg tm
 ===================
 Help output::
 
-   Usage: lgweb [options]
+   Usage: tm [options]
    
-   A Web server for the Logical Graph Editor
+   Starts the Translator Manager
    
    Options:
      -h, --help            show this help message and exit
@@ -290,4 +285,29 @@ Help output::
    Version: 1.0.0
    Git version: Unknown
  
+
+[Deprecated] Command: dlg fill
+==============================
+Help output::
+
+   Usage: fill [options]
+
+   Fill a Logical Graph with parameters
+
+   Options:
+     -h, --help            show this help message and exit
+     -v, --verbose         Become more verbose. The more flags, the more verbose
+     -q, --quiet           Be less verbose. The more flags, the quieter
+     -o OUTPUT, --output=OUTPUT
+                           Where the output should be written to (default:
+                           stdout)
+     -f, --format          Format JSON output (newline, 2-space indent)
+     -L LOGICAL_GRAPH, --logical-graph=LOGICAL_GRAPH
+                           Path to the Logical Graph (default: stdin)
+     -p PARAMETER, --parameter=PARAMETER
+                           Parameter specification (either 'name=value' or a JSON
+                           string)
+     -R, --reproducibility
+                           Level of reproducibility. Default 0 (NOTHING). Accepts '-1'-'8'"
+                           Refer to dlg.common.reproducibility.constants for more explanation.
 

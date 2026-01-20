@@ -20,11 +20,7 @@
 #    MA 02111-1307  USA
 #
 import base64
-import binascii
 import builtins
-from json import JSONDecodeError
-from pickle import PickleError
-
 import dill
 import io
 import json
@@ -32,8 +28,11 @@ import os
 import random
 import string
 import sys
+
+from json import JSONDecodeError
 from typing import Union
 
+from dlg.utils import serialize_data
 from dlg.common.reproducibility.reproducibility import common_hash
 from dlg.data.drops.data_base import DataDROP, logger
 from dlg.data.io import SharedMemoryIO, MemoryIO
@@ -49,6 +48,17 @@ def get_builtins()-> dict:
     builtin_names = [b.__name__ for b in builtin_types]
     return dict(zip(builtin_names, builtin_types))
 
+def guess_type(value):
+    """Guess the type from value
+
+    Args:
+        value (Any): _description_
+    """
+    try:
+        vtype = type(value).__name__
+        return "raw" if vtype == "bytes" else vtype
+    except NameError:
+        return "raw"
 
 def parse_pydata(pd: Union[bytes, dict]) -> bytes:
     """
@@ -65,60 +75,70 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
 
     :returns a byte encoded value
     """
-    pd_dict = pd if isinstance(pd, dict) else {"value":pd, "type":"raw"}
-    pydata = pd_dict["value"]
-    logger.debug("pydata value provided: '%s' with type '%s'", pydata, type(pydata))
+    stypes = ["float", "int", "str", "list", "dict"]
+    if not isinstance(pd, dict):
+        # fix types when just a value is passed (tests)
+        pytype = guess_type(pd)
+        if pytype not in stypes:
+            pd = serialize_data(pd)
+        return {"value":pd, "type": pytype}
+    pydata = pd["value"]
+    pytype = pd["type"].lower()
+    logger.debug("pydata value provided: '%s' with type '%s', %s",
+                 pydata, type(pydata), pd["type"])
     empty_strings = ["None", ""]
-    if pd_dict["type"].lower() in ["string", "str"]:
-        pass
     if pydata in empty_strings:
-        pydata = bytes() # Treat None/Empty objects as empty object data.
-        pd_dict["type"] = 'object'
+        if pytype in ["string", "str"]:
+            pydata = ''
+        else:
+            pydata = bytes() # Treat None/Empty objects as empty object data.
+            pytype = 'object'
     builtin_types = get_builtins()
-    if pd_dict["type"] != "raw" and type(pydata) in builtin_types.values() and pd_dict["type"] not in builtin_types.keys():
-        logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pd_dict["type"])
-        pd_dict["type"] = type(pydata).__name__
-    if pd_dict["type"].lower() == "json":
+    if pytype != "raw" and type(pydata) in builtin_types.values() and pytype not in builtin_types.keys():
+        logger.warning("Type of pydata %s provided differs from specified type: %s", type(pydata).__name__, pytype)
+        # pytype = type(pydata).__name__
+    if pytype == "json":
         try:
             pydata = json.loads(pydata)
         except JSONDecodeError:
             pydata = pydata.encode()
-    if pd_dict["type"].lower() == "eval":
+    if pytype == "eval":
         # try:
         pydata = eval(pydata) # pylint: disable=eval-used
         # except Exception:
         #     pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "int" or isinstance(pydata, int):
+    elif pytype in ["int", "integer"]:
         try:
             pydata = int(pydata)
-            pd_dict["type"] = "int"
-        except JSONDecodeError:
+            pytype = "int"
+        except ValueError:
             pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "float" or isinstance(pydata, float):
+    elif pytype == "float":
         try:
             pydata = float(pydata)
-            pd_dict["type"] = "float"
-        except JSONDecodeError:
+        except ValueError:
             pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "boolean" or isinstance(pydata, bool):
+    elif pytype in ["boolean","bool"]:
         try:
             pydata = bool(pydata)
-            pd_dict["type"] = "bool"
-        except JSONDecodeError:
+            pytype = "bool"
+        except ValueError:
             pydata = pydata.encode()
-    elif pd_dict["type"].lower() == "object":
+    elif pytype.split(".")[0].lower() == "object":
         if pydata:
-            pydata = base64.b64decode(pydata.encode())
             try:
+                pydata = base64.b64decode(pydata.encode())
                 pydata = dill.loads(pydata)
-            except dill.PickleError as e:
+            except (TypeError, dill.PickleError) as e:
                 logger.error("Issue loading pydata object with pickle %s", pydata)
                 raise dill.PickleError from e
-    elif pd_dict["type"].lower() == "raw":
+    elif pytype.lower() == "raw":
         pydata = dill.loads(base64.b64decode(pydata))
         logger.debug("Returning pydata of type: %s", type(pydata))
         # return pydata
-    return dill.dumps(pydata)
+    pd["value"] = dill.dumps(pydata)
+    pd["type"] = pytype
+    return pd
 
 
 ##
@@ -154,6 +174,9 @@ class InMemoryDROP(DataDROP):
             kwargs["expireAfterUse"] = False
         super().__init__(*args, **kwargs)
 
+    # TODO add exception management handler for the initialize here
+    # TODO This should raise DlgMemoryException, which links to documentation for encoding
+
     def initialize(self, **kwargs):
         """
         If there is a pydata argument use that to populate the DROP
@@ -165,11 +188,9 @@ class InMemoryDROP(DataDROP):
         will use StringIO as the buffer. This can have ramifications for none-string
         encodings used further down the track.
         """
+        # TODO: We need to ignore pydata if we have a connected input port
         args = []
-        pydata = None
-        # pdict = {}
-        pdict = {"type": "raw"}  # initialize this value to enforce BytesIO
-        self.data_type = pdict["type"]
+        pdict = {"value":None, "type": "raw"}  # initialize this value to enforce BytesIO
         field_names = (
             [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
         )
@@ -177,22 +198,22 @@ class InMemoryDROP(DataDROP):
             "fields" in kwargs and "pydata" in field_names
         ):  # means that is was passed directly (e.g. from tests)
             pydata = kwargs.pop("pydata")
-            pdict["value"] = pydata
-            pydata = parse_pydata(pdict)
+            pdict = parse_pydata(pydata)
         elif "fields" in kwargs and "pydata" in field_names:
             data_pos = field_names.index("pydata")
-            pdict = kwargs["fields"][data_pos]
-            pydata = parse_pydata(pdict)
-        if pdict and pdict["type"].lower() in ["str","string"]:
-            self.data_type =  "String" if pydata else "raw"
+            pdict = kwargs["fields"][data_pos].copy()
+            pdict = parse_pydata(pdict)
+        self.data_type = pdict["type"]
+        if pdict and pdict["type"] in ["str","string"]:
+            self.data_type =  "String" if pdict["value"] else "raw"
         else:
             self.data_type = pdict["type"] if pdict else ""
-        if pydata:
-            args.append(pydata)
-            logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
+        if pdict["value"]:
+            args.append(pdict["value"])
+            logger.debug("Loaded into memory: %s, %s, %s", pdict["value"], self.data_type, type(pdict["value"]))
         self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(
             dill.loads(*args)) # pylint: disable = no-value-for-parameter
-        self.size = len(pydata) if pydata else 0
+        self.size = len(pdict["value"]) if pdict["value"] else 0
 
     def getIO(self):
         if (
@@ -203,6 +224,10 @@ class InMemoryDROP(DataDROP):
             return SharedMemoryIO(self.oid, self._sessionId)
         else:
             return MemoryIO(self._buf)
+
+    @property
+    def buf(self):
+        return self._buf
 
     @property
     def dataURL(self) -> str:
@@ -220,6 +245,18 @@ class InMemoryDROP(DataDROP):
             logger.debug("Could not read drop reproduce data")
         return {"data_hash": common_hash(data)}
 
+    @property
+    def buftype(self)->str:
+        """
+        This needs to return strings to ensure that the type is correctly serialized. Necessary
+        for drop_proxies where the type has to be passed over the wire.
+
+        See use in droputils.allDropContents for context.
+        """
+        if type(self._buf) == io.StringIO:
+            return 'str'
+        else:
+            return 'bytes'
 
 ##
 # @brief PythonObject
@@ -270,24 +307,32 @@ class SharedMemoryDROP(DataDROP):
     def initialize(self, **kwargs):
         args = []
         pydata = None
+        # pdict = {}
+        pdict = {"type": "raw"}  # initialize this value to enforce BytesIO
+        self.data_type = pdict["type"]
+        field_names = (
+            [f["name"] for f in kwargs["fields"]] if "fields" in kwargs else []
+        )
         if "pydata" in kwargs and not (
-            "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]
-        ):  # means that is was passed directly
+            "fields" in kwargs and "pydata" in field_names
+        ):  # means that is was passed directly (e.g. from tests)
             pydata = kwargs.pop("pydata")
-            logger.debug("pydata value provided: %s", pydata)
-            try:  # test whether given value is valid
-                _ = dill.loads(base64.b64decode(pydata.encode("latin1")))
-                pydata = base64.b64decode(pydata.encode("latin1"))
-            except PickleError:
-                pydata = None
-                logger.warning("Unable to load using pickle, default to None")
-            except binascii.Error:
-                pydata = None
-                logger.warning("Unable to load using base64, defaulting to None")
-        elif "nodeAttributes" in kwargs and "pydata" in kwargs["nodeAttributes"]:
-            pydata = parse_pydata(kwargs["nodeAttributes"]["pydata"])
-        args.append(pydata)
-        self._buf = io.BytesIO(*args)
+            pdict["value"] = pydata
+            pydata = parse_pydata(pdict)
+        elif "fields" in kwargs and "pydata" in field_names:
+            data_pos = field_names.index("pydata")
+            pdict = kwargs["fields"][data_pos]
+            pydata = parse_pydata(pdict)
+        if pdict and pdict["type"].lower() in ["str","string"]:
+            self.data_type =  "String" if pydata else "raw"
+        else:
+            self.data_type = pdict["type"] if pdict else ""
+        if pydata:
+            args.append(pydata)
+            logger.debug("Loaded into memory: %s, %s, %s", pydata, self.data_type, type(pydata))
+        self._buf = io.BytesIO(*args) if self.data_type != "String" else io.StringIO(
+            dill.loads(*args)) # pylint: disable = no-value-for-parameter
+        self.size = len(pydata) if pydata else 0
 
     def getIO(self):
         if sys.version_info >= (3, 8):
@@ -308,3 +353,17 @@ class SharedMemoryDROP(DataDROP):
     def dataURL(self) -> str:
         hostname = os.uname()[1]
         return f"shmem://{hostname}/{os.getpid()}/{id(self._buf)}"
+
+    @property
+    def buftype(self):
+        """
+        This needs to return strings to ensure that the type is correctly serialized. Necessary
+        for drop_proxies where the type has to be passed over the wire.
+
+        See use in droputils.allDropContents for context.
+        """
+
+        if type(self._buf) == io.StringIO:
+            return 'str'
+        else:
+            return 'bytes'

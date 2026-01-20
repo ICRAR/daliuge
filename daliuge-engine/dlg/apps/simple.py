@@ -21,10 +21,12 @@
 #
 """Applications used as examples, for testing, or in simple situations"""
 
+import _pickle
 from numbers import Number
 import pickle
 import random
 from typing import List, Optional
+import dill
 import requests
 import logging
 import time
@@ -34,6 +36,9 @@ import numpy as np
 from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.container import ContainerDROP
+from dlg.data.drops.directory import DirectoryDROP
+from dlg.data.drops import InMemoryDROP, FileDROP
+from dlg.apps.branch import BranchAppDrop
 from dlg.drop import track_current_drop
 from dlg.meta import (
     dlg_float_param,
@@ -47,8 +52,9 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
-from dlg.exceptions import DaliugeException
 from dlg.apps.simple_functions import random_array
+from dlg.exceptions import DaliugeException, InvalidDropException
+from dlg.rpc import DropProxy
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -66,7 +72,6 @@ class NullBarrierApp(BarrierAppDROP):
 
     def run(self):
         pass
-
 
 
 ##
@@ -146,12 +151,13 @@ class CopyApp(BarrierAppDROP):
         [dlg_streaming_input("binary/*")],
     )
 
+    @track_current_drop
     def run(self):
         logger.debug("Using buffer size %d", self.bufsize)
         logger.info(
             "Copying data from inputs %s to outputs %s",
-            [x.name for x in self.inputs],
-            [x.name for x in self.outputs],
+            [(getattr(x, "path", "") or x.name) for x in self.inputs],
+            [(getattr(x, "path", "") or x.name) for x in self.outputs],
         )
         self.copyAll()
         logger.info(
@@ -168,6 +174,15 @@ class CopyApp(BarrierAppDROP):
         if isinstance(inputDrop, ContainerDROP):
             for child in inputDrop.children:
                 self.copyRecursive(child)
+        elif isinstance(inputDrop, DirectoryDROP):
+            for outputDrop in self.outputs:
+                if isinstance(outputDrop, DirectoryDROP):
+                    droputils.copyDirectoryContents(inputDrop,outputDrop)
+                else:
+                    raise InvalidDropException(
+                        self,
+                        "Can't copy directory to non-DirectoryDROP"
+                    )
         else:
             for outputDrop in self.outputs:
                 droputils.copyDropContents(inputDrop, outputDrop, bufsize=self.bufsize)
@@ -225,8 +240,6 @@ class AverageArraysApp(BarrierAppDROP):
     method:  string <['mean']|'median'>, use mean or median as method.
     """
 
-    from numpy import mean, median
-
     component_meta = dlg_component(
         "AverageArraysApp",
         "Average Array App.",
@@ -239,10 +252,11 @@ class AverageArraysApp(BarrierAppDROP):
     methods = ["mean", "median"]
     method = dlg_string_param("method", methods[0])
 
-    def __init__(self, oid, uid, **kwargs):
-        super().__init__(oid, kwargs)
+    def initialize(self, **kwargs):
+        super(AverageArraysApp, self).initialize(**kwargs)
         self.marray = []
 
+    @track_current_drop
     def run(self):
         # At least one output should have been added
 
@@ -324,6 +338,7 @@ class GenericGatherApp(BarrierAppDROP):
                 value = droputils.allDropContents(ipt)
                 output.write(value)
 
+    @track_current_drop
     def run(self):
         self.readWriteData()
 
@@ -417,9 +432,14 @@ class ArrayGatherApp(BarrierAppDROP):
         for output in outputs:
             for ipt in inputs:
                 value = droputils.allDropContents(ipt)
-                self.value_list.append(pickle.loads(value))
-            output.write(pickle.dumps(self.value_list))
+                try:
+                    # TODO: This really needs to use the encoding but requires a drop data-type/encoding.
+                    self.value_list.append(dill.loads(value))
+                except _pickle.PickleError:
+                    self.value_list.append(value)
+            output.write(dill.dumps(self.value_list))
 
+    @track_current_drop
     def run(self):
         self.value_list = []
         self.readWriteData()
@@ -477,6 +497,7 @@ class GenericNpyGatherApp(BarrierAppDROP):
     function: str = dlg_string_param("function", "sum")  # type: ignore
     reduce_axes: list = dlg_list_param("reduce_axes", "None")  # type: ignore
 
+    @track_current_drop
     def run(self):
         if len(self.inputs) < 1:
             raise Exception(f"At least one input should have been added to {self}")
@@ -629,6 +650,7 @@ class GenericNpyScatterApp(BarrierAppDROP):
     num_of_copies: int = dlg_int_param("num_of_copies", 1)
     scatter_axes: List[int] = dlg_list_param("scatter_axes", "[0]")
 
+    @track_current_drop
     def run(self):
         if len(self.inputs) * self.num_of_copies != len(self.outputs):
             raise DaliugeException(
@@ -685,13 +707,22 @@ class PickOne(BarrierAppDROP):
 
     def readData(self):
         ipt = self.inputs[0]
-        data = pickle.loads(droputils.allDropContents(ipt))
+        contents = droputils.allDropContents(ipt)
+        data = []
+        try:
+            data = pickle.loads(contents)
+        except EOFError:
+            # No data stored in drop
+            logger.error("There was no data in the Memory drop %s", ipt.oid)
         # data = droputils.allDropContents(input)
         # data = dill.loads(base64.b64decode(data))
+        logger.warning("Data type is: %s", type(data))
 
         # make sure we always have a ndarray with at least 1dim.
         if type(data) not in (list, tuple) and not isinstance(data, (np.ndarray)):
             logger.warning("Data type not in [list, tuple]: %s", data)
+            if not data:
+                return None, []
             raise TypeError
         if isinstance(data, np.ndarray) and data.ndim == 0:
             data = np.array([data])
@@ -716,6 +747,7 @@ class PickOne(BarrierAppDROP):
                 output.len = len(d)
             output.write(d)
 
+    @track_current_drop
     def run(self):
         value, rest = self.readData()
         self.writeData(value, rest)
