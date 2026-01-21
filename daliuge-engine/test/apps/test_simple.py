@@ -67,7 +67,7 @@ class TestSimpleApps(unittest.TestCase):
     def test_sleepapp(self):
         # Nothing fancy, just run it and be done with it
         a = NullDROP("a", "a")
-        b = PyFuncApp("b", "b", func_name=f"dlg.apps.simple.sleep")
+        b = PyFuncApp("b", "b", func_name=f"dlg.apps.simple_functions.sleep")
         # b = SleepApp("b", "b")
         c = NullDROP("c", "c")
         b.addInput(a)
@@ -146,7 +146,7 @@ class TestSimpleApps(unittest.TestCase):
         self.assertEqual(big_mean, average)
 
     def test_helloworldapp(self):
-        h = PyFuncApp("h", "h", func_name="dlg.apps.simple.hello_world")
+        h = PyFuncApp("h", "h", func_name="dlg.apps.simple_functions.hello_world")
         b = FileDROP("c", "c")
         h.addOutput(b)
         b.addProducer(h)
@@ -166,7 +166,7 @@ class TestSimpleApps(unittest.TestCase):
             m.append(InMemoryDROP("m%d" % i, "m%d" % i))
             inputs=[{f"m{i}":f"greet"}]
             h.append(PyFuncApp(
-                "h%d" % i, "h%d" % i, func_name="dlg.apps.simple.hello_world",
+                "h%d" % i, "h%d" % i, func_name="dlg.apps.simple_functions.hello_world",
                 inputs=inputs
             ))
             f.append(FileDROP("f%d" % i, "f%d" % i))
@@ -274,7 +274,7 @@ class TestSimpleApps(unittest.TestCase):
         a = InMemoryDROP("a", "a")
         a.write(pickle.dumps(size))
         inputs=[{"a": "n"}]
-        b = PyFuncApp("b", "b", func_name="dlg.apps.simple.list_thrashing",inputs=inputs)
+        b = PyFuncApp("b", "b", func_name="dlg.apps.simple_functions.list_thrashing",inputs=inputs)
         # self.assertEqual(b.size, size)
         c = InMemoryDROP("c", "c")
         b.addInput(a)
@@ -299,7 +299,7 @@ class TestSimpleApps(unittest.TestCase):
         X = AverageArraysApp("X", "X")
         Z = InMemoryDROP("Z", "Z")
         inputs=[{"S": "n"}]
-        drops = [PyFuncApp(x, x, func_name="dlg.apps.simple.list_thrashing",
+        drops = [PyFuncApp(x, x, func_name="dlg.apps.simple_functions.list_thrashing",
                         inputs=inputs) for x in drop_ids]
         # drops = [ListAppendThrashingApp(x, x, size=size) for x in drop_ids]
         mdrops = [InMemoryDROP(chr(65 + x), chr(65 + x)) for x in range(max_threads)]

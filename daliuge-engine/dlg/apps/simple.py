@@ -29,16 +29,15 @@ from typing import List, Optional
 import dill
 import requests
 import logging
-import time
 import numpy as np
 # from tests.data.example_eagle import RandomArrayApp
 
+from time import sleep
 from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
-from dlg.apps.branch import BranchAppDrop
 from dlg.drop import track_current_drop
 from dlg.meta import (
     dlg_float_param,
@@ -92,27 +91,54 @@ class DALiuGEApp(BarrierAppDROP):
     """A placeholder BarrierAppDrop that just aids the generation of the palette component"""
 
 
-# @brief sleep
+##
+# @brief SleepApp
+# @details A simple APP that sleeps the specified amount of time (0 by default).
+# This is mainly useful (and used) to test graph translation and structure
+# without executing real algorithms. Very useful for debugging.
 # @par EAGLE_START
-# @param category PyFuncApp
+# @param category DALiuGEApp
 # @param tag daliuge
 # @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.SleepAndCopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param dropclass dlg.apps.simple.SleepApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
 # @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
 # @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
-def sleep(sleep_time: float = 0):
-    """
-    Simple wrapper around time.sleep() function
 
-    :param sleep_time: Duration of sleep
-    """
 
-    time.sleep(sleep_time)
-    logger.info("Slept for %s s", sleep_time)
+class SleepApp(BarrierAppDROP):
+    """A BarrierAppDrop that sleeps the specified amount of time (0 by default)"""
+
+    component_meta = dlg_component(
+        "SleepApp",
+        "Sleep App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+    sleep_time = dlg_float_param("sleep_time", 0)
+
+    @track_current_drop
+    def run(self):
+        self._run()
+        try:
+            # If data is coming through a named port we load it from there.
+            if isinstance(self.sleep_time, (InMemoryDROP, FileDROP, DropProxy)):
+                logger.debug("Trying to read from %s", self.sleep_time)
+                self.sleep_time = drop_loaders.load_pickle(self.sleep_time)
+            sleep(self.sleep_time)
+        except (TypeError, ValueError):
+            logger.debug(
+                "Found invalid sleep_time: %s. Resetting to 0. %s",
+                self.sleep_time,
+                type(self.sleep_time),
+            )
+            self.sleep_time = 0
+            sleep(self.sleep_time)
+        logger.info("%s slept for %s s", self.name, self.sleep_time)
 
 
 ##
@@ -207,6 +233,91 @@ class SleepAndCopyApp(CopyApp):
     def run(self):
         sleep(self.sleep_time)
         CopyApp.run(self)
+
+
+##
+# @brief RandomArrayApp
+# @details A testing APP that does not take any input and produces a random array of
+# type int64, if integer is set to True, else of type float64.
+# size indicates the number of elements ranging between the values low and high.
+# The resulting array will be send to all connected output apps.
+# @par EAGLE_START
+# @param category DALiuGEApp
+# @param tag daliuge
+# @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The size of the array
+# @param low 0/Float/ApplicationArgument/NoPort/ReadWrite//False/False/Low value of range in array [inclusive]
+# @param high 1/Float/ApplicationArgument/NoPort/ReadWrite//False/False/High value of range of array [exclusive]
+# @param integer True/Boolean/ApplicationArgument/NoPort/ReadWrite//False/False/Generate integer array?
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.RandomArrayApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
+# @par EAGLE_END
+class RandomArrayApp(BarrierAppDROP):
+    """
+    A BarrierAppDrop that generates an array of random numbers. It does
+    not require any inputs and writes the generated array to all of its
+    outputs.
+
+    Keywords:
+
+    integer:  bool [True], generate integer array
+    low:      float, lower boundary (will be converted to int for integer arrays)
+    high:     float, upper boundary (will be converted to int for integer arrays)
+    size:     int, number of array elements
+    """
+
+    component_meta = dlg_component(
+        "RandomArrayApp",
+        "Random Array App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    # default values
+    integer = dlg_bool_param("integer", True)
+    low = dlg_float_param("low", 0)
+    high = dlg_float_param("high", 100)
+    size = dlg_int_param("size", 100)
+    marray = []
+
+    def initialize(self, keep_array=False, **kwargs):
+        super(RandomArrayApp, self).initialize(**kwargs)
+        self._keep_array = keep_array
+
+    @track_current_drop
+    def run(self):
+        self._run()
+        # At least one output should have been added
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception("At least one output should have been added to %r" % self)
+        logger.info("Generating %d random numbers between %f and %f", self.size, self.low, self.high)
+        marray = self.generateRandomArray()
+        if self._keep_array:
+            self.marray = marray
+        for o in outs:
+            d = pickle.dumps(marray)
+            o.len = len(d)
+            o.write(d)
+
+    def generateRandomArray(self):
+        if self.integer:
+            # generate an array of self.size integers with numbers between
+            # slef.low and self.high
+            marray = np.random.randint(int(self.low), int(self.high), size=(self.size))
+        else:
+            # generate an array of self.size floats with numbers between
+            # self.low and self.high
+            marray = (np.random.random(size=self.size) + self.low) * self.high
+        return marray
+
+    def _getArray(self):
+        return self.marray
 
 
 ##
@@ -544,6 +655,115 @@ class GenericNpyGatherApp(BarrierAppDROP):
             result = data if result is None else gather(result, data)
         return result
 
+##
+# @brief HelloWorldApp
+# @details A simple APP that implements the standard Hello World in DALiuGE.
+# It allows to change 'World' with some other string and it also permits
+# to connect the single output port to multiple sinks, which will all receive
+# the same message. App does not require any input.
+# @par EAGLE_START
+# @param category DALiuGEApp
+# @param tag daliuge
+# @param greet World/String/ApplicationArgument/InputPort/ReadWrite//False/False/What appears after 'Hello '
+# @param hello "world"/Object/ApplicationArgument/OutputPort/ReadWrite//False/False/message
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.HelloWorldApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @par EAGLE_END
+class HelloWorldApp(BarrierAppDROP):
+    """
+    An App that writes 'Hello World!' or 'Hello <greet>!' to all of
+    its outputs.
+
+    Keywords:
+    greet:   string, [World], whom to greet.
+    """
+
+    component_meta = dlg_component(
+        "HelloWorldApp",
+        "Hello World App.",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    greet = dlg_string_param("greet", "World")
+
+    @track_current_drop
+    def run(self):
+        ins = self.inputs
+        # if no inputs use the parameter else use the input
+        if len(ins) == 0:
+            self.greeting = "Hello %s" % self.greet
+        elif len(ins) != 1:
+            raise Exception("Only one input expected for %r" % self)
+        else:  # the input is expected to be a vector. We'll use the first element
+            try:
+                phrase = pickle.loads(droputils.allDropContents(ins[0]))[0]
+            except (_pickle.UnpicklingError, TypeError, IndexError):
+                phrase = droputils.allDropContents(ins[0])
+            self.greeting = f"Hello, {phrase}"
+        logger.debug("Greeting is %s", self.greeting)
+
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception("At least one output should have been added to %r" % self)
+        for o in outs:
+            o.len = len(self.greeting.encode())
+            o.write(self.greeting.encode())  # greet across all outputs
+
+
+##
+# @brief UrlRetrieveApp
+# @details A simple APP that retrieves the content of a URL and writes
+# it to all outputs.
+# @par EAGLE_START
+# @param category DALiuGEApp
+# @param tag daliuge
+# @param url None/String/ApplicationArgument/NoPort/ReadWrite//False/False/The URL to retrieve
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.UrlRetrieveApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param content /String/ApplicationArgument/OutputPort/ReadWrite//False/False/content read from URL
+# @par EAGLE_END
+class UrlRetrieveApp(BarrierAppDROP):
+    """
+    An App that retrieves the content of a URL
+
+    Keywords:
+    URL:   string, URL to retrieve.
+    """
+
+    component_meta = dlg_component(
+        "UrlRetrieveApp",
+        "URL Retrieve App",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    url = dlg_string_param("url", "")
+
+    @track_current_drop
+    def run(self):
+        try:
+            logger.info("Accessing URL %s", self.url)
+            u = requests.get(self.url, timeout=30)
+        except requests.exceptions.RequestException as e:
+            raise e.reason
+
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception("At least one output should have been added to %r" % self)
+        for o in outs:
+            o.len = len(u.content)
+            o.write(u.content)  # send content to all outputs
 
 ##
 # @brief GenericScatterApp
@@ -752,5 +972,69 @@ class PickOne(BarrierAppDROP):
         value, rest = self.readData()
         self.writeData(value, rest)
 
+##
+# @brief ListAppendThrashingApp
+# @details A testing APP that appends a random integer to a list num times.
+# This is a CPU intensive operation and can thus be used to provide a test for application threading
+# since this operation will not yield.
+# The resulting array will be sent to all connected output apps.
+# @par EAGLE_START
+# @param category DALiuGEApp
+# @param tag test
+# @param size 100/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/the size of the array
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.GenericScatterApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param dropclass dlg.apps.simple.ListAppendThrashingApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
+# @par EAGLE_END
+class ListAppendThrashingApp(BarrierAppDROP):
+    """
+    A BarrierAppDrop that appends random integers to a list N times. It does
+    not require any inputs and writes the generated array to all of its
+    outputs.
 
-RandomArrayApp = random_array
+    Keywords:
+
+    size:     int, number of array elements
+    """
+
+    compontent_meta = dlg_component(
+        "ListAppendThrashingApp",
+        "List Append Thrashing",
+        [dlg_batch_input("binary/*", [])],
+        [dlg_batch_output("binary/*", [])],
+        [dlg_streaming_input("binary/*")],
+    )
+
+    def initialize(self, **kwargs):
+        self.size = self._popArg(kwargs, "size", 100)
+        self.marray = []
+        super(ListAppendThrashingApp, self).initialize(**kwargs)
+
+    @track_current_drop
+    def run(self):
+        # At least one output should have been added
+        outs = self.outputs
+        if len(outs) < 1:
+            raise Exception("At least one output should have been added to %r" % self)
+        self.marray = self.generateArray()
+        for o in outs:
+            d = pickle.dumps(self.marray)
+            o.len = len(d)
+            o.write(pickle.dumps(self.marray))
+
+    def generateArray(self):
+        # This operation is wasteful to simulate an N^2 operation.
+        marray = []
+        for _ in range(int(self.size)):
+            marray = []
+            for _ in range(int(self.size)):
+                marray.append(random.random())
+        return marray
+
+    def _getArray(self):
+        return self.marray

@@ -21,9 +21,37 @@
 #
 """Functions used as examples, for testing, or in simple situations"""
 import json
+import logging
+import numpy as np
 import pickle
+import random
+import time
+
 from typing import Any
 
+logger = logging.getLogger(f"dlg.{__name__}")
+
+# @brief sleep
+# @par EAGLE_START
+# @param category PyFuncApp
+# @param tag daliuge
+# @param sleep_time 5/Integer/ApplicationArgument/NoPort/ReadWrite//False/False/The number of seconds to sleep
+# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
+# @param dropclass dlg.apps.simple.SleepAndCopyApp/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
+# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
+# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
+# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
+# @par EAGLE_END
+def sleep(sleep_time: float = 0):
+    """
+    Simple wrapper around time.sleep() function
+
+    :param sleep_time: Duration of sleep
+    """
+
+    time.sleep(sleep_time)
+    logger.info("Slept for %s s", sleep_time)
 
 ##
 # @brief hello_world
@@ -43,7 +71,6 @@ from typing import Any
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
-
 def hello_world(greet: str="World"):
     """
     Return a greeting based on user input
@@ -55,13 +82,14 @@ def hello_world(greet: str="World"):
         if not greet:
             final_greet = ""
         else:
-            final_greet =" ".join(g for g in g) if len(greet) > 1 else greet[0]
+            final_greet =" ".join(g for g in greet) if len(greet) > 1 else greet[0]
 
     return f"Hello, {final_greet}"
+
+
 ##
 # @brief random_array
 # @details A testing APP that does not take any input and produces a random array of
-
 # type int64, if integer is set to True, else of type float64.
 # size indicates the number of elements ranging between the values low and high.
 # The resulting array will be send to all connected output apps.
@@ -81,7 +109,6 @@ def hello_world(greet: str="World"):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
 # @par EAGLE_END
-
 def random_array(low=0, high=100, size=100, integer: bool=True, seed: int=0):
     """
     Produce a random numpy array of integers or floats of 'size' between 'low' and 'high'
@@ -116,7 +143,6 @@ def random_array(low=0, high=100, size=100, integer: bool=True, seed: int=0):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param content /String/ApplicationArgument/OutputPort/ReadWrite//False/False/content read from URL
 # @par EAGLE_END
-
 def retrieve_url(url):
     """
     App that retrieves the content of a URL
@@ -148,7 +174,6 @@ def retrieve_url(url):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param array /Object.Array/ApplicationArgument/OutputPort/ReadWrite//False/False/random array
 # @par EAGLE_END
-
 def list_thrashing(n: int=100):
     """
     A BarrierAppDrop that appends random integers to a list N times. It does
@@ -164,6 +189,7 @@ def list_thrashing(n: int=100):
         for _ in range(n):
             marray.append(random.random())
     return marray
+
 
 def readLines(fileName: str) -> list:
     """

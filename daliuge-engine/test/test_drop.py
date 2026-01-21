@@ -47,7 +47,7 @@ from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException, ErrorManagerCaughtException, \
     InvalidDROPState
-from dlg.apps.simple import Branch
+from dlg.apps.branch import Branch
 from dlg.apps.simple import NullBarrierApp, SleepAndCopyApp
 
 from test.dlg_engine_testutils import run_errormanagement_exception_test
