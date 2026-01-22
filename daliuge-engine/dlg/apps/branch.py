@@ -32,6 +32,7 @@ from dlg.meta import (
     dlg_int_param,
 )
 
+##
 # @brief Branch
 # @details A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
 # the provided conditional function. The conditional function can be specified either in-line or as an external function and has
@@ -44,7 +45,7 @@ from dlg.meta import (
 # @param tag daliuge
 # @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
 # @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
-# @param x /Object/ComponentParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
+# @param x /Object/ApplicationParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
 # @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
 # @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
 # @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
@@ -67,6 +68,14 @@ class Branch(PyFuncApp):
     bufsize = dlg_int_param("bufsize", 65536)
     result = dlg_bool_param("result", False)
 
+    def _get_drop_from_port(self, result):
+        for output in self.outputs:
+            for value in self.parameters['outputPorts'].values():
+                if value['target_id'] in output.oid:
+                    if value['name'] == result:
+                        return output
+        raise RuntimeError
+
     def write_results(self,result:bool=False):
         """
         Copy the input to the output identified by the condition function.
@@ -76,33 +85,30 @@ class Branch(PyFuncApp):
         if not self.outputs:
             return
 
+
         go_result = str(self.result).lower()
         nogo_result = str(not self.result).lower()
 
-        try:
-            nogo_drop = getattr(self, nogo_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the False condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
-        try:
-            go_drop = getattr(self, go_result)
-        except AttributeError:
-            logger.error("There is no Drop associated with the True condition; "
-                         "a runtime failure has occured.")
-            self.setError()
-            return
+        # if nogo_result == 'true':
+        #     raise Exception
+        go_drop_oid = next(iter(self._port_names['output'].get(go_result,[])), None)
+        nogo_drop_oid = next(iter(self._port_names['output'].get(nogo_result,[])), None)
 
-        logger.info("Sending skip to port: %s: %s", str(nogo_result), getattr(self,nogo_result))
+        go_drop = next(o for o in self.outputs if o.oid == go_drop_oid)
+        nogo_drop = next(o for o in self.outputs if o.oid == nogo_drop_oid)
+
         nogo_drop.skip()  # send skip to correct branch
 
         if self.inputs and hasattr(go_drop, "write"):
             droputils.copyDropContents(  # send data to correct branch
-                self.inputs[0], go_drop, bufsize=self.bufsize
+                    self.x, go_drop, bufsize=self.bufsize
             )
+            logger.debug("Sent the following data to correct branch: %s",
+                         droputils.allDropContents(self.x))
+
         else:  # this enables a branch based only on the condition function
-            d = pickle.dumps(self.parameters[self.argnames[0]])
+            d = pickle.dumps(self.parameters['x'])
+            logger.debug("Sending following data to correct branch: %s", self.parameters['x'])
             # d = self.parameters[self.argnames[0]]
             if hasattr(go_drop, "write"):
                 go_drop.write(d)

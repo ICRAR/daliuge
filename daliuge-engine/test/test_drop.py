@@ -1215,7 +1215,7 @@ class BranchAppDropTestsBase(object):
             last_true = x
             last_false = y
 
-        with DROPWaiterCtx(self, [last_true, last_false], 200,
+        with DROPWaiterCtx(self, [last_true, last_false], 20,
                 [DROPStates.COMPLETED, DROPStates.SKIPPED], ):
             a.async_execute()
         time.sleep(0.01)

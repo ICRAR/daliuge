@@ -51,7 +51,6 @@ from dlg.meta import (
     dlg_batch_output,
     dlg_streaming_input,
 )
-from dlg.apps.simple_functions import random_array
 from dlg.exceptions import DaliugeException, InvalidDropException
 from dlg.rpc import DropProxy
 

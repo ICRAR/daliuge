@@ -25,6 +25,7 @@ import logging
 import numpy as np
 import pickle
 import random
+import requests
 import time
 
 from typing import Any
