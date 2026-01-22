@@ -81,7 +81,7 @@ def hello_world(greet: str="World"):
     """
     final_greet = greet
     if isinstance(greet, list) or isinstance(greet, np.ndarray):
-        if not greet:
+        if len(greet) == 0:
             final_greet = ""
         else:
             final_greet =" ".join(g for g in greet) if len(greet) > 1 else greet[0]
@@ -128,7 +128,7 @@ def random_array(low=0, high=100, size=100, integer: bool=True, seed: int=0):
     np.random.seed(seed)
     if integer:
         return np.random.randint(int(low), int(high), size=size)
-    return (np.random.random(size=size) + low) * high
+    return np.random.random(size=size) * (high-low) + low
 
 ##
 # @brief retrieve_url
@@ -156,7 +156,7 @@ def retrieve_url(url):
         logger.info("Accessing URL %s", url)
         return requests.get(url, timeout=30)
     except requests.exceptions.RequestException as e:
-        raise e.reason
+        raise e
 
 ##
 # @brief list_thrashing
