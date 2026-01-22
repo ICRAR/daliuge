@@ -46,6 +46,7 @@ jobs:
         run: |
           dlg_paletteGen -r -t daliuge ./ $OUTPUT_FILENAME.palette
           dlg_paletteGen -r -t template ./ $OUTPUT_FILENAME-template.palette
+          dlg_paletteGen -s daliuge-engine/dlg/apps/simple_functions.py $OUTPUT_FILENAME-functions.palette
 
       - name: Commit palettes to EAGLE
         env:
@@ -56,6 +57,7 @@ jobs:
           mkdir -p EAGLE-graph-repo/$PROJECT_NAME
           mv $OUTPUT_FILENAME.palette EAGLE-graph-repo/$PROJECT_NAME/
           mv $OUTPUT_FILENAME-template.palette EAGLE-graph-repo/$PROJECT_NAME/
+          mv $OUTPUT_FILENAME-functions.palette EAGLE-graph-repo/$PROJECT_NAME/
           cd EAGLE-graph-repo
           git add *
           git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $GITHUB_REF_NAME, commit $PROJECT_VERSION)"
