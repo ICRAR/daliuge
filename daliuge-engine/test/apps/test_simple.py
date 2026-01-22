@@ -116,7 +116,7 @@ class TestSimpleApps(unittest.TestCase):
 
     def test_randomarrayapp(self):
         i = NullDROP("i", "i")
-        c = PyFuncApp("c", "c", func_name="dlg.apps.simple.random_array")
+        c = PyFuncApp("c", "c", func_name="dlg.apps.simple_functions.random_array")
         o = InMemoryDROP("o", "o")
         c.addInput(i)
         c.addOutput(o)
