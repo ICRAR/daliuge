@@ -24,10 +24,10 @@ Quick Start Guide
 :doc:`/running` |br|
 :doc:`/basics`
 
-Graph Patterns
+Graph foundations
 --------------
-:doc:`/graph_patterns/app_data_patterns` |br|
-:doc:`/graph_patterns/construct_patterns` |br|
+:doc:`/graph_foundation/app_data_patterns` |br|
+:doc:`/graph_foundation/construct_patterns` |br|
 
 Engine Fundamentals
 -----------------------
@@ -70,8 +70,8 @@ API Documentation
    :caption: Graph Patterns 
    :hidden: 
    
-   graph_patterns/app_data_patterns
-   graph_patterns/construct_patterns
+   graph_foundation/app_data_patterns
+   graph_foundation/construct_patterns
 
 .. toctree::
    :maxdepth: 2
