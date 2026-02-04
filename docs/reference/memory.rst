@@ -1,9 +1,9 @@
-.. _memory_patterns:
+.. _memory_drop: 
 
-Memory
-######
+MemoryDROP 
+==========
 
-IO
+I/O
 ===
 This is used to produce an input/output port. It is important to make sure this is separate from pydata.
 

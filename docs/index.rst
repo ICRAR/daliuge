@@ -24,8 +24,9 @@ Quick Start Guide
 :doc:`/running` |br|
 :doc:`/basics`
 
+   
 Graph foundations
---------------
+--------------``
 :doc:`/graph_foundation/app_data_patterns` |br|
 :doc:`/graph_foundation/construct_patterns` |br|
 
@@ -67,7 +68,7 @@ API Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Graph Patterns 
+   :caption: Graph foundations 
    :hidden: 
    
    graph_foundation/app_data_patterns
@@ -87,6 +88,7 @@ API Documentation
    :caption: Advanced DALiuGE Methods
 
    advanced/delayed
+   advanced/remote_deployment
    
 .. toctree:: 
    :maxdepth: 1
@@ -111,6 +113,7 @@ API Documentation
    :hidden:
 
    api-index
+   reference/drop_reference
    development/template_primer
    development/app_development/app_index 
    development/data_development/data_index 

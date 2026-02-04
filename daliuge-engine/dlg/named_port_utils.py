@@ -109,6 +109,62 @@ def serialize_applicationArgs(applicationArgs):
     logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
     return pargs, kwargs
 
+
+def read_port_value(
+        default,
+        port_dict,
+        encoding,
+        key,
+        mode,
+        parser,
+        keys,
+        counter
+):
+    """
+    Perform reading logic for collecting values from a named port
+
+    Note: that for outputs, we should not be reading from the DROP, as there should not
+    be information stored in the port. The only exception for this is if we are
+    retrieving information from that drop throught the PATH encoding, which is DROP
+    metadata rather than actual data.
+
+    :param default:
+    :param port_dict:
+    :param encoding:
+    :param key:
+    :param mode:
+    :param parser:
+    :param keys:
+    :param counter:
+    :return:
+    """
+    value = default
+    local_parser = get_port_reader_function(encoding)
+    if not local_parser:
+        # we prefer the port based parser if available
+        local_parser = parser
+    if port_dict[keys[counter]]["drop"].status == DROPStates.SKIPPED:
+        value = port_dict[key].value
+        logger.warning("Input drop skipped! Using %s default value for parg %s", mode,
+                       key)
+    elif (mode=="outputs" and encoding != DropParser.PATH):
+        value = port_dict[key].value
+        logger.warning("Did not attempt to read value from output (%s), continuing with "
+                       "default", key)
+    elif local_parser:
+        logger.debug("Reading from %s encoded port %s using %s", encoding, key,
+                     local_parser.__repr__())
+        value = local_parser(port_dict[keys[counter]]["drop"])
+        try:
+            value = deserialize_data(value)
+        except (TypeError, AttributeError, binascii.Error, pickle.UnpicklingError):
+            # If deserialization does not work we just
+            # stick with the value
+            pass
+
+    return value
+
+
 def identify_named_ports(
     port_dict: dict,
     positionalArgs: list,
@@ -175,23 +231,13 @@ def identify_named_ports(
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
-            local_parser = get_port_reader_function(encoding)
-            if not local_parser:
-                # we prefer the port based parser if available
-                local_parser = parser
-            if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
-                value = positionalPortArgs[key].value
-                logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
-            elif local_parser:
-                logger.debug("Reading from %s encoded port %s using %s", encoding, key, local_parser.__repr__())
-                value = local_parser(port_dict[keys[i]]["drop"])
-                try:
-                    value = deserialize_data(value)
-                except (TypeError, AttributeError, binascii.Error, pickle.UnpicklingError):
-                    # If deserialization does not work we just
-                    # stick with the value
-                    pass
-                positionalPortArgs[key].value = value
+            positionalPortArgs[key].value = read_port_value(default=value,
+                                                            port_dict=port_dict,
+                                                            encoding=encoding,
+                                                            key=key,mode=mode,
+                                                            parser=local_parser,
+                                                            keys=keys,
+                                                            counter=i)
             logger.debug("Using %s '%s' for port %s", mode, value, key)
             positionalArgs.remove(key)
             # We have positional argument that is also a keyword
@@ -203,18 +249,16 @@ def identify_named_ports(
             except ValueError:
                 logger.warning("No encoding set for %key: possible default")
                 continue
-            local_parser = get_port_reader_function(encoding)
-            if not local_parser:
-                # we prefer the port based parser if available
-                local_parser = parser
-            if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
-                logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
-            if local_parser:
-                logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
-                value = local_parser(port_dict[keys[i]]["drop"])
-            # if not found in appArgs we don't put them into portargs either
-            # pargsDict.update({key: value})
-                keywordArgs[key].value = value
+
+            value = read_port_value(default=value,
+                                                         port_dict=port_dict,
+                                                         encoding=encoding,
+                                                         key=key, mode=mode,
+                                                         parser=local_parser,
+                                                         keys=keys,
+                                                         counter=i)
+
+            keywordArgs[key].value = value
             keywordPortArgs.update({key: keywordArgs[key]})
             logger.debug("Using %s of type %s for kwarg %s", mode, type(value), key)
             _ = keywordArgs.pop(key)  # remove from original arg list
