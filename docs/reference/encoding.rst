@@ -1,4 +1,4 @@
-.. _supported_encoding
+.. _supported_encoding:
 
 
 Native supported formats

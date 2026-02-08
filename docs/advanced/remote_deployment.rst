@@ -1,7 +1,7 @@
- .. _remote_deployment:
+.. _remote_deployment:
 
 Remote Subgraph Deployment
-==========================
+===========================
 
 .. warning:: 
     This section discusses alpha features and procedures that are still being actively 

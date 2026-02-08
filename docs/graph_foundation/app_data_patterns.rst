@@ -10,3 +10,4 @@ App and Data
    app_data/apps 
    app_data/data
    app_data/ports
+   app_data/files

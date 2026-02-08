@@ -66,6 +66,16 @@ API Documentation
    running
    basics
 
+.. toctree:: 
+   :maxdepth: 1
+   :caption: Building workflows
+   :hidden: 
+
+   workflows/more_complex
+   workflows/files_and_data
+   workflows/managing_errors
+   workflows/heatmap
+
 .. toctree::
    :maxdepth: 2
    :caption: Graph foundations 
