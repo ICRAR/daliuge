@@ -24,7 +24,6 @@ A module containing utility code for running remote commands over SSH.
 """
 
 import logging
-import sys
 import time
 
 from paramiko.client import SSHClient, AutoAddPolicy

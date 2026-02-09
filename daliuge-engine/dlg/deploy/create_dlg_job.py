@@ -42,7 +42,7 @@ from dlg.deploy.configs import (
     DEFAULT_MON_HOST,
 )
 from dlg.deploy.logparser import LogParser
-from dlg.deploy.slurm_client import SlurmClient, process_config, process_slurm_template
+from dlg.deploy.slurm_client import SlurmClient, process_config
 from dlg.common.reproducibility.reproducibility import (
     init_pgt_unroll_repro_data,
     init_pgt_partition_repro_data,

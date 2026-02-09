@@ -68,6 +68,8 @@ def process_config(config_file: str):
     return {key: value for key, value in all_opts.items() if value}
 
 def process_slurm_template(template_file: str):
+    if not template_file:
+        return None
     template = Path(template_file)
     with template.open('r') as fp:
         return fp.read()
@@ -153,7 +155,7 @@ class SlurmClient:
         :param suffix:
         """
 
-        if os.path.isfile(config):
+        if config and os.path.isfile(config):
             config = process_config(config)
 
             # Do the config from the config file
@@ -334,7 +336,7 @@ class SlurmClient:
 
     @property
     def session_id(self):
-        os.path.split(self.session_dir)[-1]
+        return os.path.split(self.session_dir)[-1]
 
     def mk_session_dir(self, dlg_root: str = ""):
         """
@@ -487,7 +489,7 @@ class SlurmClient:
         job_id = jobId.strip()
         while running:
             command = f"sacct --jobs={job_id} --format=state --noheader"
-            stdout, stderr, exitStatus = dlg_remote.execRemote(
+            stdout, stderr, _ = dlg_remote.execRemote(
                 self.host, command, username=self.username
             )
             print(f"{stdout=},{stderr=}")
@@ -518,7 +520,7 @@ class SlurmClient:
             dlg_remote.copyFrom(self.host,
                             remotePath=f"{self.session_dir}.tar.xz",
                             localPath=f"{self.session_dir}.tar.xz",
-                            sername=self.username)
+                            username=self.username)
         else:
             return None
         return output_path

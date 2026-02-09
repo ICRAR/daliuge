@@ -941,7 +941,7 @@ def convert_subgraphs(lgo: dict) -> dict:
             }
             for n in lgo["nodeDataArray"]:
                 if n["id"] == app_node["id"]:
-                    n = apply_subgraph_keyword(n, node, subgraph)
+                    app_node['subgraph'] = apply_subgraph_keyword(n, node, subgraph)
 
     return lgo
 
@@ -969,8 +969,8 @@ def apply_subgraph_keyword(app_node, construct_node, subgraph):
             "value": subgraph,
             "parameterType": "applicationArgument",
         })
-        logger.warning(f"No subgraph keyword map found for {app_node['name']}. Using"
-                       "'subgraph' as default.")
+        logger.warning(f"No subgraph keyword map found for %s. Using"
+                       "'subgraph' as default.", app_node['name'])
     return app_node
 
 

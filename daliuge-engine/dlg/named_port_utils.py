@@ -109,12 +109,6 @@ def serialize_applicationArgs(applicationArgs):
     logger.info("Constructed command line arguments: %s %s", pargs, kwargs)
     return pargs, kwargs
 
-def _evaluatePositionalArgs():
-    evaluatePositionalArgs
-    pass
-
-def _evaluateKeywordArgs():
-    pass
 
 def identify_named_ports(
     port_dict: dict,
