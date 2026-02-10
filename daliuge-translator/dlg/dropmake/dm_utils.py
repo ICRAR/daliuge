@@ -969,7 +969,7 @@ def apply_subgraph_keyword(app_node, construct_node, subgraph):
             "value": subgraph,
             "parameterType": "applicationArgument",
         })
-        logger.warning(f"No subgraph keyword map found for %s. Using"
+        logger.warning("No subgraph keyword map found for %s. Using"
                        "'subgraph' as default.", app_node['name'])
     return app_node
 

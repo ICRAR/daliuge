@@ -711,4 +711,4 @@ def run(_, args):
         parser.error(f"Invalid input from args: {args}!")
 
 if __name__ == "__main__":
-    main()
+    run(None, sys.argv[1:])
