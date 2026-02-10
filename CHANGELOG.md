@@ -1,6 +1,14 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.6.0
+- [Feature] Update deploy error handling: https://github.com/ICRAR/daliuge/pull/376 
+
+# v6.5.0
+- [Feature] Add class-attribute for ports in AbstractDROP: https://github.com/ICRAR/daliuge/pull/382
+- [Fixed] Fix an issue with later types of the docker engine: https://github.com/ICRAR/daliuge/pull/380
+- [Fixed] Fix docker internal network resolution: https://github.com/ICRAR/daliuge/pull/381
+
 # v6.4.2 
 - [Fixed] Fix branch not working across multiple NodeManagers: https://github.com/ICRAR/daliuge/pull/378
 

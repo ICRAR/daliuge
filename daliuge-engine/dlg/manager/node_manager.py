@@ -53,7 +53,7 @@ from dlg.apps.app_base import AppDROP, DropRunner
 from dlg.exceptions import (
     NoSessionException,
     SessionAlreadyExistsException,
-    DaliugeException, ErrorManagerCaughtException, SessionInterruptError,
+    DaliugeException,
 )
 from ..lifecycle.dlm import DataLifecycleManager
 
@@ -393,7 +393,7 @@ class NodeManagerBase(DROPManager):
 
     from dlg.runtime.error_management import manage_session_failure
 
-    @manage_session_failure
+    # @manage_session_failure
     def deploySession(self, sessionId, completedDrops: list[str] = None):
         self._check_session_id(sessionId)
         session = self.sessions[sessionId]
@@ -425,17 +425,12 @@ class NodeManagerBase(DROPManager):
         if self._error_listener:
             listeners.append(ErrorStatusListener(session, self._error_listener))
 
-        try:
-            session.deploy(
-                completedDrops=completedDrops,
-                event_listeners=listeners,
-                foreach=foreach,
-            )
-        except ErrorManagerCaughtException as exc:
-            session.cancel(interrupt=True)
-            # raise SessionInterruptError(
-            #     "Session was interrupted due to Deploy failure"
-            # ) from exc
+        session.deploy(
+            completedDrops=completedDrops,
+            event_listeners=listeners,
+            foreach=foreach,
+        )
+
 
     def cancelSession(self, sessionId):
         logger.info("Cancelling session: %s", sessionId)
