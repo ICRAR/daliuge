@@ -104,7 +104,8 @@ setup(
     ],
     license="LGPLv2+",
     packages=find_packages(),
-    package_data={"":["VERSION"]},
+    package_data={"":["VERSION"],
+                  "dlg.templates": ["*.template"]},
     test_suite="test",
     entry_points={
         "console_scripts": ["dlg=dlg.common.tool:run"]
