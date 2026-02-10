@@ -145,7 +145,7 @@ install_requires = [
     "wheel",  # need to get wheel first...
     "bottle",
     "urllib3>=1.25.4, <1.27 ; python_version < '3.10'",
-    "urllib3>=2.5.0; python_version >= '3.10'",
+    "urllib3>=2.6.3; python_version >= '3.10'",
     "boto3>=1.38.0",
     "configobj",
     "crc32c",
