@@ -28,7 +28,7 @@ import docker
 
 from asyncio.log import logger
 
-from dlg import droputils, utils, prepareUser
+from dlg import droputils, utils
 from dlg.apps.dockerapp import DockerApp
 from dlg.data.drops.ngas import NgasDROP
 from dlg.data.drops.file import FileDROP
@@ -92,7 +92,7 @@ class DockerTests(unittest.TestCase):
 
         os.environ["DLG_ROOT"] = cls._temp
         logger.info(f"Preparing pwd and group files in {utils.getDlgDir()}")
-        _dum = prepareUser.prepareUser(DLG_ROOT=utils.getDlgDir())
+        _dum = utils.prepareUser(DLG_ROOT=utils.getDlgDir())
 
     @classmethod
     def tearDownClass(cls):
