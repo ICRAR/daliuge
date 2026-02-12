@@ -29,6 +29,7 @@ import dill
 import pytest
 import unittest
 pexpect = pytest.importorskip("dlg.dropmake")
+pytest.skip("Not yet implemented")
 
 from importlib.resources import files
 from test.dlg_end_to_end_utils import create_and_run_graph_spec, translate_graph

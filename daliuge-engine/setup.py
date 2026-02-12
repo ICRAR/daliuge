@@ -160,7 +160,7 @@ install_requires = [
     "paramiko",
     "psutil",
     "python-daemon",
-    "pyzmq == 26.1.0",  # Python 25.1.1 is minimal install that supports Python 3.12
+    "pyzmq == 26.1.1",  # Python 25.1.1 is minimal install that supports Python 3.12
     "requests",
     "scp",
     "pyyaml",

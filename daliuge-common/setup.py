@@ -63,7 +63,7 @@ def do_versioning():
 install_requires = [
     "GPUtil-fix>=1.4.0",
     "np-merklelib",
-    "pyzmq==26.1.0",
+    "pyzmq==26.1.1",
     "pydantic>=2.5",
     "boto3",
     "phonenumbers", #
