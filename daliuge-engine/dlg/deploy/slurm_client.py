@@ -150,25 +150,29 @@ class SlurmClient:
         :param pip_name:
         :param username:
         :param ssh_key:
-        :param config:
+        :param parsed_config:
         :param slurm_template:
         :param suffix:
         """
 
-        if config and os.path.isfile(config):
-            config = process_config(config)
+        if config:
+            if isinstance(config, dict):
+                parsed_config = config
+            elif os.path.isfile(config):
+                parsed_config = process_config(config)
+            else:
+                raise ValueError(f"Invalid config: {config}")
 
-            # Do the config from the config file
             try:
-                self.host = config.get('login_node')
+                self.host = parsed_config.get('login_node')
                 # superceded by slurm_template if that is present
-                self._acc = config.get('account')
-                self.dlg_root = config.get('dlg_root')
-                self.modules = config.get('modules')
+                self._acc = parsed_config.get('account')
+                self.dlg_root = parsed_config.get('dlg_root')
+                self.modules = parsed_config.get('modules')
                 # superceded by slurm_template if that is present
-                self.venv = config.get('venv')
-                self.exec_prefix = config.get("exec_prefix")
-                self.username = config.get('user', username)
+                self.venv = parsed_config.get('venv')
+                self.exec_prefix = parsed_config.get("exec_prefix")
+                self.username = parsed_config.get('user', username)
                 if not self.username:
                     print("Username not configured in INI file, using local username...")
             except KeyError as e:
@@ -177,16 +181,16 @@ class SlurmClient:
                 sys.exit(1)
         else:
             # Setup SLURM environment variables using Factory
-            config = ConfigFactory.create_config(facility=facility, user=username)
-            self.host = config.getpar("host") if host is None else host
-            self._acc = config.getpar("account") if (acc is None) else acc
+            parsed_config = ConfigFactory.create_config(facility=facility, user=username)
+            self.host = parsed_config.getpar("host") if host is None else host
+            self._acc = parsed_config.getpar("account") if (acc is None) else acc
             # self._user = config.getpar("user") if (username is None) else username
 
             # environment & sbatch
-            self.dlg_root = config.getpar("dlg_root") if not dlg_root else dlg_root
-            self.modules = config.getpar("modules")
-            self.venv = config.getpar("venv")
-            self.exec_prefix = config.getpar("exec_prefix")
+            self.dlg_root = parsed_config.getpar("dlg_root") if not dlg_root else dlg_root
+            self.modules = parsed_config.getpar("modules")
+            self.venv = parsed_config.getpar("venv")
+            self.exec_prefix = parsed_config.getpar("exec_prefix")
             self.username = username
         # sbatch 
         self._slurm_template = process_slurm_template(slurm_template)
