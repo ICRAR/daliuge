@@ -80,7 +80,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          py.test daliuge-engine/test/manager/test_dm.py --cov --show-capture=no --full-trace
+          py.test daliuge-engine/test/ --cov --show-capture=no --full-trace
 
       - name: Update to coveralls
         env:
