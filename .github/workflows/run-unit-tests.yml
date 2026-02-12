@@ -123,7 +123,7 @@ jobs:
 
       - name: Run tests
         run: |
-          py.test daliuge-engine/test/end_to_end/data/test_memory.py --cov --show-capture=all
+          py.test daliuge-engine/test/end_to_end/ --cov --show-capture=all
 
 
       - name: Update to coveralls
