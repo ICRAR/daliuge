@@ -73,12 +73,12 @@ class TestMemory(unittest.TestCase):
                     value = fp.read()
                     self.assertEqual(TYPE_MAP[expected_type]['type'], type(value))
                     self.assertEqual(TYPE_MAP[expected_type]["value"], value)
-            # else:
-            #     with open(l.path, "rb") as fp:
-            #         value = dill.load(fp)
-            #         if expected_type != "object":
-            #             self.assertEqual(TYPE_MAP[expected_type]["type"], type(value))
-            #             self.assertEqual(TYPE_MAP[expected_type]["value"], value)
-            #         else:
-            #             self.assertEqual(TYPE_MAP[expected_type]["type"], type(value))
-            #             self.assertEqual(TYPE_MAP[expected_type]["value"], value())
+            else:
+                with open(l.path, "rb") as fp:
+                    value = dill.load(fp)
+                    if expected_type != "object":
+                        self.assertEqual(TYPE_MAP[expected_type]["type"], type(value))
+                        self.assertEqual(TYPE_MAP[expected_type]["value"], value)
+                    else:
+                        self.assertEqual(TYPE_MAP[expected_type]["type"], type(value))
+                        self.assertEqual(TYPE_MAP[expected_type]["value"], value())
