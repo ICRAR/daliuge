@@ -117,42 +117,38 @@ class SlurmClient:
         config=None,
         slurm_template=None,
         suffix=None,
+        wait: bool=False,
     ):
         """
+        Initialize a SLURM client for deploying DALiuGE graphs
 
-        ## Here, we want to separate out the following
-        ## Config derived from CONFIG Factory - we replace with ini file
-        ## Config derived from CLI, intended for replacement in the SLURM job script
-        ##    - We want to replace these directives with the SLURM template
-        ## Config derived from CLI that is used in the final script call
-        ## Any leftover config - we keep as normal
-
-        :param dlg_root:
-        :param host:
-        :param acc:
-        :param physical_graph_template_file:
-        :param logical_graph:
-        :param job_dur:
-        :param num_nodes:
-        :param run_proxy:
-        :param mon_host:
-        :param mon_port:
-        :param logv:
-        :param facility:
-        :param zerorun:
-        :param max_threads:
-        :param sleepncopy:
-        :param num_islands:
-        :param all_nics:
-        :param check_with_session:
-        :param submit:
-        :param remote:
-        :param pip_name:
-        :param username:
-        :param ssh_key:
-        :param parsed_config:
-        :param slurm_template:
-        :param suffix:
+        :param dlg_root: Root directory for DALiuGE installation
+        :param host: Hostname of the SLURM cluster
+        :param acc: SLURM account name
+        :param physical_graph_template_file: Path to physical graph template file
+        :param logical_graph: Path to logical graph file
+        :param job_dur: Duration of job in minutes
+        :param num_nodes: Number of compute nodes to request
+        :param run_proxy: Whether to enable remote monitoring proxy
+        :param mon_host: Monitoring host address
+        :param mon_port: Monitoring port number  
+        :param logv: Logging verbosity level (0-3)
+        :param facility: Target facility name
+        :param zerorun: Run without executing drops
+        :param max_threads: Maximum number of threads per process
+        :param sleepncopy: Use sleep-and-copy application
+        :param num_islands: Number of islands in deployment
+        :param all_nics: Use all network interfaces
+        :param check_with_session: Check graph status with session
+        :param submit: Submit job to SLURM queue
+        :param remote: Whether deploying to remote cluster
+        :param pip_name: Name of pipeline
+        :param username: Remote username
+        :param ssh_key: Path to SSH key file
+        :param config: Configuration dictionary or file path
+        :param slurm_template: Custom SLURM script template
+        :param suffix: Custom suffix for session directory
+        :param wait: Whether to wait for job completion
         """
 
         if config:
@@ -230,7 +226,7 @@ class SlurmClient:
         self._remote = remote
         self.ssh_key = ssh_key if ssh_key else None
 
-        self.wait = True
+        self.wait = wait
     
     def create_session_suffix(self, suffix=None):
         """
