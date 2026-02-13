@@ -220,6 +220,7 @@ class ZeroRPCClient(RPCClientBase):
         async_result = client.__call__(req.method, *req.args, **{"async": True})
         async_result.rawlink(lambda x: self.process_response(req, x))
 
+
     def get_rpc_client(self, hostname, port):
         # hostname = hostname.split(":")[0]
         client = self.get_client_for_endpoint(hostname, port)

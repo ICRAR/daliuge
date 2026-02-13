@@ -11,6 +11,5 @@ Each ErrorCode has debugging tips and suggestions for how you may rectify the er
 
 .. autoclass:: dlg.runtime.error_management.ErrorCode
    :members:
-   :noindex:
    :undoc-members:
    :member-order: bysource

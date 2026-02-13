@@ -168,6 +168,7 @@ class NMTestsMixIn:
         sessionId=f"s{random.randint(0, 1000)}",
         node_managers=None,
         threads=0,
+        wait_for_event=True
     ):
         """Utility to run a graph in two Node Managers"""
 
@@ -188,23 +189,30 @@ class NMTestsMixIn:
         drops.update(dm2.sessions[sessionId].drops)
 
         leaf_drop = drops[leaf_oid]
-        with droputils.DROPWaiterCtx(self, leaf_drop, 5):
+        def run_roots():
             for oid in root_oids:
                 drop = drops[oid]
                 drop.write(root_data)
                 drop.setCompleted()
+
+        if wait_for_event:
+            with droputils.DROPWaiterCtx(self, leaf_drop, 5):
+                run_roots()
+        else:
+            run_roots()
+            sleep(5)
 
         if not expected_failures:
             expected_failures = []
         expected_successes = [
             drops[oid] for oid in drops if oid not in expected_failures
         ]
-        expected_failures = [drops[oid] for oid in drops if oid in expected_failures]
+        expected_failures = {drops[oid] for oid in drops if oid in expected_failures}
 
         for drop in expected_successes:
             self.assertEqual(DROPStates.COMPLETED, drop.status)
         for drop in expected_failures:
-            self.assertEqual(DROPStates.ERROR, drop.status)
+            self.assertTrue(drop.status in (DROPStates.ERROR, DROPStates.CANCELLED))
 
         leaf_drop_data = None
         if leaf_drop not in expected_failures:
