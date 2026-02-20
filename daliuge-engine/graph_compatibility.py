@@ -99,7 +99,7 @@ class Runner(ManagerStarter):
         start_time = time.time()
         while time.time() - start_time < self.MAX_WAIT_TIME:
             all_completed = all(
-                status['status'] == DROPStates.COMPLETED
+                (status['status'] == DROPStates.COMPLETED or status['status'] == DROPStates.SKIPPED)
                 for status in dim.getGraphStatus(session_id).values()
             )
             if all_completed:
@@ -137,8 +137,8 @@ class Runner(ManagerStarter):
         logical_graph = prepare_lgt(self.lg_path, 0)
         partitioned_graph = unroll_and_partition_with_params(
             lgt=logical_graph,
-            test=True,
-            algorithm="metis",
+            test=False,
+            algorithm="mysarkar",
             num_partitions=2,
             num_islands=1,
             par_label="Partition",
