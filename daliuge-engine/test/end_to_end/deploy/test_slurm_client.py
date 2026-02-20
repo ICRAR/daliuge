@@ -78,7 +78,7 @@ class TestSlurmClient(unittest.TestCase):
             job_dur=45,
             physical_graph_template_file=str(self.pg),
             suffix="TestSession",
-            parsed_config=cfg_file,
+            config=cfg_file,
             username='test'
         )
         session_dir = client.session_dir

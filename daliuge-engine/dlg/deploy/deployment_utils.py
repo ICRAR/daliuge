@@ -126,19 +126,15 @@ def find_numislands(physical_graph_template_file):
         return None, None, physical_graph_template_file
 
     with open(physical_graph_template_file, "r") as f:
-        pgt_data = json.load(f, strict=False)
-    try:
-        (pgt_name, pgt) = pgt_data
-    except TypeError as e:
-        raise ValueError(type(pgt_data)) from e
+        pgt = json.load(f, strict=False)
     try:
         nodes = list(map(lambda x: x["node"], pgt))
         islands = list(map(lambda x: x["island"], pgt))
     except KeyError:
-        return None, None, pgt_name
+        return None, None
     num_islands = len(dict(zip(islands, range(len(islands)))))
     num_nodes = len(dict(zip(nodes, range(len(nodes)))))
-    return num_islands, num_nodes, pgt_name
+    return num_islands, num_nodes
 
 
 def label_job_dur(job_dur):

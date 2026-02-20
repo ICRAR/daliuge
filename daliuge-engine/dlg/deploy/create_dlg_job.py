@@ -502,7 +502,6 @@ def _translate_graph(parser, opts, lg_graph):
     else:
         pgt_file = graph_file
 
-
     if not lg_graph:
         parser.error("Incorrect configuration, no graph available to translate")
         sys.exit(1)
@@ -519,10 +518,9 @@ def _translate_graph(parser, opts, lg_graph):
     )
     pgt.append(reprodata)
     pgt = init_pgt_partition_repro_data(pgt)
-    pgt_name = pgt_file
     pgt_path = Path(f"/tmp/{pgt_file}")
     with pgt_path.open("w") as o:
-        json.dump((pgt_name, pgt), o, indent=2)
+        json.dump(pgt, o, indent=2)
         return str(pgt_path)
 
 

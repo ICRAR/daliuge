@@ -24,14 +24,16 @@ Contains a slurm client which generates slurm scripts from daliuge graphs.
 """
 
 import datetime
+import json
 import logging
-import sys
 import os
-import subprocess
 import shutil
-import tempfile
 import string
+import subprocess
+import sys
+import tempfile
 import time
+
 import dlg.remote as dlg_remote
 
 from configparser import ConfigParser, ExtendedInterpolation
@@ -58,7 +60,7 @@ def process_config(config_file: str):
         - Graph translation parameters
         - Engine parameters
 
-    :returns: dict, config information
+    :returns: dict, confiport information
     """
     parser = ConfigParser(interpolation=ExtendedInterpolation())
     all_opts = {}
@@ -200,7 +202,6 @@ class SlurmClient:
         self._run_proxy = run_proxy
         self._mon_host = mon_host
         self._mon_port = mon_port
-        self._pip_name = pip_name
         self._logv = logv
         self._zerorun = zerorun
         self._max_threads = max_threads
@@ -214,7 +215,8 @@ class SlurmClient:
         self._submit = submit
         self._suffix = self.create_session_suffix(suffix)
         if self._physical_graph_template_file:
-            ni, nn, self._pip_name = find_numislands(self._physical_graph_template_file)
+            self._pip_name = Path(self._physical_graph_template_file).name
+            ni, nn = find_numislands(self._physical_graph_template_file)
             if isinstance(ni, int) and ni >= self._num_islands:
                 self._num_islands = ni
             if nn and nn >= self._num_nodes:
@@ -388,19 +390,21 @@ class SlurmClient:
         """
         jobId = None
 
-        import json
-        subgraph_dir = Path("/tmp/")
-        subgraph_name = "subgraph.graph"
-        self._logical_graph = subgraph_dir / subgraph_name
-        with open(self._logical_graph, 'w+') as fp:
-            json.dump(logical_graph, fp)
+        # subgraph_dir = Path("/tmp/")
+        # subgraph_name = "subgraph.graph"
+        # self._logical_graph = subgraph_dir / subgraph_name
+        # with open(self._logical_graph, 'w+') as fp:
+        #     json.dump(logical_graph, fp)
 
         session_dir = self.mk_session_dir()
         if not session_dir:
             print("No session_dir created.")
             return jobId
-        if logical_graph:
-            self._pip_name = subgraph_name
+
+        if self._logical_graph:
+            print(f"Changing to logical graph submission.")
+            self._pip_name = Path(self._logical_graph).name
+
         remote_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
         print(f"{remote_graph_file_name=}")
         if self._physical_graph_template_file:
