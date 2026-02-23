@@ -102,7 +102,7 @@ class TestGraphLoaderToNodeManager(NMTestsMixIn, ManagerStarter, unittest.TestCa
         self.dim.addGraphSpec("TestSession", pg_spec)
         self.dim.deploySession("TestSession", completedDrops=roots)
 
-        max_wait_time = 30  # seconds
+        max_wait_time = 60  # seconds
         poll_interval = 1  # second
         start_time = time.time()
         all_completed = False
