@@ -2,7 +2,7 @@
 set -uo pipefail
 
 # Directory containing files to process
-DIR="${1:-/home/00087932/github/test_runner_graphs/}"
+DIR="${1}"
 
 # Track overall failure
 overall_status=0

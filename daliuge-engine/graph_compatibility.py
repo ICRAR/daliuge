@@ -126,8 +126,8 @@ class Runner(ManagerStarter):
         # Start second node manager
         nm2_events_port, nm2_rpc_port = (5555, 6666)
         nm2_info = self.start_nm_in_thread(port=8999,
-                                           events_port=constants.NODE_DEFAULT_EVENTS_PORT,
-                                           rpc_port=constants.NODE_DEFAULT_RPC_PORT)
+                                           events_port=nm2_events_port,
+                                           rpc_port=nm2_rpc_port)
         nm2_hostname = create_full_hostname(nm2_info, nm2_events_port, nm2_rpc_port)
 
         manager_hostnames = [nm1_hostname, nm2_hostname]
