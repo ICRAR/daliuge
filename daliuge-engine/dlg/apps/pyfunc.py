@@ -621,6 +621,20 @@ class PyFuncApp(BarrierAppDROP):
                 self.parameters[arg] = arg_map[arg].value
         return keywordArgsMap, positionalArgsMap
 
+    def _get_drop_from_port(self, port):
+        """
+        # TODO change port to an alternate name
+        Derived from branch app
+        :param result:
+        :return:
+        """
+        for input in self.inputs:
+            for value in self.parameters['outputPorts'].values():
+                if value['target_id'] in input.oid:
+                    if value['name'] == port:
+                        return input
+        raise RuntimeError
+
     def _ports2args(self, pargsDict, keyargsDict) -> tuple[dict,dict]:
         """
         Replace arguments with values from ports.
@@ -637,8 +651,18 @@ class PyFuncApp(BarrierAppDROP):
         if "output_parser" in self.parameters:
             self.output_parser = self.parameters["output_parser"]
         # TODO investigate use of _port_map and _port_ids instead of these parameters.
-        if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
+        # parameters is bad because parameters means
+
+
+        # if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
+        if self.inputs and self._port_ids['input']:
             logger.debug("Mapping ports to inputs...")
+
+            inputs_dict = collections.OrderedDict()
+            for dropid, portname in self._port_ids['input'].items():
+                inputs_dict[dropid] = {"name": portname, "path": None,
+                                   "drop": self._inputs[dropid]}
+
             if self.fn_nargs == 0:
                 check_len = len(self._inputs)
             else:
@@ -646,11 +670,11 @@ class PyFuncApp(BarrierAppDROP):
                     len(self._inputs),
                     self.fn_nargs + self.fn_nkw,
                 )
-            inputs_dict = collections.OrderedDict()
-            for inport in self.parameters["inputs"]:
-                key = list(inport.keys())[0]
-                inputs_dict[key] = {"name": inport[key], "path": None, "drop":
-                    self._inputs[key]}
+
+            # for inport in self.parameters["inputs"]:
+            #     key = list(inport.keys())[0]
+            #     inputs_dict[key] = {"name": inport[key], "path": None, "drop":
+            #         self._inputs[key]}
             parser = (
                 get_port_reader_function(self.input_parser)
                 if hasattr(self, "input_parser")

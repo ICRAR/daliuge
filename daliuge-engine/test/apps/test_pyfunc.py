@@ -98,8 +98,9 @@ def _PyFuncApp(oid, uid, f, additional_imports=None, global_parsers= False, **kw
 
     applicationArgs = kwargs.pop("applicationArgs", {})
     input_kws = [
-        {k: v} for k, v in kwargs.items() if k not in ["input_parser", "output_parser"]
+        {k: v} for k, v in kwargs.items() if k not in ["input_parser", "output_parser", "ports"]
     ]
+    ports = kwargs.get("ports", [])
     return pyfunc.PyFuncApp(
         oid,
         uid,
@@ -108,6 +109,7 @@ def _PyFuncApp(oid, uid, f, additional_imports=None, global_parsers= False, **kw
         func=func,
         applicationArgs=applicationArgs,
         inputs=input_kws,
+        ports=ports,
         **fw_kwargs,
     )
 
@@ -347,6 +349,7 @@ class TestPyFuncApp(unittest.TestCase):
             arg_inputs = []
             # dict with name: (drop, value) items
             kwarg_inputs = {}
+            ports = []
             arg_names = [
                 "b",
                 "c",
@@ -355,11 +358,16 @@ class TestPyFuncApp(unittest.TestCase):
                 "z",
             ]  # neeed to use argument names
             # translate = lambda x: base64.b64encode(pickle.dumps(x))
+            # ports = [{'name': name, 'oid': other["oid"], 'direction': direction}]
+            # DROP B's ports:
+            # ports = [{'name': 'input', 'oid': 'a', direction: 'input'}]
+
             logger.debug(f"args: {args}")
             for i in range(n_args):
                 logger.debug(f"adding arg input: {args[i]}")
                 si = arg_names[i]
                 arg_inputs.append(InMemoryDROP(si, si, pydata={"value":args[i], "type": "int"}))
+                ports.append({"name": si, "oid": si, "direction": "input"})
             i = n_args
             for name, value in kwargs.items():
                 si = name  # use keyword name
@@ -367,12 +375,15 @@ class TestPyFuncApp(unittest.TestCase):
                     si,
                     InMemoryDROP(si, si, pydata={"value":value, "type": "int"}),
                 )
+                ports.append({"name": si, "oid": si, "direction": "input"})
                 i += 1
 
             a = InMemoryDROP("a", "a", pydata={"value":1, "type":"int"})
             output = InMemoryDROP("o", "o")
             kwargs = {inp.uid: inp.oid for inp in arg_inputs}
             kwargs.update({name: vals[0] for name, vals in kwarg_inputs.items()})
+            kwargs['ports'] = ports
+            ports.append({"name": 'a', "oid": 'a', "direction": "input"})
             kwargs["a"] = a.oid
             app = _PyFuncApp(
                 "f",
