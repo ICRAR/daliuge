@@ -403,7 +403,6 @@ def create_monitor_options(parser):
     group = optparse.OptionGroup(parser, "Monitor proxy options",
                                  "Start and configure the monitoring proxy.")
 
-
     group.add_option(
         "-p",
         "--run_proxy",

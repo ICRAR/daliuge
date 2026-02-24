@@ -24,7 +24,6 @@ Contains a slurm client which generates slurm scripts from daliuge graphs.
 """
 
 import datetime
-import json
 import logging
 import os
 import shutil
@@ -113,7 +112,6 @@ class SlurmClient:
         check_with_session: bool =False,
         submit: bool = False,
         remote: bool = True,
-        pip_name: str = "",
         username: str = "",
         ssh_key="",
         config=None,
@@ -380,7 +378,7 @@ class SlurmClient:
         return session_dir
 
 
-    def submit_job(self, logical_graph: dict = None):
+    def submit_job(self):
         """
         Submits the slurm script to the requested facility
 
@@ -402,7 +400,7 @@ class SlurmClient:
             return jobId
 
         if self._logical_graph:
-            print(f"Changing to logical graph submission.")
+            print("Changing to logical graph submission.")
             self._pip_name = Path(self._logical_graph).name
 
         remote_graph_file_name = "{0}/{1}".format(session_dir, self._pip_name)
