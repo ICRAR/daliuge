@@ -477,7 +477,7 @@ def create_algorithm_options(parser):
         type="string",
         dest="algorithm",
         help="The algorithm to be used for the translation",
-        default="metis",
+        default="mysarkar",
     )
 
     group.add_option(
