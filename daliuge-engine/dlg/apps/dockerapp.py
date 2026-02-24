@@ -45,7 +45,7 @@ from dlg.named_port_utils import replace_named_ports
 from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import DaliugeException, InvalidDropException
 
-
+logging.getLogger("docker").setLevel(logging.DEBUG)
 logger = logging.getLogger(f"dlg.{__name__}")
 
 DLG_ROOT = utils.getDlgDir()
@@ -366,6 +366,10 @@ class DockerApp(BarrierAppDROP):
 
         c.api.close()
 
+        # Prepare workspace user group and password templates
+        logger.info("Setting up group and password templates in: %s", utils.getDlgDir())
+        utils.prepareUser()
+
         self._containerIp = None
         self._containerId = None
         self._waiters = []
@@ -468,6 +472,7 @@ class DockerApp(BarrierAppDROP):
             # deal with environment variables
             env = {}
             env.update({"DLG_UID": self._uid})
+
             if self._dlg_session_id:
                 env.update({"DLG_SESSION_ID": self._dlg_session_id})
             if self._user is not None:
@@ -562,6 +567,7 @@ class DockerApp(BarrierAppDROP):
             logger.debug("Final user for container: %s:%s",
                          self._user, self._userid)
 
+            cmd = os.path.expandvars(cmd)
             # Create container
             self._container = c.containers.create(  # type: ignore
                 self._image,
@@ -614,6 +620,8 @@ class DockerApp(BarrierAppDROP):
 
             end = time.time()
 
+            for line in self.container.logs(stream=True, follow=True):
+                print(line.decode().rstrip())
             # Capture output
             stdout = self.container.logs(stream=False, stdout=True, stderr=False)
             stderr = self.container.logs(stream=False, stdout=False, stderr=True)

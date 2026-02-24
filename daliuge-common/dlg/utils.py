@@ -41,9 +41,11 @@ import re
 import grp
 import pwd
 
+from pathlib import Path
 import netifaces
 import dlg.exceptions as ex
 from dlg import common
+from dlg.exceptions import InvalidPathException
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -505,27 +507,43 @@ class ExistingProcess(object):
 
 def prepareUser(DLG_ROOT=getDlgDir()):
     workdir = f"{DLG_ROOT}/workspace/settings"
+
+    def check_usrfile_exists(wdir, filename):
+        """
+        Determine if we need to create the user files
+        """
+        p = Path(wdir) / filename
+        if p.is_dir():
+            raise InvalidPathException(f"{p} already exists as a directory! Please remove and try again")
+        if p.exists() and p.is_file():
+            return True
+        else:
+            return False
+
     try:
         os.makedirs(workdir, exist_ok=True)
     except Exception as e:
         logger.debug("prepareUser has failed")
         raise e
-    template_dir = os.path.dirname(__file__)
+    template_dir = os.path.join(os.path.dirname(__file__), "templates")
     # get current user info
     pw = pwd.getpwuid(os.getuid())
     gr = grp.getgrgid(pw.pw_gid)
     dgr = grp.getgrnam("docker")
-    with open(os.path.join(workdir, "passwd"), "wt") as file:
-        file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
-        file.write(
-            f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n"
-        )
-        logger.debug("passwd file written %s", file.name)
-    with open(os.path.join(workdir, "group"), "wt") as file:
-        file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
-        file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
-        file.write(f"docker:x:{dgr.gr_gid}\n")
-        logger.debug("Group file written %s", file.name)
+
+    if not check_usrfile_exists(workdir, "passwd"):
+        with open(os.path.join(workdir, "passwd"), "wt") as file:
+            file.write(open(os.path.join(template_dir, "passwd.template"), "rt").read())
+            file.write(
+                f"{pw.pw_name}:x:{pw.pw_uid}:{pw.pw_gid}:{pw.pw_gecos}:{DLG_ROOT}:/bin/bash\n"
+            )
+            logger.debug("passwd file written %s", file.name)
+    if not check_usrfile_exists(workdir, "group"):
+        with open(os.path.join(workdir, "group"), "wt") as file:
+            file.write(open(os.path.join(template_dir, "group.template"), "rt").read())
+            file.write(f"{gr.gr_name}:x:{gr.gr_gid}:\n")
+            file.write(f"docker:x:{dgr.gr_gid}\n")
+            logger.debug("Group file written %s", file.name)
 
     return dgr.gr_gid
 
