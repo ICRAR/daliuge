@@ -84,6 +84,18 @@ def save_npy(drop: "DataDROP", ndarray: np.ndarray, allow_pickle=False):
     dropio.write(bio.getbuffer())
     dropio.close()
 
+def save_npy_str(drop: "DataDROP", ndarray: np.ndarray, allow_pickle=False):
+    """
+    Saves a numpy ndarray to a drop in npy format
+    """
+    sio = io.StringIO()
+    # np.save accepts a "file-like" object which basically just requires
+    # a .write() method. Try np.save(drop, array)
+    np.save(sio, ndarray, allow_pickle=allow_pickle)
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_WRITE)
+    dropio.write(sio.getvalue())
+    dropio.close()
 
 def save_numpy(drop: "DataDROP", ndarray: np.ndarray):
     save_npy(drop, ndarray)
