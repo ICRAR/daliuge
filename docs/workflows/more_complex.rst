@@ -35,8 +35,10 @@ If you run the workflow with no changes as before, the output file will have a D
 You can then experiment with copying or renaming the output to make this behaviour more visible. For example, we can also specify a relative filepath if we have a particular name we want to use:
 
     - Click on the ``File`` drop
-    - Update the value of the ``filepath`` parameter to ``myfile.txt`` 
+    - Update the value of the ``filepath`` parameter to ``myfile.txt``
+
       .. image:: ../images/workflows/hello_world_basic_fileattr.png
+
     - Re-run the graph and check the newest session directory:: 
         
         cd ~/dlg/workspace
@@ -58,7 +60,7 @@ To recap some invisible but important points here:
 
     - The default, and encouraged, DALiuGE behaviour is to be in control of both data read and write, as well as being in control of output file naming:
     - With DALiuGE controlling naming and provenance, individual applications don’t need complicated coordination logic to avoid collisions or track which file belongs to which run.
-    - Everything takes place within the _session directory_, meaning that data is localised to a session. This supports reproducibility and improves the isolation of the workflow.
+    - Everything takes place within the *session directory*, meaning that data is localised to a session. This supports reproducibility and improves the isolation of the workflow.
 
 Extending Hello, World
 ----------------------
@@ -89,20 +91,16 @@ In this example,  we'll create a workflow that demonstrates how to:
 
 For this example, we'll work with a synthetic noisy signal that might represent an astronomical observation. We'll use the NumPy library (which will be installed in your DALiuGE virtual environment).
 
-We have some array data that represents a noisy signal (:download:`../data/noisy_signal.npy`). Assuming we've downloaded this in a folder like $HOME/data/, lets use ``numpy`` to view the image first to see what we are dealing with::
+We have some array data that represents a noisy signal (:download:`noisy_signal.npy <../data/noisy_signal.npy>`). Assuming we've downloaded this in a folder like $HOME/data/, lets use ``numpy`` to view the image first to see what we are dealing with::
 
-To view the data locally::
-
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
-    >>> data = np.load("$HOME/data/noisy_signal.npy")
-    >>> plt.figure(figsize=(10,6))
-    >>> plt.imshow(data, cmap='viridis')
-    >>> plt.colorbar()
-    >>> plt.title("Noisy Signal")
-    >>> plt.show()
-
-
+    > import numpy as np
+    > import matplotlib.pyplot as plt
+    > data = np.load("$HOME/data/noisy_signal.npy")
+    > plt.figure(figsize=(10,6))
+    > plt.imshow(data, cmap='viridis')
+    > plt.colorbar()
+    > plt.title("Noisy Signal")
+    > plt.show()
 
 Let's create a workflow that will:
 1. Load this noisy data
@@ -110,14 +108,6 @@ Let's create a workflow that will:
 3. Save both the filtered result and a mask showing where significant signal was detected
 
 DALiuGE can load this
-
-We have some array data that represents a noisy signal (:download:`../data/noisy_signal.npy`). Assuming we've downloaded this in a folder like $HOME/data/, lets use ``numpy`` to view the image first to see what we are dealing with::
-
-    >>> import numpy as np 
-    >>> np.load("noisy_signal.npy")
-    >>> import matplotlib.pyplot as plt
-    >>> plt.imshow()
-    >>> plt.show()
 
 - Show how we can produce files and switch to memory and back for testing
 - Show how we can write without explicitly using a 'writer'
