@@ -42,7 +42,7 @@ from dlg.deploy.configs import (
     DEFAULT_MON_HOST,
 )
 from dlg.deploy.logparser import LogParser
-from dlg.deploy.slurm_client import SlurmClient
+from dlg.deploy.slurm_client import SlurmClient, process_config
 from dlg.common.reproducibility.reproducibility import (
     init_pgt_unroll_repro_data,
     init_pgt_partition_repro_data,
@@ -73,31 +73,8 @@ def process_bool(param: str):
     else:
         raise ValueError("You have likely misspelled True/False in your .ini config")
 
-def process_config(config_file: str):
-    """
-    Use configparser to process INI file
 
-    Current functionality: 
-        - Returns remote environment config (e.g. DLG_ROOT, HOME etc.)
 
-    Future Functionality: 
-        - Graph translation parameters
-        - Engine parameters
-
-    :returns: dict, config information
-    """
-    from configparser import ConfigParser, ExtendedInterpolation
-    parser = ConfigParser(interpolation=ExtendedInterpolation())
-    all_opts = {}
-    parser.read(config_file)
-    for s in parser.sections():
-        all_opts |= (dict(parser[s]))
-    return {key: value for key, value in all_opts.items() if value}
-
-def process_slurm_template(template_file: str):
-    template = Path(template_file)
-    with template.open('r') as fp:
-        return fp.read()
 
 def create_engine_group(parser: optparse.OptionParser):
     """
@@ -426,7 +403,6 @@ def create_monitor_options(parser):
     group = optparse.OptionGroup(parser, "Monitor proxy options",
                                  "Start and configure the monitoring proxy.")
 
-
     group.add_option(
         "-p",
         "--run_proxy",
@@ -500,7 +476,7 @@ def create_algorithm_options(parser):
         type="string",
         dest="algorithm",
         help="The algorithm to be used for the translation",
-        default="metis",
+        default="mysarkar",
     )
 
     group.add_option(
@@ -525,7 +501,6 @@ def _translate_graph(parser, opts, lg_graph):
     else:
         pgt_file = graph_file
 
-
     if not lg_graph:
         parser.error("Incorrect configuration, no graph available to translate")
         sys.exit(1)
@@ -542,10 +517,9 @@ def _translate_graph(parser, opts, lg_graph):
     )
     pgt.append(reprodata)
     pgt = init_pgt_partition_repro_data(pgt)
-    pgt_name = pgt_file
     pgt_path = Path(f"/tmp/{pgt_file}")
     with pgt_path.open("w") as o:
-        json.dump((pgt_name, pgt), o, indent=2)
+        json.dump(pgt, o, indent=2)
         return str(pgt_path)
 
 
@@ -618,11 +592,10 @@ def submit(opts, parser):
                      "file could be found!")
         sys.exit(1)
     if opts.slurm_template:
-        template_path = cfg_manager.load_user_config(ConfigType.SLURM, opts.slurm_template)
-        if not template_path:
+        template = cfg_manager.load_user_config(ConfigType.SLURM, opts.slurm_template)
+        if not template:
             parser.error("Provided --slurm_template option that does not exist!")
             sys.exit(1)
-        template = process_slurm_template(template_path)  if template_path else None
     else:
         template = None
 

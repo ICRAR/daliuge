@@ -51,7 +51,7 @@ class TestSlurmClient(unittest.TestCase):
             facility="setonix", 
             num_nodes=6,
             job_dur=45,
-            physical_graph_template_file=self.pg,
+            physical_graph_template_file=str(self.pg),
             suffix="TestSession",
             username="test"
         )
@@ -71,14 +71,14 @@ class TestSlurmClient(unittest.TestCase):
         - That we can use the INI file to produce alternative parameters
         """
         cfg_file = Path(__file__).parent / "setonix.ini"
-        cfg = process_config(cfg_file)
+        # cfg = process_config(cfg_file)
         client = SlurmClient(
             facility="setonix", 
             num_nodes=6,
             job_dur=45,
-            physical_graph_template_file=self.pg,
+            physical_graph_template_file=str(self.pg),
             suffix="TestSession",
-            config=cfg,
+            config=cfg_file,
             username='test'
         )
         session_dir = client.session_dir
@@ -97,14 +97,14 @@ class TestSlurmClient(unittest.TestCase):
         Use 'slurm_script_from_template.sh as a comparison file to demonstrate
         how the template approach gives us more options. 
         """
-        template = Path(__file__).parent / "example_template.slurm"
-        with template.open() as fp:
-            slurm_template = fp.read()
+        slurm_template = Path(__file__).parent / "example_template.slurm"
+        # with template.open() as fp:
+        #     slurm_template = fp.read()
         client = SlurmClient(
             facility="setonix", 
-            physical_graph_template_file=self.pg,
+            physical_graph_template_file=str(self.pg),
             suffix="TestSession",
-            slurm_template=slurm_template,
+            slurm_template=str(slurm_template),
             username='test'
         )
         session_dir = client.session_dir
