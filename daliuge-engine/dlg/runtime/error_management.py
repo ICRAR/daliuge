@@ -122,6 +122,16 @@ class ErrorCode(Enum):
           report a BAD_IMPORT code.
     """
 
+    MEMORY_DROP_TYPE_ERROR = auto()
+    """
+    There was an issue reading/writing to a MemoryDROP. This is likely caused by the 
+    PyData type being inconsistent with the data that is actually being written. 
+    
+    Make sure that if you are expecting string data to be stored in the memory drop, 
+    that the type dropdown box is set to "String"; if it is not string, set it to an 
+    alternative type. 
+    """
+
     GRAPH_ERROR = 200
     """
     An error has occured during graph execution that was not expected. Please 
@@ -137,9 +147,9 @@ class ErrorCode(Enum):
     The graph has failed to be loaded by the DALiuGE Engine. This can be caused by number 
     of issues: 
 
-    - A python module that your graph relies on is not currently accessible in the 
-      virtual environment in which DALiuGE is being run. 
-    - The graph is missing key arguments - please check the JSON is complete.
+        - A python module that your graph relies on is not currently accessible in the 
+          virtual environment in which DALiuGE is being run. 
+        - The graph is missing key arguments - please check the JSON is complete.
     """
 
     SESSION_ERROR = 300
@@ -171,6 +181,15 @@ class ErrorCode(Enum):
     attaching the log files.
     """
 
+    REMOTE_SESSION_RUNTIME_ERROR = auto()
+    """
+    An error occured during the execution of a remote session. At the moment, 
+    known causes of this error are: 
+        
+        - A SlurmClient PyFunc app has wait = True and submit = False. Submit must be 
+          set to True if you want to `wait` for the remote subgraph to deploy. 
+    """
+
     @property
     def doc_url(self) -> str:
         log_message = f"Error [{self.value}] - {self.name}"
@@ -198,6 +217,7 @@ EXCEPTION_MAP = {
     ex.InvalidPathException: ErrorCode.PATH_ERROR,
     ex.IncompleteDROPSpec: ErrorCode.INCOMPLETE_DROP_SPEC,
     ex.BashAppRuntimeError: ErrorCode.BASH_COMMAND_FAILED,
+    ex.MemoryDROPTypeError: ErrorCode.MEMORY_DROP_TYPE_ERROR,
     ex.OutputDROPCancelled: ErrorCode.OUTPUT_DROPPED_CANCELLED,
     ex.InvalidGraphException: ErrorCode.GRAPH_ERROR,
     ex.IncompleteGraphError: ErrorCode.INVALID_GRAPH_CONFIGURATION,
@@ -205,7 +225,7 @@ EXCEPTION_MAP = {
     ex.InvalidSessionException: ErrorCode.SESSION_ERROR,
     ex.InvalidSessionState: ErrorCode.SESSION_STATE_ERROR,
     ex.NoSessionException: ErrorCode.SESSION_MISSING_ERROR,
-
+    ex.RemoteSessionRuntimeException: ErrorCode.REMOTE_SESSION_RUNTIME_ERROR,
     ###################################################################
     # Standard errors that we may not catch with specific exceptions
     # based on where they might occur in the code, _but_ where we
@@ -235,6 +255,8 @@ def intercept_error(e: Exception, raise_exception=True):
 
     logger = logging.getLogger(f"dlg.{__name__}")
     if type(e) != ex.ErrorManagerCaughtException:
+        if hasattr(e, "reason"):
+            logger.error(e.reason)
         errorno = EXCEPTION_MAP.get(type(e), ErrorCode.DROP_ERROR)
         logger.log(USER, errorno.doc_url)
     if raise_exception:
