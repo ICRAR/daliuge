@@ -23,6 +23,7 @@ from abc import abstractmethod
 import random
 import os
 import logging
+from enum import IntEnum
 from typing import Union
 
 from dlg.drop import AbstractDROP, track_current_drop
@@ -50,6 +51,15 @@ except ImportError:
     _checksumType = ChecksumTypes.CRC_32
 
 logger = logging.getLogger(f"dlg.{__name__}")
+
+
+class DataDROPError(IntEnum):
+    """
+    An enumeration for write error codes.
+    """
+    DROP_CANCELLED_BEFORE_WRITE = -1
+    INCORRECT_DROP_STATE = -2
+    INCORRECT_DATA_FORMAT = -3
 
 ##
 # @brief Data
@@ -192,13 +202,24 @@ class DataDROP(AbstractDROP):
         once the DROP is COMPLETE or beyond only reading is allowed.
         The underlying storage mechanism is responsible for implementing the
         final writing logic via the `self.writeMeta()` method.
+
+        Returns the following codes if failed for some reason:
+            - -1: Drop is cancelled
+            - -2: Drop is not in a writing state
+            - -3: Data type is not of binary type
+
         """
+        if self.status in [DROPStates.CANCELLED]:
+            return DataDROPError.DROP_CANCELLED_BEFORE_WRITE
 
         if self.status not in [DROPStates.INITIALIZED, DROPStates.WRITING]:
-            raise Exception("No more writing expected")
+            logger.error("No more writing expected")
+            return DataDROPError.INCORRECT_DROP_STATE
 
         if not isinstance(data, (bytes, memoryview, str)):
-            raise Exception("Data type not of binary type: ", type(data).__name__)
+            logger.error("Data type not of binary type: %s",
+                         type(data).__name__)
+            return DataDROPError.INCORRECT_DATA_FORMAT
 
         # We lazily initialize our writing IO instance because the data of this
         # DROP might not be written through this DROP

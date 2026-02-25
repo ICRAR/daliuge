@@ -27,7 +27,7 @@ full JSON representation.
 import collections
 import importlib
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 
@@ -232,12 +232,11 @@ def loadDropSpecs(dropSpecList):
     # Done!
     return dropSpecs, reprodata
 
-
 def createGraphFromDropSpecList(
     dropSpecList: List[dict], session: Optional["Session"] = None
-) -> List[AbstractDROP]:
+) -> Tuple[List[AbstractDROP], List[dict]]:
     logger.debug("Found %d DROP definitions", len(dropSpecList))
-
+    load_failures = []
     # Step #1: create the actual DROPs
     drops = collections.OrderedDict()
     logger.info("Creating %d drops", len(dropSpecList))
@@ -258,6 +257,8 @@ def createGraphFromDropSpecList(
         cf = __CREATION_FUNCTIONS[dropType.lower()]
         session_id = session.sessionId if session else ""
         drop = cf(dropSpec, session_id=session_id)
+        if hasattr(drop, "exception"):
+            load_failures.append({"oid": drop.oid, "exception": drop.exception})
         if session is not None:
             # Now using per-drop reproducibility setting.
             drop.reproducibility_level = ReproducibilityFlags(
@@ -311,7 +312,7 @@ def createGraphFromDropSpecList(
         drop for drop in drops.values() if not droputils.getUpstreamObjects(drop)
     ]
     logger.info("%d graph roots found, bye-bye!", len(roots))
-    return roots
+    return roots, load_failures
 
 
 def _createData(dropSpec, dryRun=False, session_id=None):
