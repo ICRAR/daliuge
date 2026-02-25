@@ -53,3 +53,12 @@ class RestServer(object):
             self._server.server_close()
             self.app.close()
             self._server = None
+
+    @property
+    def listen(self):
+        return self._server.listen
+
+    @property
+    def port(self):
+        return self._server.port
+
