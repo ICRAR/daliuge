@@ -43,7 +43,7 @@ from dlg.exceptions import InvalidDropException, InvalidSessionState, \
 
 from test.dlg_engine_testutils import NMTestsMixIn
 
-from ..manager import test_dm
+from ..manager import test_adm
 
 logger = logging.getLogger(f"dlg.{__name__}")
 

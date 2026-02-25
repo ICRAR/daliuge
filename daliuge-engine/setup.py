@@ -154,13 +154,13 @@ install_requires = [
     "docker",
     "lockfile",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
-    "netifaces>=0.10.6",
+    "netifaces-plus",
     "numpy",
     "overrides",
     "paramiko",
     "psutil",
     "python-daemon",
-    "pyzmq == 25.1.1",  # Python 25.1.1 is minimal install that supports Python 3.12
+    "pyzmq == 26.1.1",  # Python 25.1.1 is minimal install that supports Python 3.12
     "requests",
     "scp",
     "pyyaml",

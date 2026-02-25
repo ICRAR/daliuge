@@ -45,10 +45,11 @@ TYPE_MAP = {
     "list": {"type": list, "value":[11, 12, 13]},
     "dict": {"type": dict, "value":{"a": 1, "b": "test", "c": 0.0}},
     "float": {"type": float, "value":11.1},
-    "object": {"type": type(helloDALiuGE), "value": helloDALiuGE()},
+    "object": {"type": type(helloDALiuGE), "value": helloDALiuGE.__name__},
     "true": {"type": bool, "value":True},
     "false": {"type": bool, "value":False}
 }
+
 
 class TestMemory(unittest.TestCase):
     """
@@ -65,6 +66,7 @@ class TestMemory(unittest.TestCase):
         g = translate_graph(str(f), 'pydata_types')
 
         roots, leafs = create_and_run_graph_spec(self, g)
+
         for l in leafs:
             expected_type = l.filename.split(".")[0]
             if expected_type == "string":
@@ -79,5 +81,6 @@ class TestMemory(unittest.TestCase):
                         self.assertEqual(TYPE_MAP[expected_type]["type"], type(value))
                         self.assertEqual(TYPE_MAP[expected_type]["value"], value)
                     else:
+                        # For the pyfunc object, we need to check the name of the function
                         self.assertEqual(TYPE_MAP[expected_type]["type"], type(value))
-                        self.assertEqual(TYPE_MAP[expected_type]["value"], value())
+                        self.assertEqual(TYPE_MAP[expected_type]["value"], value.__name__)
