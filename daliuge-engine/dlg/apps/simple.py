@@ -30,7 +30,6 @@ import dill
 import requests
 import logging
 import numpy as np
-# from tests.data.example_eagle import RandomArrayApp
 
 from time import sleep
 from dlg import droputils, drop_loaders
