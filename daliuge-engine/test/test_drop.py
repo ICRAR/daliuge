@@ -47,7 +47,7 @@ from dlg.data.drops.file import FileDROP
 from dlg.droputils import DROPWaiterCtx
 from dlg.exceptions import InvalidDropException, ErrorManagerCaughtException, \
     InvalidDROPState
-from dlg.apps.simple import Branch
+from dlg.apps.branch import Branch
 from dlg.apps.simple import NullBarrierApp, SleepAndCopyApp
 
 from test.dlg_engine_testutils import run_errormanagement_exception_test
@@ -1214,7 +1214,7 @@ class BranchAppDropTestsBase(object):
             last_true = x
             last_false = y
 
-        with DROPWaiterCtx(self, [last_true, last_false], 200,
+        with DROPWaiterCtx(self, [last_true, last_false], 20,
                 [DROPStates.COMPLETED, DROPStates.SKIPPED], ):
             a.async_execute()
         time.sleep(0.01)

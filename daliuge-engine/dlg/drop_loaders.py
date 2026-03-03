@@ -120,7 +120,10 @@ def load_dill(drop: "DataDROP"):
             data = base64.b64decode(data)
         buf.write(data)
     drop.close(desc)
-    return dill.loads(buf.getvalue())
+    # Only attempt to load if we've actually read something
+    if buf.getvalue():
+        return dill.loads(buf.getvalue())
+    return None
 
 
 def load_binary(drop: "DataDROP"):

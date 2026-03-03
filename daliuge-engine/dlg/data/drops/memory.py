@@ -84,6 +84,7 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
         return {"value":pd, "type": pytype}
     pydata = pd["value"]
     pytype = pd["type"].lower()
+    pytype = "str" if pytype == "string" else pytype
     logger.debug("pydata value provided: '%s' with type '%s', %s",
                  pydata, type(pydata), pd["type"])
     empty_strings = ["None", ""]

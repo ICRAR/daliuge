@@ -886,8 +886,6 @@ class PyFuncApp(BarrierAppDROP):
         """
 
         encoding = "dill"
-        # if not self._applicationArgs:
-        #     return getattr(self, "output_parser", "dill")
         component_params = self.parameters.get("componentParams", {})
         applicationArgs = self.parameters.get("applicationArgs", {})
         if "outputs" in self.parameters and check_ports_dict(

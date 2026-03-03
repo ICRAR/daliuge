@@ -184,8 +184,8 @@ extra_requires = {
     "aws": ["boto3"],
     "test": ["pytest",
         # Toggle comments below if adding new test graphs
-        "eagle-test-graphs==0.2.3"
-        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@fix_objects"
+        "eagle-test-graphs==0.2.4"
+        # "eagle_test_graphs @ git+https://github.com/ICRAR/EAGLE_test_repo@LIU-455"
     ]
 }
 
