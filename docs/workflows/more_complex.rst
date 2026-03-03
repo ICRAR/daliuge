@@ -96,7 +96,6 @@ We have some array data that represents a noisy signal (:download:`noisy_signal.
     > import numpy as np
     > import matplotlib.pyplot as plt
     > data = np.load("$HOME/data/noisy_signal.npy")
-    > plt.figure(figsize=(10,6))
     > plt.imshow(data, cmap='viridis')
     > plt.colorbar()
     > plt.title("Noisy Signal")
@@ -106,6 +105,93 @@ Let's create a workflow that will:
 1. Load this noisy data
 2. Apply a simple smoothing filter
 3. Save both the filtered result and a mask showing where significant signal was detected
+
+To do this, we create the following graph with PyFuncApps:
+
+.. image:: ../images/workflows/match_filter_graph.png
+
+Reviewing each DROP in the graph:
+
+
+``signal``
+^^^^^^^^^^
+
+Given our assumptions for where we store the data, all we need to do is set the ``filepath`` attribute for the data:
+
+.. image:: ../images/workflows/match_filter_signal_npy.png
+
+``create_matched_filter``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this DROP, we use some Python code to produce a matched filter of the noisy image, based on techniques presented in Rhodes University's Fundamentals of `Radio Interferometry course <https://github.com/ratt-ru/foi-course/blob/master/5_Imaging/5_A_matched_filter.ipynb>`_
+
+The following code produces a matched filter from the loaded ``.npy`` file, and we put this in the ``func_code`` parameter of the DROP table and put ``create_match_filter` into the ``func_name`` parameter::
+
+    def create_match_filter(noisy_signal, deviation: float, amp:float, theta: float):
+
+        sizex, sizey = noisy_signal.shape
+
+        x0 = sizex/2
+        y0 = sizey/2
+        norm = amp
+        rtheta = theta * 180. / np.pi #convert to radians
+
+        a = (np.cos(rtheta)**2.)/(2.*(deviation**2.)) + (np.sin(rtheta)**2.)/(2.*(deviation**2.))
+        b = -1.*(np.sin(2.*rtheta))/(4.*(deviation**2.)) + (np.sin(2.*rtheta))/(4.*(deviation**2.))
+        c = (np.sin(rtheta)**2.)/(2.*(deviation**2.)) + (np.cos(rtheta)**2.)/(2.*(deviation**2.))
+        gFunc1 = lambda x,y: norm * np.exp(-1. * (a * ((x - x0)**2.) - 2.*b*(x-x0)*(y-y0) + c * ((y-y0)**2.)))
+
+        xpos, ypos = np.mgrid[0:sizex, 0:sizey].astype(float)
+        return gFunc1(xpos, ypos)
+
+Then, we need to add inputs and output ports (use the **Add Parameter** button), remembering:
+
+- We are taking a ``numpy`` file as an input, so we can use the built-in `npy` encoding
+- We don't particularly care about the output encoding, as we are passing it straight onto the convolution, so don't worry about the encoding here.
+
+The final result will be a table as follows:
+
+.. image:: ../images/workflows/match_filter_create_filter.png
+
+``apply_filter_with_convolution``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To apply the matched-filter onto the recovered signal, we need:
+
+- Two input ports, one for the .npy file, and one for the matched filter
+    - The ``match_filter`` should be read in as pickle encoding
+    - The signal should be read in as a ``.npy``
+- one output port, for the output numpy file.
+
+To apply the convolution, we use the following code and add it to the `apply_filter_with_convolution`` DROP::
+
+    import numpy as np
+
+    def apply_filter_with_convolution(signal, filter):
+        return np.fft.ifft2(np.fft.fft2(np.fft.fftshift(filter)) * np.fft.fft2(signal)).real
+
+The final table is going to look like:
+
+.. image:: ../images/workflows/match_filter_apply_convolution.png
+
+
+``recovered_signal.npy``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To help identify the final image, we can specify a specific output filename:
+
+.. image:: ../images/workflows/match_filter_recovered_signal.png
+
+Reviewing output
+------------------------------------------------
+
+The output from this will be in our ``~/dlg/workspace/match_filterX-20XX-XX-XX`` directory, which we can plot and review the image:
+
+    > data = np.load("recovered_signal.npy")
+    > plt.imshow(data, cmap='viridis')
+    > plt.colorbar()
+    > plt.title("Recovered Signal")
+    > plt.show()
 
 DALiuGE can load this
 
@@ -118,8 +204,7 @@ The files produced by this will be in the workspace folder:
 - Check the final signal, and we can see there's alternative 
 
 * DALiuGE can handle NumPy arrays natively through memory
-* For some specialized formats (FITS, HDF5), you may need to use file-based interfaces
-* Consider memory usage when working with large arrays
+
 
 Conclusions
 ------------
@@ -133,6 +218,7 @@ In this tutorial, we've learned:
 
 These concepts form the foundation for building more complex scientific workflows. We've seen how DALiuGE can handle both simple string operations and real numerical data processing, making it suitable for a wide range of scientific computing tasks.
 
+However, for some specialized formats (FITS, HDF5), you may need to use custom decoders. Consider memory usage when working with large arrays.
 
 Next
 ----
