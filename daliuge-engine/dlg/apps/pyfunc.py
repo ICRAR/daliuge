@@ -31,6 +31,8 @@ import logging
 import os
 import pickle
 
+import numpy as np
+
 from typing import Callable, Union
 import dill
 from io import StringIO
@@ -752,6 +754,10 @@ class PyFuncApp(BarrierAppDROP):
             raise IncompleteDROPSpec(
                 self, "No function specified (either via name, code or function object)"
             )
+        elif not self.func_name:
+            raise IncompleteDROPSpec(
+                self, "No function specified (either via name, code or function object)"
+            )
         if self.func:
             self.func_name = self.func.__name__
         self.name = f"{self.name}:{self.func_name}"  # PyFuncApp is parent
@@ -934,6 +940,8 @@ class PyFuncApp(BarrierAppDROP):
                 self._write(o, dill.dumps(result))
                 # o.write(dill.dumps(result))
             elif parser is DropParser.EVAL or parser is DropParser.UTF8:
+                if isinstance(result, bytes):
+                    result = result.decode("utf8")
                 if isinstance(result, str):
                     self._write(o, result)
                     # o.write(result)
@@ -942,7 +950,6 @@ class PyFuncApp(BarrierAppDROP):
                     self._write(o, encoded_result)
                     # o.write(encoded_result)
             elif parser is DropParser.NPY:
-                import numpy as np
 
                 if not isinstance(result, np.ndarray):
                     try:

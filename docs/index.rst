@@ -24,13 +24,11 @@ Quick Start Guide
 :doc:`/running` |br|
 :doc:`/basics`
 
-Graph Patterns
---------------
-:doc:`/graph_patterns/loop`
-   scatter
-   branch
-   subgraph
-   globals
+   
+Graph foundations
+--------------``
+:doc:`/graph_foundation/app_data_patterns` |br|
+:doc:`/graph_foundation/construct_patterns` |br|
 
 Engine Fundamentals
 -----------------------
@@ -68,16 +66,23 @@ API Documentation
    running
    basics
 
+.. toctree:: 
+   :maxdepth: 1
+   :caption: Building workflows
+   :hidden: 
+
+   workflows/more_complex
+   workflows/files_and_data
+   workflows/managing_errors
+   workflows/heatmap
+
 .. toctree::
    :maxdepth: 2
-   :caption: Graph Patterns 
+   :caption: Graph foundations 
    :hidden: 
    
-   graph_patterns/loop
-   graph_patterns/branch
-   graph_patterns/scatter
-   graph_patterns/subgraph
-   graph_patterns/globals
+   graph_foundation/app_data_patterns
+   graph_foundation/construct_patterns
 
 .. toctree::
    :maxdepth: 2
@@ -93,6 +98,7 @@ API Documentation
    :caption: Advanced DALiuGE Methods
 
    advanced/delayed
+   advanced/remote_deployment
    
 .. toctree:: 
    :maxdepth: 1
@@ -117,6 +123,7 @@ API Documentation
    :hidden:
 
    api-index
+   reference/drop_reference
    development/template_primer
    development/app_development/app_index 
    development/data_development/data_index 
