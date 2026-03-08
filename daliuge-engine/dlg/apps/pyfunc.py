@@ -636,6 +636,7 @@ class PyFuncApp(BarrierAppDROP):
             self.input_parser = self.parameters["input_parser"]
         if "output_parser" in self.parameters:
             self.output_parser = self.parameters["output_parser"]
+        # TODO investigate use of _port_map and _port_ids instead of these parameters.
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
             logger.debug("Mapping ports to inputs...")
             if self.fn_nargs == 0:

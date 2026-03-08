@@ -30,7 +30,6 @@ import signal
 import socket
 import sys
 import time
-import re
 
 import daemon
 from lockfile.pidlockfile import PIDLockFile
@@ -59,16 +58,6 @@ from dlg.dlg_logging import USER, USERSTR
 
 _terminating = False
 MAX_WATCHDOG_RESTART = 10
-
-class DlgFormatter(logging.Formatter):
-    def format(self, record: logging.LogRecord) -> str:
-        arg_pattern = re.compile(r"%\((\w+)\)")
-        arg_names = [x.group(1) for x in arg_pattern.finditer(self._fmt)]
-        for field in arg_names:
-            if field not in record.__dict__:
-                record.__dict__[field] = None
-
-        return super().format(record)
 
 
 def run_server(server, host, port):
@@ -365,7 +354,7 @@ def setupLogging(opts):
     if log_ids:
         fmt += "[%(session_id)10.10s] [%(drop_uid)10.10s] "
     fmt += "%(name)s#%(funcName)s:%(lineno)s %(message)s"
-    fmt = DlgFormatter(fmt)
+    fmt = utils.DlgFormatter(fmt)
     fmt.converter = time.localtime if opts.local_time else time.gmtime
     time_fmt =  "Local" if opts.local_time else "GMT"
     # Let's configure logging now
