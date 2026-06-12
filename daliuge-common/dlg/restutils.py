@@ -210,8 +210,17 @@ class RestClient(object):
             )
 
             try:
-                error = json.loads(self._resp.read().decode("utf-8"))
-                etype = getattr(exceptions, error["type"])
+                error_data = self._resp.read().decode("utf-8")
+                error = json.loads(error_data)
+    
+                # Check if the expected fields exist
+                if "type" not in error or "args" not in error:
+                    raise RestClientException(msg + error_data)
+                
+                etype = getattr(exceptions, error["type"], None)
+                if etype is None:
+                    raise RestClientException(msg + f"Unknown exception type: {error['type']}")
+                    
                 eargs = error["args"]
 
                 if etype == SubManagerException:
@@ -224,8 +233,10 @@ class RestClient(object):
                     ex = etype(*eargs)
                 if hasattr(ex, "msg"):
                     ex.msg = msg + ex.msg
-            except Exception as e: # pylint: disable=broad-exception-caught
-                ex = RestClientException(msg + str(e) + "Unknown")
+            except json.JSONDecodeError as e:
+                ex = RestClientException(msg + f"Invalid JSON response: {str(e)}")
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                ex = RestClientException(msg + str(e))
 
             raise ex
 
