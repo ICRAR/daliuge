@@ -235,7 +235,7 @@ class RestClient(object):
                     ex.msg = msg + ex.msg
                 raise ex
             except json.JSONDecodeError as e:
-                raise RestClientException(msg + f"Invalid JSON response: {str(e)}")
+                raise RestClientException(msg + f"Invalid JSON response: {str(e)}") from e
             except RestClientException:
                 raise
 

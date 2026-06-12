@@ -420,20 +420,29 @@ def gen_pgt(
         logger.info("Graph Exception")
         raise HTTPException(
             status_code=500,
-            detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name),
+            detail=json.dumps({
+                "type": "GraphException",
+                "args": [str(ge)]
+            })
         ) from ge
     except SchedulerException as se:
         logger.info("Schedule Exception")
         raise HTTPException(
             status_code=500,
-            detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name),
+            detail=json.dumps({
+                "type": "SchedulerException",
+                "args": [str(se)]
+            })
         ) from se
     except Exception as e:
         logger.info("Partition / Other exception")
         trace_msg = traceback.format_exc()
         raise HTTPException(
             status_code=500,
-            detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name),
+            detail=json.dumps({
+                "type": "DaliugeException",
+                "args": [trace_msg]
+            })
         ) from e
 
 
@@ -534,20 +543,29 @@ async def gen_pgt_post(
         logger.info("GRAPH EXCEPTION")
         raise HTTPException(
             status_code=500,
-            detail="Invalid Logical Graph {1}: {0}".format(str(ge), lg_name),
+            detail=json.dumps({
+                "type": "GraphException",
+                "args": [str(ge)]
+            })
         ) from ge
     except SchedulerException as se:
         logger.info("SCHEDULE EXCEPTION")
         raise HTTPException(
             status_code=500,
-            detail="Graph scheduling exception {1}: {0}".format(str(se), lg_name),
+            detail=json.dumps({
+                "type": "SchedulerException",
+                "args": [str(se)]
+            })
         ) from se
     except Exception as e:
         logger.info("OTHER EXCEPTION")
         trace_msg = traceback.format_exc()
         raise HTTPException(
             status_code=500,
-            detail="Graph partition exception {1}: {0}".format(trace_msg, lg_name),
+            detail=json.dumps({
+                "type": "DaliugeException",
+                "args": [trace_msg]
+            })
         ) from e
 
 
