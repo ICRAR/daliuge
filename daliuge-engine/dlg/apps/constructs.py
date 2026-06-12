@@ -88,6 +88,21 @@ class CommentDrop(BarrierAppDROP):
 
 
 ##
+# @brief Exclusive Force Node
+# @details An Exclusive Force Node
+# @par EAGLE_START
+# @param category ExclusiveForceNode
+# @param dropclass dlg.apps.constructs.ExclusiveForceDrop/String/ComponentParameter/NoPort/ReadWrite//False/False/Drop class
+# @param base_name construct/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
+# @param tag template
+# @par EAGLE_END
+class ExclusiveForceDrop(BarrierAppDROP):
+    """
+    This only exists to make sure we have an exclusive force node in the template palette
+    """
+
+
+##
 # @brief GlobalVariables
 # @details A Global variable store
 # @par EAGLE_START
