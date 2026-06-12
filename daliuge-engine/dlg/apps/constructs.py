@@ -45,6 +45,20 @@ class LoopDrop(BarrierAppDROP):
 
 
 ##
+# @brief MKN
+# @details A MKN template drop
+# @par EAGLE_START
+# @param category MKN
+# @param tag template
+# @param k 1/Integer/ConstructParameter/NoPort/ReadWrite//False/False/Internal multiplicity
+# @par EAGLE_END
+class MKNDrop(BarrierAppDROP):
+    """
+    This only exists to make sure we have a MKN in the template palette
+    """
+
+
+##
 # @brief GroupBy
 # @details A GroupBy template drop
 # @par EAGLE_START
@@ -100,7 +114,6 @@ class ExclusiveForceDrop(BarrierAppDROP):
     """
     This only exists to make sure we have an exclusive force node in the template palette
     """
-
 
 ##
 # @brief GlobalVariables
