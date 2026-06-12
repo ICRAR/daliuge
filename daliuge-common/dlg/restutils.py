@@ -209,36 +209,41 @@ class RestClient(object):
                 self._resp.status,
             )
 
+            ex = None
             try:
                 error_data = self._resp.read().decode("utf-8")
                 error = json.loads(error_data)
-    
+
                 # Check if the expected fields exist
                 if "type" not in error or "args" not in error:
-                    raise RestClientException(msg + error_data)
-                
-                etype = getattr(exceptions, error["type"], None)
-                if etype is None:
-                    raise RestClientException(msg + f"Unknown exception type: {error['type']}")
-                    
-                eargs = error["args"]
-
-                if etype == SubManagerException:
-                    for host, args in eargs.items():
-                        subetype = getattr(exceptions, args["type"])
-                        subargs = args["args"]
-                        eargs[host] = subetype(*subargs)
-                    ex = etype(eargs)
+                    ex = RestClientException(msg + error_data)
                 else:
-                    ex = etype(*eargs)
-                if hasattr(ex, "msg"):
-                    ex.msg = msg + ex.msg
+                    etype = getattr(exceptions, error["type"], None)
+                    if etype is None:
+                        ex = RestClientException(msg + f"Unknown exception type: {error['type']}")
+                    else:
+                        eargs = error["args"]
+
+                        if etype == SubManagerException:
+                            for host, args in eargs.items():
+                                subetype = getattr(exceptions, args["type"])
+                                subargs = args["args"]
+                                eargs[host] = subetype(*subargs)
+                            ex = etype(eargs)
+                        else:
+                            ex = etype(*eargs)
+                        if hasattr(ex, "msg"):
+                            ex.msg = msg + ex.msg
             except json.JSONDecodeError as e:
                 ex = RestClientException(msg + f"Invalid JSON response: {str(e)}")
+            except RestClientException:
+                # Re-raise RestClientException without wrapping
+                raise
             except Exception as e:  # pylint: disable=broad-exception-caught
                 ex = RestClientException(msg + str(e))
 
-            raise ex
+            if ex:
+                raise ex
 
         if not self._resp.length:
             return None, None
