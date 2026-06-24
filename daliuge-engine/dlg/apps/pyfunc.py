@@ -53,6 +53,7 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException
 from dlg.meta import (
     dlg_string_param,
+    dlg_int_param,
     dlg_dict_param,
     dlg_component,
     dlg_batch_input,
@@ -717,6 +718,7 @@ class PyFuncApp(BarrierAppDROP):
         inputs and provided applicationArgs to the function arguments. All of this
         should be driven by matching names.
         """
+        kwargs["n_effective_inputs"] = -1
         BarrierAppDROP.initialize(self, **kwargs)
 
         env = os.environ.copy()
