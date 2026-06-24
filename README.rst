@@ -85,6 +85,10 @@ It is possible to confirm that everything is up and running by accessing the fol
 With this setup running, it is now possible to translate and deploy a prototype EAGLE workflow
 on your local machine. 
 
+Stopping the system again can simply be done by running::
+
+    make docker-stop
+
 For more information about the installation and usage of the system please refer to the `documentation <https://daliuge.readthedocs.io>`_
 
 
