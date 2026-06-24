@@ -65,7 +65,7 @@ installation (*not* a production environment).
 
 Running both the Engine (with one island manager and two node managers) and the Translator is as a simple as:: 
 
-    make docker-run
+    make docker-start
 
 It is possible to confirm that everything is up and running by accessing the following links in a browser
 (Opera, Firefox, or Chrome are recommended):: 
@@ -91,7 +91,16 @@ On the command line this can also be verified like this::
 
 
 With this setup running, it is now possible to translate and deploy a prototype EAGLE workflow
-on your local machine. 
+on your local machine.
+
+Make sure it is accessible from EAGLE
+=====================================
+
+Open https://eagle.icrar.org and navigate to the Settings by clicking on the cog wheel in the upper right corner. Go to the External Services tab and enter the translator URL::
+
+   http://dlg-tm.localhost/gen_pgt
+
+That will enable EAGLE to submit a graph to the translator.
 
 Quickstop
 =========
