@@ -11,7 +11,9 @@ services:
     container_name: traefik
     hostname: traefik.localhost
     networks:
-      - dlg-local
+      dlg-local:
+        aliases:
+          - traefik
     command:
       - "--log.level=DEBUG"
       - "--api=true"
@@ -25,9 +27,8 @@ services:
       - DOMAIN=localhost
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.tls.domains[0].main=*.localhost"
-      - "traefik.http.routers.api.rule=Host(`traefik.localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-      - "traefik.http.routers.api.service=dashboard@internal"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.rule=Host(`traefik`) || Host(`traefik.localhost`)"
       - "traefik.http.routers.api.service=api@internal"
     ports:
       - 80:80
@@ -52,10 +53,10 @@ services:
     container_name: dlg-dim
     command: ["dlg", "dim", "-H", "0.0.0.0", "-N", "dlg-nm1,dlg-nm2"]
     networks:
-      dlg-local:
-        # always route through traefik
-        aliases:
-          - traefik
+      - dlg-local
+    environment:
+      - http_proxy=http://traefik:80
+      - https_proxy=http://traefik:80
     labels:
       - "traefik.http.routers.dim.rule=Host(`dlg-dim.localhost`)"
       - "traefik.http.services.dim.loadbalancer.server.port=8001"
@@ -77,10 +78,10 @@ services:
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
-      dlg-local:
-        # always route through traefik
-        aliases:
-          - traefik
+      - dlg-local
+    environment:
+      - http_proxy=http://traefik:80
+      - https_proxy=http://traefik:80
     labels:
       - "traefik.http.routers.nm1.rule=Host(`dlg-nm1.localhost`)"
       - "traefik.http.services.nm1.loadbalancer.server.port=8000"
@@ -101,10 +102,10 @@ services:
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "nm", "-H", "0.0.0.0", "-vv"]
     networks:
-      dlg-local:
-        # always route through traefik
-        aliases:
-          - traefik
+      - dlg-local
+    environment:
+      - http_proxy=http://traefik:80
+      - https_proxy=http://traefik:80
     labels:
       - "traefik.http.routers.nm2.rule=Host(`dlg-nm2.localhost`)"
       - "traefik.http.services.nm2.loadbalancer.server.port=8000"
@@ -126,10 +127,10 @@ services:
     user: ${MY_UID}:${MY_GID}
     command: ["dlg", "daemon", "--tm"]
     networks:
-      dlg-local:
-        # always route through traefik
-        aliases:
-          - traefik
+      - dlg-local
+    environment:
+      - http_proxy=http://traefik:80
+      - https_proxy=http://traefik:80
     labels:
       - "traefik.http.routers.tm.rule=Host(`dlg-tm.localhost`)"
       - "traefik.http.services.tm.loadbalancer.server.port=8084"
