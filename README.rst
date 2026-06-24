@@ -52,24 +52,18 @@ prototyping tool. Please review the installation material for Docker `here <http
 
 The following steps are recommended for quickstarting your DALiuGE install: 
 
-1. Create and enter the virtual environment
-2. Build the docker images
-3. Run the docker images
-4. Confirm the images are running and accessible from EAGLE using a web browser. 
+1. Build the docker images
+2. Run the docker images
+3. Confirm the images are running and accessible from EAGLE using a web browser. 
 
-Creating the virtual environment is as simple as running:: 
-
-    make virtualenv
-    source .venv/bin/activate 
-
-Now, in the `.venv` environment, run:: 
+To build the docker images run:: 
 
     make docker-install 
 
 This will install a development version of the DALiuGE images and is appropriate for local
 installation (*not* a production environment). 
 
-Running both the Engine and the Translator is as a simple as:: 
+Running both the Engine (with one island manager and two node managers) and the Translator is as a simple as:: 
 
     make docker-run
 
@@ -81,9 +75,26 @@ It is possible to confirm that everything is up and running by accessing the fol
     http://dlg-nm2.localhost/ # Node Manager 2
     http://dlg-dim.localhost/ # Data Island Manager
 
+There is one additional container running which is providing a proxy gateway and name resolution into the container network::
+
+   http://traefik.localhost
+
+On the command line this can also be verified like this::
+
+   ❯ docker ps
+   CONTAINER ID   IMAGE                    COMMAND                  CREATED         STATUS         PORTS                                                                              NAMES
+   d845df25ba92   traefik:v3.6.4           "/entrypoint.sh --lo…"   4 minutes ago   Up 4 minutes   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp   traefik
+   be9dde120797   icrar/dlg_full:latest    "dlg dim -H 0.0.0.0 …"   4 minutes ago   Up 4 minutes   5555/tcp, 6666/tcp, 8000-8002/tcp, 9000/tcp                                        dlg-dim
+   ab14ff4463ec   icrar/dlg_full:latest    "dlg daemon --tm"        4 minutes ago   Up 4 minutes   5555/tcp, 6666/tcp, 8000-8002/tcp, 9000/tcp                                        dlg-tm
+   f50b2a6de075   icrar/dlg_full:latest    "dlg nm -H 0.0.0.0 -…"   4 minutes ago   Up 4 minutes   5555/tcp, 6666/tcp, 8000-8002/tcp, 9000/tcp                                        dlg-nm1
+   5db3f6e31a88   icrar/dlg_full:latest    "dlg nm -H 0.0.0.0 -…"   4 minutes ago   Up 4 minutes   5555/tcp, 6666/tcp, 8000-8002/tcp, 9000/tcp                                        dlg-nm2
+
 
 With this setup running, it is now possible to translate and deploy a prototype EAGLE workflow
 on your local machine. 
+
+Quickstop
+=========
 
 Stopping the system again can simply be done by running::
 
