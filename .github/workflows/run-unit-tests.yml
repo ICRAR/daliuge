@@ -8,8 +8,8 @@ on:
     types: [opened, synchronize]  # Run on PRs from any branch
 
 jobs:
-  run_translator:
-    name: Run daliuge-translator tests with python ${{matrix.python-version}}
+  run_all:
+    name: Run all daliuge tests with python ${{matrix.python-version}}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -20,111 +20,18 @@ jobs:
           - python-version:  "3.12"
           - python-version:  "3.13"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         name: Install Python
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install test dependencies
-        run: |
-          pip install -U coveralls pytest pytest-cov
-          pip install -U setuptools pip wheel dask
-
-      - name: Install daliuge-common
-        run: pip install -e daliuge-common/
-
-      - name: Install daliuge-translator
-        run: pip install -e "daliuge-translator/[test]"
-
-      - name: Run daliuge-translator tests
-        run: |
-          py.test daliuge-translator/test/ --cov --show-capture=no
-
-      - name: Update to coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-          COVERALLS_PARALLEL: true
-        run: coveralls --service=github
-
-  run_engine:
-    name: Run daliuge-engine tests with python ${{matrix.python-version}}
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        include:
-          - python-version: "3.10"
-          - python-version:  "3.11"
-          - python-version:  "3.12"
-          - python-version:  "3.13"
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        name: Install Python
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install test dependencies
-        run: |
-          pip install -U coveralls pytest pytest-cov
-          pip install -U setuptools pip wheel dask
-
-      - name: Install daliuge-common
-        run: pip install -e daliuge-common/
-
-      - name: Install daliuge-engine
-        run: pip install -e "daliuge-engine/[test]"
-
-      - name: Run tests with coverage
-        run: |
-          py.test daliuge-engine/test/ --cov --show-capture=no --full-trace
-
-      - name: Update to coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-          COVERALLS_PARALLEL: true
-        run: coveralls --service=github
-
-  run_end_to_end:
-    name: Run end-to-end tests with python ${{matrix.python-version}}
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        include:
-          - python-version: "3.10"
-          - python-version:  "3.11"
-          - python-version:  "3.12"
-          - python-version:  "3.13"
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        name: Install Python
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install test dependencies
-        run: |
-          pip install -U coveralls pytest pytest-cov
-          pip install -U setuptools pip wheel dask
-
-      - name: Install daliuge-common
-        run: pip install -e daliuge-common/
-
-      - name: Install daliuge-translator
-        run: pip install -e "daliuge-translator/[test]"
-
-      - name: Install daliuge-engine
-        run: pip install -e "daliuge-engine/[test]"
+        run: make local
 
       - name: Run tests
-        run: |
-          py.test daliuge-engine/test/end_to_end/ --cov --show-capture=all 
-
+        run: make test
 
       - name: Update to coveralls
         env:
@@ -133,8 +40,9 @@ jobs:
           COVERALLS_PARALLEL: true
         run: coveralls --service=github
 
+
   finish:
-    needs: [run_translator, run_engine, run_end_to_end]
+    needs: [run_all]
     runs-on: ubuntu-22.04
     steps:
       - name: Coveralls Finished

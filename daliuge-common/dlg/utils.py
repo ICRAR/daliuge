@@ -554,7 +554,14 @@ def serialize_data(d):
 
 
 def deserialize_data(d):
-    # return dill.loads(d)
+    try:
+        dill.loads(base64.b64decode(d.encode("utf8")))
+    except AttributeError:
+        try:
+            if isinstance(d.decode(), str):
+                return d.decode()[:-1]
+        except UnicodeDecodeError:
+            return d
     return dill.loads(base64.b64decode(d.encode("utf8")))
 
 

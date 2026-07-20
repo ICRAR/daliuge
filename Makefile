@@ -57,8 +57,9 @@ lint:             ## Run pylint
 
 .PHONY: test
 test: 		  ## Run tests and generate coverage report.
-	@ pip install pytest
-	@ pip install pytest-cov
+	@ CWD=$$PWD && TMP_DIR=$$(mktemp -d) && cd $$TMP_DIR && git clone https://github.com/ICRAR/EAGLE_test_repo && cd EAGLE_test_repo && pip install . && cd $$CWD && rm -rf $$TMP_DIR
+	@ pip install -U coveralls pytest pytest-cov
+	@ pip install -U setuptools pip wheel dask
 	@ cd daliuge-translator
 	@ $(env_prefix)py.test --cov --show-capture=no
 	@ cd ../daliuge-engine

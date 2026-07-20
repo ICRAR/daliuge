@@ -527,6 +527,7 @@ def get_port_reader_function(input_parser: DropParser):
             logger.debug("Read %s from %s drop.", content, input_parser)
             return ast.literal_eval(content) if len(content) > 0 else None
 
+        optionalEval.name = "optionalEval"
         reader = optionalEval
     elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy
@@ -539,9 +540,13 @@ def get_port_reader_function(input_parser: DropParser):
                 return x.path
             except AttributeError:
                 return drop_loaders.load_utf8(x)
+        PathFromData.name = "PathFromData"
         reader = PathFromData
     elif ip is DropParser.DATAURL:
-        reader = lambda x: x.dataURL
+        def DataURLFromData(x):
+            return x.dataURL
+        DataURLFromData.name = "DataURLFromData"
+        reader = DataURLFromData
     elif ip is DropParser.DILL:
         reader = drop_loaders.load_dill
     elif ip is DropParser.BINARY:

@@ -10,16 +10,16 @@ jobs:
   run-examples:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Checkout reference graphs repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ICRAR/dlg-reference-graphs
           path: dlg-reference-graphs
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 

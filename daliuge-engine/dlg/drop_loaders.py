@@ -175,3 +175,14 @@ def load_utf8(drop: "DataDROP"):
     res = dropio.buffer()
     dropio.close()
     return res
+
+save_pickle.name = "save_pickle"
+load_pickle.name = "load_pickle"
+save_npy.name = "save_npy"
+save_numpy.name = "save_numpy"
+load_npy.name = "load_npy"
+load_numpy.name = "load_numpy"
+load_dill.name = "load_dill"
+load_binary.name = "load_binary"
+save_binary.name = "save_binary"
+load_utf8.name = "load_utf8"

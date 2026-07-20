@@ -55,7 +55,6 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException
 from dlg.meta import (
     dlg_string_param,
-    dlg_int_param,
     dlg_dict_param,
     dlg_component,
     dlg_batch_input,

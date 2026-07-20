@@ -34,7 +34,6 @@ import numpy as np
 from time import sleep
 from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP, InputFiredAppDROP
-from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
@@ -541,7 +540,7 @@ class ArrayGatherApp(InputFiredAppDROP):
     # value_list = dlg_list_param("value_list", [])
 
     def initialize(self, **kwargs):
-        num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
+        # num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
         # n_effective_inputs = dlg_int_param("n_effective_inputs", -1)
         super(ArrayGatherApp, self).initialize(**kwargs)
         self.kwargs = kwargs
