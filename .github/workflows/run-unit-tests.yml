@@ -9,7 +9,7 @@ on:
 
 jobs:
   run_all:
-    name: Run daliuge-translator tests with python ${{matrix.python-version}}
+    name: Run all daliuge tests with python ${{matrix.python-version}}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
