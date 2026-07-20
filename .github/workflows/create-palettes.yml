@@ -54,7 +54,9 @@ jobs:
           EAGLE_UPDATER_TOKEN: ${{ secrets.EAGLE_UPDATER_TOKEN }}
           PALETTE_TOKEN: ${{ secrets.PALETTE_TOKEN }}
         run: |
-          git clone https://$PALETTE_TOKEN@github.com/ICRAR/EAGLE-graph-repo
+          git config --global credential.helper store
+          echo "https://$PALETTE_TOKEN:x-oauth-basic@github.com" > ~/.git-credentials
+          git clone https://github.com/ICRAR/EAGLE-graph-repo
           mkdir -p EAGLE-graph-repo/$PROJECT_NAME
           mv $OUTPUT_FILENAME.palette EAGLE-graph-repo/$PROJECT_NAME/
           mv $OUTPUT_FILENAME-template.palette EAGLE-graph-repo/$PROJECT_NAME/
