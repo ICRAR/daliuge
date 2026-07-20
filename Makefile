@@ -57,6 +57,7 @@ lint:             ## Run pylint
 
 .PHONY: test
 test: 		  ## Run tests and generate coverage report.
+	@ CWD=$$PWD && TMP_DIR=$$(mktemp -d) && cd $$TMP_DIR && git clone https://github.com/ICRAR/EAGLE_test_repo && cd EAGLE_test_repo && pip install . && cd $$CWD && rm -rf $$TMP_DIR
 	@ pip install pytest
 	@ pip install pytest-cov
 	@ cd daliuge-translator
