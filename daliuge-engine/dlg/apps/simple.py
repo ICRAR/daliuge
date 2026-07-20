@@ -34,7 +34,6 @@ import numpy as np
 from time import sleep
 from dlg import droputils, drop_loaders
 from dlg.apps.app_base import BarrierAppDROP, InputFiredAppDROP
-from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
