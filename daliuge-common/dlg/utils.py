@@ -554,7 +554,14 @@ def serialize_data(d):
 
 
 def deserialize_data(d):
-    # return dill.loads(d)
+    try:
+        dill.loads(base64.b64decode(d.encode("utf8")))
+    except AttributeError:
+        try:
+            if isinstance(d.decode(), str):
+                return d.decode()[:-1]
+        except UnicodeDecodeError:
+            return d
     return dill.loads(base64.b64decode(d.encode("utf8")))
 
 
@@ -631,6 +638,16 @@ def truncateUidToKey(uid: str) -> str:
             truncatedUid = f"{truncatedUid}_{split[-1]}"  # add the rest of the original
 
     return truncatedUid
+
+class DlgFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        arg_pattern = re.compile(r"%\((\w+)\)")
+        arg_names = [x.group(1) for x in arg_pattern.finditer(self._fmt)]
+        for field in arg_names:
+            if field not in record.__dict__:
+                record.__dict__[field] = None
+
+        return super().format(record)
 
 
 # Backwards compatibility

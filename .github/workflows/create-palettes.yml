@@ -15,15 +15,15 @@ jobs:
     env:
       PROJECT_NAME: daliuge
       GIT_REPO: https://github.com/ICRAR/daliuge
-      GITHUB_USERNAME: eagle.updater
+      GITHUB_USERNAME: $GITHUB_USERNAME
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         name: Install Python
         with:
-          python-version: '3.9'
+          python-version: '3.12'
 
       - name: Install system dependencies
         run: |
@@ -35,6 +35,7 @@ jobs:
         run: |
           git config --global user.name $GITHUB_USERNAME
           git config --global user.email $GITHUB_USERNAME@gmail.com
+          # git config --global url."https://${{ secrets.PALETTE_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
       - name: Environment variables
         run: |
@@ -46,16 +47,20 @@ jobs:
         run: |
           dlg_paletteGen -r -t daliuge ./ $OUTPUT_FILENAME.palette
           dlg_paletteGen -r -t template ./ $OUTPUT_FILENAME-template.palette
+          dlg_paletteGen -s daliuge-engine/dlg/apps/simple_functions.py $OUTPUT_FILENAME-functions.palette
 
       - name: Commit palettes to EAGLE
         env:
           EAGLE_UPDATER_TOKEN: ${{ secrets.EAGLE_UPDATER_TOKEN }}
           PALETTE_TOKEN: ${{ secrets.PALETTE_TOKEN }}
         run: |
-          git clone https://$PALETTE_TOKEN@github.com/ICRAR/EAGLE-graph-repo
+          git config --global credential.helper store
+          echo "https://$PALETTE_TOKEN:x-oauth-basic@github.com" > ~/.git-credentials
+          git clone https://github.com/ICRAR/EAGLE-graph-repo
           mkdir -p EAGLE-graph-repo/$PROJECT_NAME
           mv $OUTPUT_FILENAME.palette EAGLE-graph-repo/$PROJECT_NAME/
           mv $OUTPUT_FILENAME-template.palette EAGLE-graph-repo/$PROJECT_NAME/
+          mv $OUTPUT_FILENAME-functions.palette EAGLE-graph-repo/$PROJECT_NAME/
           cd EAGLE-graph-repo
           git add *
           git diff-index --quiet HEAD || git commit -m "Automatically generated DALiuGE palette (branch $GITHUB_REF_NAME, commit $PROJECT_VERSION)"

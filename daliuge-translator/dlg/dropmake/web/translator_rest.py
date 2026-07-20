@@ -246,6 +246,7 @@ def load_pg_viewer(
             pgt_view_name = None
     if pgt_exists(pgt_dir, pgt_view_name):
         tpl = templates.TemplateResponse(
+            request,
             "pg_viewer.html",
             {
                 "request": request,
@@ -277,6 +278,7 @@ def show_gantt_chart(
     Interface to show the gantt chart
     """
     tpl = templates.TemplateResponse(
+        request,
         "matrix_vis.html",
         {
             "request": request,
@@ -317,6 +319,7 @@ def show_schedule_matrix(
     Interface to show the schedule mat
     """
     tpl = templates.TemplateResponse(
+        request,
         "matrix_vis.html",
         {
             "request": request,
@@ -404,6 +407,7 @@ def gen_pgt(
             ["{0}:{1}".format(k, v) for k, v in pgt.result().items()]
         )
         tpl = templates.TemplateResponse(
+            request,
             "pg_viewer.html",
             {
                 "request": request,
@@ -518,6 +522,7 @@ async def gen_pgt_post(
             ["{0}:{1}".format(k, v) for k, v in pgt.result().items()]
         )
         tpl = templates.TemplateResponse(
+            request,
             "pg_viewer.html",
             {
                 "request": request,
@@ -1098,6 +1103,7 @@ def get_submission_method(
 )
 def index(request: Request):
     tpl = templates.TemplateResponse(
+        request,
         "pg_viewer.html",
         {
             "request": request,

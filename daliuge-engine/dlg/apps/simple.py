@@ -29,16 +29,14 @@ from typing import List, Optional
 import dill
 import requests
 import logging
-import time
 import numpy as np
 
+from time import sleep
 from dlg import droputils, drop_loaders
-from dlg.apps.app_base import BarrierAppDROP
-from dlg.apps.pyfunc import PyFuncApp
+from dlg.apps.app_base import BarrierAppDROP, InputFiredAppDROP
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
-from dlg.apps.branch import BranchAppDrop
 from dlg.drop import track_current_drop
 from dlg.meta import (
     dlg_float_param,
@@ -129,7 +127,7 @@ class SleepApp(BarrierAppDROP):
             if isinstance(self.sleep_time, (InMemoryDROP, FileDROP, DropProxy)):
                 logger.debug("Trying to read from %s", self.sleep_time)
                 self.sleep_time = drop_loaders.load_pickle(self.sleep_time)
-            time.sleep(self.sleep_time)
+            sleep(self.sleep_time)
         except (TypeError, ValueError):
             logger.debug(
                 "Found invalid sleep_time: %s. Resetting to 0. %s",
@@ -137,7 +135,7 @@ class SleepApp(BarrierAppDROP):
                 type(self.sleep_time),
             )
             self.sleep_time = 0
-            time.sleep(self.sleep_time)
+            sleep(self.sleep_time)
         logger.info("%s slept for %s s", self.name, self.sleep_time)
 
 
@@ -227,11 +225,11 @@ class CopyApp(BarrierAppDROP):
 # @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @par EAGLE_END
-class SleepAndCopyApp(SleepApp, CopyApp):
+class SleepAndCopyApp(CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
-
+    sleep_time = dlg_float_param("sleep_time", 0)
     def run(self):
-        SleepApp.run(self)
+        sleep(self.sleep_time)
         CopyApp.run(self)
 
 
@@ -440,9 +438,10 @@ class GenericGatherApp(BarrierAppDROP):
 
     # automatically populated by scatter node
     num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
+    n_effective_inputs = dlg_int_param("n_effective_inputs", -1)
 
     def readWriteData(self):
-        inputs = self.inputs
+        inputs = self._completedInputs
         outputs = self.outputs
         for output in outputs:
             for ipt in inputs:
@@ -451,7 +450,14 @@ class GenericGatherApp(BarrierAppDROP):
 
     @track_current_drop
     def run(self):
-        self.readWriteData()
+        n_effective_inputs = self.n_effective_inputs if self.n_effective_inputs > 0 else len(self.inputs)
+        if len(self._completedInputs) < n_effective_inputs:
+            logger.error("Not enough completed inputs")
+            self.setError()
+        else:
+            logger.debug("n_effective_inputs: %d", n_effective_inputs)
+            self.value_list = []
+            self.readWriteData()
 
 
 ##
@@ -523,7 +529,7 @@ class DictGatherApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input /Object/ComponentParameter/InputPort/ReadWrite//False/False/0-base placeholder port for inputs
 # @par EAGLE_END
-class ArrayGatherApp(BarrierAppDROP):
+class ArrayGatherApp(InputFiredAppDROP):
     component_meta = dlg_component(
         "ArrayGatherApp",
         "Collect multiple inputs into an array",
@@ -534,6 +540,8 @@ class ArrayGatherApp(BarrierAppDROP):
     # value_list = dlg_list_param("value_list", [])
 
     def initialize(self, **kwargs):
+        # num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
+        # n_effective_inputs = dlg_int_param("n_effective_inputs", -1)
         super(ArrayGatherApp, self).initialize(**kwargs)
         self.kwargs = kwargs
 
@@ -542,18 +550,25 @@ class ArrayGatherApp(BarrierAppDROP):
         outputs = self.outputs
         for output in outputs:
             for ipt in inputs:
-                value = droputils.allDropContents(ipt)
-                try:
-                    # TODO: This really needs to use the encoding but requires a drop data-type/encoding.
-                    self.value_list.append(dill.loads(value))
-                except _pickle.PickleError:
-                    self.value_list.append(value)
+                if ipt.uid in self._completedInputs:
+                    value = droputils.allDropContents(ipt)
+                    try:
+                        # TODO: This really needs to use the encoding but requires a drop data-type/encoding.
+                        self.value_list.append(dill.loads(value))
+                    except _pickle.PickleError:
+                        self.value_list.append(value)
             output.write(dill.dumps(self.value_list))
 
     @track_current_drop
     def run(self):
-        self.value_list = []
-        self.readWriteData()
+        n_effective_inputs = self.n_effective_inputs if self.n_effective_inputs > 0 else len(self.inputs)
+        if len(self._completedInputs) < n_effective_inputs:
+            logger.error("Not enough completed inputs")
+            self.setError()
+        else:
+            logger.debug("n_effective_inputs: %d", n_effective_inputs)
+            self.value_list = []
+            self.readWriteData()
 
 
 ##
@@ -654,7 +669,6 @@ class GenericNpyGatherApp(BarrierAppDROP):
             # result = data if result is None else gather(result, data, allow_pickle=True)
             result = data if result is None else gather(result, data)
         return result
-
 
 ##
 # @brief HelloWorldApp
@@ -765,7 +779,6 @@ class UrlRetrieveApp(BarrierAppDROP):
         for o in outs:
             o.len = len(u.content)
             o.write(u.content)  # send content to all outputs
-
 
 ##
 # @brief GenericScatterApp
@@ -900,107 +913,6 @@ class GenericNpyScatterApp(BarrierAppDROP):
                 out_index = in_index * self.num_of_copies + split_index
                 drop_loaders.save_numpy(self.outputs[out_index], result[split_index])
 
-
-class SimpleBranch(BranchAppDrop, NullBarrierApp):
-    """
-    Simple branch app that is told the result of its condition.
-    We are keeping this not to break existing graphs.
-    """
-
-    def initialize(self, **kwargs):
-        self.result = self._popArg(kwargs, "result", True)
-        BranchAppDrop.initialize(self, **kwargs)
-
-    @track_current_drop
-    def run(self):
-        pass
-
-    def condition(self):
-        return self.result
-
-
-##
-# @brief Branch
-# @details A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
-# the provided conditional function. The conditional function can be specified either in-line or as an external function and has
-# to return a boolean value.
-# The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
-# a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
-# conditional function.
-# @par EAGLE_START
-# @param category Branch
-# @param tag daliuge
-# @param func_name condition/String/ComponentParameter/NoPort/ReadWrite//False/False/Python conditional function name. This can also be a valid import path to an importable function.
-# @param func_code def condition(x): return (x > 0)/String/ComponentParameter/NoPort/ReadWrite//False/False/Python function code for the branch condition. Modify as required. Note that func_name above needs to match the defined name here.
-# @param x /Object/ApplicationParameter/InputPort/ReadWrite//False/False/Port carrying the input which is also used in the condition function. Note that the name of the parameter has to match the argument of the condition function.
-# @param true  /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is true the input will be copied to this port
-# @param false /Object/ComponentParameter/OutputPort/ReadWrite//False/False/If condition is false the input will be copied to this port
-# @param log_level "NOTSET"/Select/ComponentParameter/NoPort/ReadWrite/NOTSET,DEBUG,INFO,WARNING,ERROR,CRITICAL/False/False/Set the log level for this drop
-# @param dropclass dlg.apps.simple.Branch/String/ComponentParameter/NoPort/ReadOnly//False/False/Application class
-# @param base_name simple/String/ComponentParameter/NoPort/ReadOnly//False/False/Base name of application class
-# @param execution_time 5/Float/ConstraintParameter/NoPort/ReadOnly//False/False/Estimated execution time
-# @param num_cpus 1/Integer/ConstraintParameter/NoPort/ReadOnly//False/False/Number of cores used
-# @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
-# @par EAGLE_END
-class Branch(PyFuncApp):
-    """
-    A branch application that copies the input to either the 'true' or the 'false' output depending on the result of
-    the provided conditional function. The conditional function can be specified either in-line or as an external function and has
-    to return a boolean value.
-    The inputs of the application are passed on as arguments to the conditional function. The conditional function needs to return
-    a boolean value, but the application will copy the input data to the true or false output, depending on the result of the
-    conditional function.
-    """
-
-    bufsize = dlg_int_param("bufsize", 65536)
-    result = dlg_bool_param("result", False)
-
-    def _get_drop_from_port(self, result):
-        for output in self.outputs:
-            for value in self.parameters['outputPorts'].values():
-                if value['target_id'] in output.oid:
-                    if value['name'] == result:
-                        return output
-        raise RuntimeError
-
-    def write_results(self,result:bool=False):
-        """
-        Copy the input to the output identified by the condition function.
-        """
-        if result and isinstance(result, bool):
-            self.result = result
-        if not self.outputs:
-            return
-
-
-        go_result = str(self.result).lower()
-        nogo_result = str(not self.result).lower()
-
-        # if nogo_result == 'true':
-        #     raise Exception
-        go_drop_oid = next(iter(self._port_names['output'].get(go_result,[])), None)
-        nogo_drop_oid = next(iter(self._port_names['output'].get(nogo_result,[])), None)
-
-        go_drop = next(o for o in self.outputs if o.oid == go_drop_oid)
-        nogo_drop = next(o for o in self.outputs if o.oid == nogo_drop_oid)
-
-        nogo_drop.skip()  # send skip to correct branch
-
-        if self.inputs and hasattr(go_drop, "write"):
-            droputils.copyDropContents(  # send data to correct branch
-                    self.x, go_drop, bufsize=self.bufsize
-            )
-            logger.debug("Sent the following data to correct branch: %s",
-                         droputils.allDropContents(self.x))
-
-        else:  # this enables a branch based only on the condition function
-            d = pickle.dumps(self.parameters['x'])
-            logger.debug("Sending following data to correct branch: %s", self.parameters['x'])
-            # d = self.parameters[self.argnames[0]]
-            if hasattr(go_drop, "write"):
-                go_drop.write(d)
-
-
 ##
 # @brief PickOne
 # @details App that picks the first element of an input list, passes that
@@ -1074,7 +986,6 @@ class PickOne(BarrierAppDROP):
     def run(self):
         value, rest = self.readData()
         self.writeData(value, rest)
-
 
 ##
 # @brief ListAppendThrashingApp

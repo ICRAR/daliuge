@@ -10,7 +10,7 @@ except ModuleNotFoundError:
     from importlib_resources import files
 
 from dlg.apps.pyfunc import PyFuncApp
-from dlg.apps.simple import Branch
+from dlg.apps.branch import Branch
 from dlg.ddap_protocol import DROPStates
 from dlg.droputils import depthFirstTraverse
 

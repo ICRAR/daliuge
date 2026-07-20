@@ -732,7 +732,8 @@ class Session(object):
         else:
             logger.warning("Session %s has been interrupted when in state %s. This was "
                            "likely triggered by a runtime error that has been caught by "
-                           "the DALiuGE runtime environment to ensure smoother shutdown.")
+                           "the DALiuGE runtime environment to ensure smoother shutdown.",
+                           self.sessionId, status)
         for drop, downStreamDrops in droputils.breadFirstTraverse(self._roots):
             downStreamDrops[:] = [
                 dsDrop for dsDrop in downStreamDrops if isinstance(dsDrop, AbstractDROP)

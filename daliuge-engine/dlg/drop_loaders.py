@@ -84,6 +84,18 @@ def save_npy(drop: "DataDROP", ndarray: np.ndarray, allow_pickle=False):
     dropio.write(bio.getbuffer())
     dropio.close()
 
+def save_npy_str(drop: "DataDROP", ndarray: np.ndarray, allow_pickle=False):
+    """
+    Saves a numpy ndarray to a drop in npy format
+    """
+    sio = io.StringIO()
+    # np.save accepts a "file-like" object which basically just requires
+    # a .write() method. Try np.save(drop, array)
+    np.save(sio, ndarray, allow_pickle=allow_pickle)
+    dropio = drop.getIO()
+    dropio.open(OpenMode.OPEN_WRITE)
+    dropio.write(sio.getvalue())
+    dropio.close()
 
 def save_numpy(drop: "DataDROP", ndarray: np.ndarray):
     save_npy(drop, ndarray)
@@ -120,7 +132,10 @@ def load_dill(drop: "DataDROP"):
             data = base64.b64decode(data)
         buf.write(data)
     drop.close(desc)
-    return dill.loads(buf.getvalue())
+    # Only attempt to load if we've actually read something
+    if buf.getvalue():
+        return dill.loads(buf.getvalue())
+    return None
 
 
 def load_binary(drop: "DataDROP"):
@@ -160,3 +175,14 @@ def load_utf8(drop: "DataDROP"):
     res = dropio.buffer()
     dropio.close()
     return res
+
+save_pickle.name = "save_pickle"
+load_pickle.name = "load_pickle"
+save_npy.name = "save_npy"
+save_numpy.name = "save_numpy"
+load_npy.name = "load_npy"
+load_numpy.name = "load_numpy"
+load_dill.name = "load_dill"
+load_binary.name = "load_binary"
+save_binary.name = "save_binary"
+load_utf8.name = "load_utf8"

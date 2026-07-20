@@ -31,6 +31,8 @@ import logging
 import os
 import pickle
 
+import numpy as np
+
 from typing import Callable, Union
 import dill
 from io import StringIO
@@ -636,6 +638,7 @@ class PyFuncApp(BarrierAppDROP):
             self.input_parser = self.parameters["input_parser"]
         if "output_parser" in self.parameters:
             self.output_parser = self.parameters["output_parser"]
+        # TODO investigate use of _port_map and _port_ids instead of these parameters.
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
             logger.debug("Mapping ports to inputs...")
             if self.fn_nargs == 0:
@@ -717,6 +720,7 @@ class PyFuncApp(BarrierAppDROP):
         inputs and provided applicationArgs to the function arguments. All of this
         should be driven by matching names.
         """
+        kwargs["n_effective_inputs"] = -1
         BarrierAppDROP.initialize(self, **kwargs)
 
         env = os.environ.copy()
@@ -749,6 +753,10 @@ class PyFuncApp(BarrierAppDROP):
             self._applicationArgs)  # number of additional arguments provided
 
         if not self.func_name and not self.func_code and not self.func:
+            raise IncompleteDROPSpec(
+                self, "No function specified (either via name, code or function object)"
+            )
+        elif not self.func_name:
             raise IncompleteDROPSpec(
                 self, "No function specified (either via name, code or function object)"
             )
@@ -886,8 +894,6 @@ class PyFuncApp(BarrierAppDROP):
         """
 
         encoding = "dill"
-        # if not self._applicationArgs:
-        #     return getattr(self, "output_parser", "dill")
         component_params = self.parameters.get("componentParams", {})
         applicationArgs = self.parameters.get("applicationArgs", {})
         if "outputs" in self.parameters and check_ports_dict(
@@ -934,6 +940,8 @@ class PyFuncApp(BarrierAppDROP):
                 self._write(o, dill.dumps(result))
                 # o.write(dill.dumps(result))
             elif parser is DropParser.EVAL or parser is DropParser.UTF8:
+                if isinstance(result, bytes):
+                    result = result.decode("utf8")
                 if isinstance(result, str):
                     self._write(o, result)
                     # o.write(result)
@@ -942,7 +950,6 @@ class PyFuncApp(BarrierAppDROP):
                     self._write(o, encoded_result)
                     # o.write(encoded_result)
             elif parser is DropParser.NPY:
-                import numpy as np
 
                 if not isinstance(result, np.ndarray):
                     try:

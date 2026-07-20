@@ -86,7 +86,6 @@ class CommentDrop(BarrierAppDROP):
     This only exists to make sure we have a comment in the template palette
     """
 
-
 ##
 # @brief GlobalVariables
 # @details A Global variable store
