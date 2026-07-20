@@ -33,9 +33,9 @@ jobs:
 
       - name: Configure git
         run: |
+          git config --global user.name $GITHUB_USERNAME
+          git config --global user.email $GITHUB_USERNAME@gmail.com
           git config --global url."https://${{ secrets.PALETTE_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          # git config --global user.name $GITHUB_USERNAME
-          # git config --global user.email $GITHUB_USERNAME@gmail.com
 
       - name: Environment variables
         run: |
