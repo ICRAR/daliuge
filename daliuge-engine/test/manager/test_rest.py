@@ -135,7 +135,7 @@ class TestRest(unittest.TestCase):
                 DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
-        self.assertRaises(exceptions.SessionInterruptError, c.deploySession, sid)
+        self.assertRaises(exceptions.ErrorManagerCaughtException, c.deploySession, sid)
 
         # And here we point to an unexisting file, making an invalid drop
         c.destroySession(sid)
@@ -155,7 +155,7 @@ class TestRest(unittest.TestCase):
                 DEFAULT_TEST_GRAPH_REPRO.copy(),
             ],
         )
-        self.assertRaises(exceptions.SessionInterruptError, c.deploySession, sid)
+        self.assertRaises(exceptions.ErrorManagerCaughtException, c.deploySession, sid)
 
     def test_recursive(self):
         sid = "lala"

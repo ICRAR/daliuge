@@ -38,7 +38,7 @@ from dlg import droputils
 from dlg.common.reproducibility.constants import ReproducibilityFlags
 from dlg.ddap_protocol import DROPStates, ExecutionMode, AppDROPStates
 from dlg.apps.app_base import AppDROP, BarrierAppDROP, InputFiredAppDROP
-from dlg.data.drops.data_base import NullDROP
+from dlg.data.drops.data_base import NullDROP, DataDROPError
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.rdbms import RDBMSDrop
 from dlg.data.drops.memory import InMemoryDROP, SharedMemoryDROP
@@ -574,9 +574,8 @@ class TestDROP(unittest.TestCase):
         # Try to overwrite the DROP's checksum and size
         self.assertRaises(Exception, lambda: setattr(drop, "checksum", 0))
         self.assertRaises(Exception, lambda: setattr(drop, "size", 0))
-
         # Try to write on a DROP that is already COMPLETED
-        self.assertRaises(Exception, drop.write, "")
+        self.assertEqual(DataDROPError.INCORRECT_DROP_STATE, drop.write(""))
 
         # Invalid reading on a DROP that isn't COMPLETED yet
         drop = InMemoryDROP("a", "a")

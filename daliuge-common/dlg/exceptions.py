@@ -89,6 +89,11 @@ class BashAppRuntimeError(DROPException):
     The BashShellApp has reported an error.
     """
 
+class OutputDROPCancelled(DROPException):
+    """
+    The output drop we are expecting to write to has been cancelled.
+    """
+
 class InvalidGraphException(DaliugeException):
     """
     An exception thrown when an invalid graph, or part of a graph, is given to

@@ -145,7 +145,7 @@ install_requires = [
     "wheel",  # need to get wheel first...
     "bottle",
     "urllib3>=1.25.4, <1.27 ; python_version < '3.10'",
-    "urllib3>=2.5.0; python_version >= '3.10'",
+    "urllib3>=2.6.3; python_version >= '3.10'",
     "boto3>=1.38.0",
     "configobj",
     "crc32c",
@@ -154,13 +154,13 @@ install_requires = [
     "docker",
     "lockfile",
     # 0.10.6 builds correctly with old (<=3.10) Linux kernels
-    "netifaces>=0.10.6",
+    "netifaces-plus",
     "numpy",
     "overrides",
     "paramiko",
     "psutil",
     "python-daemon",
-    "pyzmq == 25.1.1",  # Python 25.1.1 is minimal install that supports Python 3.12
+    "pyzmq == 26.1.1",  # Python 25.1.1 is minimal install that supports Python 3.12
     "requests",
     "scp",
     "pyyaml",

@@ -59,7 +59,7 @@ def translate_graph(fp, ssid: str):
 def create_and_run_graph_spec(test_case: unittest.TestCase, appDropSpec: list[dict],
                               app_root=True):
 
-    roots = graph_loader.createGraphFromDropSpecList(appDropSpec)
+    roots, _ = graph_loader.createGraphFromDropSpecList(appDropSpec)
     # drops = [v for d,v in drops.items()]
     leafs = droputils.getLeafNodes(roots)
     with droputils.DROPWaiterCtx(test_case, leafs, timeout=20, expected_states=[

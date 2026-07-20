@@ -1,6 +1,15 @@
 # History
 https://keepachangelog.com/en/1.0.0/
 
+# v6.7.0
+- [Added] Update test runner to support Python 3.13: https://github.com/ICRAR/daliuge/pull/387 
+- [Fixed] Call prepareUser during initialization: https://github.com/ICRAR/daliuge/pull/384
+- [Fixed] LIU-540: Add back port_map to translator: https://github.com/ICRAR/daliuge/pull/388
+- [Fixed] Update urllib3 to address security notices: https://github.com/ICRAR/daliuge/pull/386
+
+# v6.6.0
+- [Feature] Update deploy error handling: https://github.com/ICRAR/daliuge/pull/376 
+
 # v6.5.0
 - [Feature] Add class-attribute for ports in AbstractDROP: https://github.com/ICRAR/daliuge/pull/382
 - [Fixed] Fix an issue with later types of the docker engine: https://github.com/ICRAR/daliuge/pull/380

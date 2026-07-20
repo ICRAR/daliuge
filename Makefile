@@ -32,8 +32,16 @@ docker-install:	  ## Install using docker containers
 	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
 	@docker build -f docker/Dockerfile.full --tag icrar/dlg_full .
 
+.PHONY: docker-nc-install
+docker-nc-install:	  ## Install using docker containers (no-cache)
+	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
+	@docker build --no-cache -f docker/Dockerfile.full --tag icrar/dlg_full .
+
 .PHONY: docker-run
-docker-run:	  ## Install using docker containers
+docker-run: docker-start
+
+.PHONY: docker-start
+docker-start:	  ## Run using docker containers
 	@if ! command -v docker; then echo "Docker is not available; please confirm it is installed." && exit; fi
 	@echo "MY_UID: $(MY_UID)"
 	@MY_GID=$(MY_GID) MY_UID=$(MY_UID) docker compose -f docker/docker-compose.yaml up -d

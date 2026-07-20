@@ -33,7 +33,8 @@ import numpy as np
 
 from time import sleep
 from dlg import droputils, drop_loaders
-from dlg.apps.app_base import BarrierAppDROP
+from dlg.apps.app_base import BarrierAppDROP, InputFiredAppDROP
+from dlg.apps.pyfunc import PyFuncApp
 from dlg.data.drops.container import ContainerDROP
 from dlg.data.drops.directory import DirectoryDROP
 from dlg.data.drops import InMemoryDROP, FileDROP
@@ -438,9 +439,10 @@ class GenericGatherApp(BarrierAppDROP):
 
     # automatically populated by scatter node
     num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
+    n_effective_inputs = dlg_int_param("n_effective_inputs", -1)
 
     def readWriteData(self):
-        inputs = self.inputs
+        inputs = self._completedInputs
         outputs = self.outputs
         for output in outputs:
             for ipt in inputs:
@@ -449,7 +451,14 @@ class GenericGatherApp(BarrierAppDROP):
 
     @track_current_drop
     def run(self):
-        self.readWriteData()
+        n_effective_inputs = self.n_effective_inputs if self.n_effective_inputs > 0 else len(self.inputs)
+        if len(self._completedInputs) < n_effective_inputs:
+            logger.error("Not enough completed inputs")
+            self.setError()
+        else:
+            logger.debug("n_effective_inputs: %d", n_effective_inputs)
+            self.value_list = []
+            self.readWriteData()
 
 
 ##
@@ -521,7 +530,7 @@ class DictGatherApp(BarrierAppDROP):
 # @param group_start False/Boolean/ComponentParameter/NoPort/ReadWrite//False/False/Is this node the start of a group?
 # @param input /Object/ComponentParameter/InputPort/ReadWrite//False/False/0-base placeholder port for inputs
 # @par EAGLE_END
-class ArrayGatherApp(BarrierAppDROP):
+class ArrayGatherApp(InputFiredAppDROP):
     component_meta = dlg_component(
         "ArrayGatherApp",
         "Collect multiple inputs into an array",
@@ -532,6 +541,8 @@ class ArrayGatherApp(BarrierAppDROP):
     # value_list = dlg_list_param("value_list", [])
 
     def initialize(self, **kwargs):
+        num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
+        # n_effective_inputs = dlg_int_param("n_effective_inputs", -1)
         super(ArrayGatherApp, self).initialize(**kwargs)
         self.kwargs = kwargs
 
@@ -540,18 +551,25 @@ class ArrayGatherApp(BarrierAppDROP):
         outputs = self.outputs
         for output in outputs:
             for ipt in inputs:
-                value = droputils.allDropContents(ipt)
-                try:
-                    # TODO: This really needs to use the encoding but requires a drop data-type/encoding.
-                    self.value_list.append(dill.loads(value))
-                except _pickle.PickleError:
-                    self.value_list.append(value)
+                if ipt.uid in self._completedInputs:
+                    value = droputils.allDropContents(ipt)
+                    try:
+                        # TODO: This really needs to use the encoding but requires a drop data-type/encoding.
+                        self.value_list.append(dill.loads(value))
+                    except _pickle.PickleError:
+                        self.value_list.append(value)
             output.write(dill.dumps(self.value_list))
 
     @track_current_drop
     def run(self):
-        self.value_list = []
-        self.readWriteData()
+        n_effective_inputs = self.n_effective_inputs if self.n_effective_inputs > 0 else len(self.inputs)
+        if len(self._completedInputs) < n_effective_inputs:
+            logger.error("Not enough completed inputs")
+            self.setError()
+        else:
+            logger.debug("n_effective_inputs: %d", n_effective_inputs)
+            self.value_list = []
+            self.readWriteData()
 
 
 ##

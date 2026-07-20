@@ -34,7 +34,7 @@ from dlg.data.drops.memory import InMemoryDROP
 from test.dlg_engine_testutils import NMTestsMixIn
 
 from .setp_up import build_shared_library
-from ..manager import test_dm
+from ..manager import test_adm
 
 _libname = "dynlib_example2"
 _libfname = "libdynlib_example2.so"

@@ -488,16 +488,23 @@ class LG:
             dropSpec_null.addStreamingConsumer(tdrop, name="stream")
             tdrop.addStreamingInput(dropSpec_null, name="stream")
             self._drop_dict["new_added"].append(dropSpec_null)
+
         elif s_type in ["Application", "Control"]:
             logger.debug("Getting source and traget port names and IDs of %s and %s", slgn.name, tlgn.name)
             sname = slgn.getPortName("outputPorts", index=-1)
             tname = tlgn.getPortName("inputPorts", index=-1)
 
             # sname is dictionary of all output ports on the sDROP.
+
             output_portname = sname[llink["fromPort"]]
             input_portname = tname[llink["toPort"]]
             sdrop.addOutput(tdrop, name=output_portname)
             tdrop.addProducer(sdrop, name=input_portname)
+
+            if "port_map" not in tdrop:
+                tdrop["port_map"] = {input_portname: output_portname}
+            else:
+                tdrop["port_map"][input_portname] = output_portname
 
             if Categories.BASH_SHELL_APP == s_type:
                 bc = src_drop["command"]

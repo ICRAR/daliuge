@@ -430,14 +430,16 @@ def _get_args(appArgs, positional=False):
     """
     Separate out the arguments dependening on if we want positional or keyword style
     """
+
     args = {
+        # Note to reader: Using dictionary comprehension, start from "for arg in appArgs"
         arg: Argument(
             value=appArgs[arg]["value"],
             encoding= appArgs[arg].get("encoding", "dill"),
             positional=positional
         )
         for arg in appArgs
-        if (appArgs[arg]["positional"] == positional)
+        if (appArgs[arg]["positional"] == positional and appArgs[arg]["type"] != "Event")
     }
 
     argType = "Positional" if positional else "Keyword"

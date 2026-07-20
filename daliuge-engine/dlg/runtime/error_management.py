@@ -29,6 +29,10 @@ import pickle
 import logging
 import dlg.exceptions as ex
 
+from dlg.common.version import version as dlgversion
+from dlg.dlg_logging import USER, USERSTR
+
+logging.addLevelName(USER, USERSTR)
 from enum import Enum, auto
 
 
@@ -104,6 +108,20 @@ class ErrorCode(Enum):
           example, incorrect flags, or the wrong redirect was used. 
     """
 
+    OUTPUT_DROPPED_CANCELLED = auto()
+    """
+    During the runtime of this DROP, the output DROP was cancelled before it could 
+    be written to.     
+    
+    This is likely the result of a distributed session failure in which a graph 
+    distributed across multiple nodes has failed during the session. Current 
+    known causes of this are: 
+        
+        - A PyFuncAppDROP failed to be initialised during deployment and the session 
+          failed. Please review other FAILED nodes (red) in the graph to see if they 
+          report a BAD_IMPORT code.
+    """
+
     GRAPH_ERROR = 200
     """
     An error has occured during graph execution that was not expected. Please 
@@ -156,12 +174,12 @@ class ErrorCode(Enum):
     @property
     def doc_url(self) -> str:
         log_message = f"Error [{self.value}] - {self.name}"
-        path = (f"https://daliuge--344.org.readthedocs.build/page/debugging/errors"
-                   f".html"
-                f"#{__name__}.{str(self)}")
         # if os.environ.get('READTHEDOCS', None) == 'True':
-        # path =  f"https://daliuge.readthedocs.org/page/errors.html#{self.name}"
-        href = f"<a href={path} target='_blank' rel='noopener noreferrer'>{path}</a>'"
+        path = (
+            f"https://daliuge.readthedocs.io/en/v{dlgversion}/debugging/errors.html"
+            f"#{__name__}.{str(self)}"
+        )
+        href = f"<a href={path} target='_blank' rel='noopener noreferrer'>{path}</a>"
         return f"{log_message} occured: Please review potential issues at\n {href}"
 
 
@@ -180,6 +198,7 @@ EXCEPTION_MAP = {
     ex.InvalidPathException: ErrorCode.PATH_ERROR,
     ex.IncompleteDROPSpec: ErrorCode.INCOMPLETE_DROP_SPEC,
     ex.BashAppRuntimeError: ErrorCode.BASH_COMMAND_FAILED,
+    ex.OutputDROPCancelled: ErrorCode.OUTPUT_DROPPED_CANCELLED,
     ex.InvalidGraphException: ErrorCode.GRAPH_ERROR,
     ex.IncompleteGraphError: ErrorCode.INVALID_GRAPH_CONFIGURATION,
     ex.InvalidRelationshipException: ErrorCode.INVALID_GRAPH_CONFIGURATION,
@@ -198,7 +217,11 @@ EXCEPTION_MAP = {
 }
 
 
-def intercept_error(e: Exception):
+def proxy_intercept(e: Exception):
+    intercept_error(e, raise_exception=False)
+
+
+def intercept_error(e: Exception, raise_exception=True):
     """
     Intercept DALiuGEExceptions during App/DataDROP runtime.
 
@@ -213,8 +236,9 @@ def intercept_error(e: Exception):
     logger = logging.getLogger(f"dlg.{__name__}")
     if type(e) != ex.ErrorManagerCaughtException:
         errorno = EXCEPTION_MAP.get(type(e), ErrorCode.DROP_ERROR)
-        logger.warning(errorno.doc_url)
-    raise ex.ErrorManagerCaughtException from e
+        logger.log(USER, errorno.doc_url)
+    if raise_exception:
+        raise ex.ErrorManagerCaughtException from e
 
 
 def manage_session_failure(func):
@@ -230,6 +254,7 @@ def manage_session_failure(func):
     :param func: The function to which we have added this dectorator
     :return:
     """
+
     def manage_session(self, *args, **kwargs):
         """
         Attempt to run the decorated function 

@@ -85,7 +85,7 @@ class NodeManagerTestsBase(NMTestsMixIn):
             {
                 "oid": "B",
                 "categoryType": "Application",
-                "dropclass": "test.manager.test_dm.ErroneousApp",
+                "dropclass": "test.manager.test_adm.ErroneousApp",
                 "inputs": ["A"],
             },
             memory("C", producers=["B"]),

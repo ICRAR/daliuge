@@ -116,7 +116,7 @@ install_requires = [
     "jinja2",
     "jsonschema",
     "metis>=0.2a3",
-    "netifaces",
+    "netifaces-plus",
     "networkx",
     "numpy",
     "parameterized",
