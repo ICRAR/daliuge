@@ -15,7 +15,7 @@ jobs:
     env:
       PROJECT_NAME: daliuge
       GIT_REPO: https://github.com/ICRAR/daliuge
-      GITHUB_USERNAME: eagle.updater
+      GITHUB_USERNAME: $GITHUB_USERNAME
 
     steps:
       - uses: actions/checkout@v4
