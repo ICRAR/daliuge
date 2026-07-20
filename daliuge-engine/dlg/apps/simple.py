@@ -542,7 +542,7 @@ class ArrayGatherApp(InputFiredAppDROP):
     # value_list = dlg_list_param("value_list", [])
 
     def initialize(self, **kwargs):
-        num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
+        # num_of_inputs: int = dlg_int_param("num_of_inputs", 1)
         # n_effective_inputs = dlg_int_param("n_effective_inputs", -1)
         super(ArrayGatherApp, self).initialize(**kwargs)
         self.kwargs = kwargs
