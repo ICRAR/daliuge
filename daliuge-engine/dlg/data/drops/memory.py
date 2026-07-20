@@ -84,6 +84,7 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
         return {"value":pd, "type": pytype}
     pydata = pd["value"]
     pytype = pd["type"].lower()
+    pytype = "str" if pytype == "string" else pytype
     logger.debug("pydata value provided: '%s' with type '%s', %s",
                  pydata, type(pydata), pd["type"])
     empty_strings = ["None", ""]
@@ -109,12 +110,14 @@ def parse_pydata(pd: Union[bytes, dict]) -> bytes:
         #     pydata = pydata.encode()
     elif pytype in ["int", "integer"]:
         try:
+            pydata = 0 if pydata == "None" else pydata
             pydata = int(pydata)
             pytype = "int"
         except ValueError:
             pydata = pydata.encode()
     elif pytype == "float":
         try:
+            pydata = 0 if pydata == "None" else pydata
             pydata = float(pydata)
         except ValueError:
             pydata = pydata.encode()

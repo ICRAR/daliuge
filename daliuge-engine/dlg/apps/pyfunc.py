@@ -53,6 +53,7 @@ from dlg.apps.app_base import BarrierAppDROP
 from dlg.exceptions import BadModuleException, IncompleteDROPSpec, InvalidPathException, MemoryDROPTypeError
 from dlg.meta import (
     dlg_string_param,
+    dlg_int_param,
     dlg_dict_param,
     dlg_component,
     dlg_batch_input,
@@ -636,6 +637,7 @@ class PyFuncApp(BarrierAppDROP):
             self.input_parser = self.parameters["input_parser"]
         if "output_parser" in self.parameters:
             self.output_parser = self.parameters["output_parser"]
+        # TODO investigate use of _port_map and _port_ids instead of these parameters.
         if "inputs" in self.parameters and check_ports_dict(self.parameters["inputs"]):
             logger.debug("Mapping ports to inputs...")
             if self.fn_nargs == 0:
@@ -721,6 +723,7 @@ class PyFuncApp(BarrierAppDROP):
         inputs and provided applicationArgs to the function arguments. All of this
         should be driven by matching names.
         """
+        kwargs["n_effective_inputs"] = -1
         BarrierAppDROP.initialize(self, **kwargs)
 
         env = os.environ.copy()
@@ -890,8 +893,6 @@ class PyFuncApp(BarrierAppDROP):
         """
 
         encoding = "dill"
-        # if not self._applicationArgs:
-        #     return getattr(self, "output_parser", "dill")
         component_params = self.parameters.get("componentParams", {})
         applicationArgs = self.parameters.get("applicationArgs", {})
         if "outputs" in self.parameters and check_ports_dict(
