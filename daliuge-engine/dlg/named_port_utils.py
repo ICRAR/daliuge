@@ -182,15 +182,15 @@ def identify_named_ports(
             if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
                 value = positionalPortArgs[key].value
                 logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
-            elif local_parser:
-                logger.debug("Reading from %s encoded port %s using %s", encoding, key, local_parser.__repr__())
+            elif local_parser is not None:
+                logger.debug("Reading from %s encoded port %s using %s", encoding, key, local_parser.name)
                 value = local_parser(port_dict[keys[i]]["drop"])
                 try:
                     value = deserialize_data(value)
                 except (TypeError, AttributeError, binascii.Error, pickle.UnpicklingError):
                     # If deserialization does not work we just
                     # stick with the value
-                    pass
+                    logger.debug("Deserialization failed, continuing with raw value: %s", value)
                 positionalPortArgs[key].value = value
             logger.debug("Using %s '%s' for port %s", mode, value, key)
             positionalArgs.remove(key)
@@ -209,8 +209,8 @@ def identify_named_ports(
                 local_parser = parser
             if port_dict[keys[i]]["drop"].status == DROPStates.SKIPPED:
                 logger.warning("Input drop skipped! Using %s default value for parg %s", mode, key)
-            if local_parser:
-                logger.debug("Reading from %s encoded port using %s", encoding, parser.__repr__())
+            if local_parser is not None:
+                logger.debug("Reading from %s encoded port using %s", encoding, local_parser.name)
                 value = local_parser(port_dict[keys[i]]["drop"])
             # if not found in appArgs we don't put them into portargs either
             # pargsDict.update({key: value})
@@ -483,6 +483,7 @@ def get_port_reader_function(input_parser: DropParser):
             logger.debug("Read %s from %s drop.", content, input_parser)
             return ast.literal_eval(content) if len(content) > 0 else None
 
+        optionalEval.name = "optionalEval"
         reader = optionalEval
     elif input_parser is DropParser.NPY:
         reader = drop_loaders.load_npy
@@ -495,9 +496,13 @@ def get_port_reader_function(input_parser: DropParser):
                 return x.path
             except AttributeError:
                 return drop_loaders.load_utf8(x)
+        PathFromData.name = "PathFromData"
         reader = PathFromData
     elif ip is DropParser.DATAURL:
-        reader = lambda x: x.dataURL
+        def DataURLFromData(x):
+            return x.dataURL
+        DataURLFromData.name = "DataURLFromData"
+        reader = DataURLFromData
     elif ip is DropParser.DILL:
         reader = drop_loaders.load_dill
     elif ip is DropParser.BINARY:

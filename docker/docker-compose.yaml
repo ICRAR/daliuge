@@ -64,6 +64,7 @@ services:
       - ~/dlg:/dlg
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
+      - /var/run/docker.sock:/var/run/docker.sock
 
 
 # =============================================================
@@ -89,6 +90,7 @@ services:
       - ~/dlg:/dlg
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
+      - /var/run/docker.sock:/var/run/docker.sock
 
 # =============================================================
 #
@@ -113,6 +115,7 @@ services:
       - ~/dlg:/dlg
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
+      - /var/run/docker.sock:/var/run/docker.sock
 
 # =============================================================
 #
