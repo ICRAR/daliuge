@@ -127,6 +127,7 @@ class SleepApp(BarrierAppDROP):
             if isinstance(self.sleep_time, (InMemoryDROP, FileDROP, DropProxy)):
                 logger.debug("Trying to read from %s", self.sleep_time)
                 self.sleep_time = drop_loaders.load_pickle(self.sleep_time)
+            logger.debug("Sleeping for %s s", self.sleep_time)
             sleep(self.sleep_time)
         except (TypeError, ValueError):
             logger.debug(
@@ -228,8 +229,10 @@ class CopyApp(BarrierAppDROP):
 class SleepAndCopyApp(CopyApp):
     """A combination of the SleepApp and the CopyApp. It sleeps, then copies"""
     sleep_time = dlg_float_param("sleep_time", 0)
+
+    @track_current_drop
     def run(self):
-        sleep(self.sleep_time)
+        SleepApp.run(self)
         CopyApp.run(self)
 
 
@@ -945,13 +948,11 @@ class PickOne(BarrierAppDROP):
         contents = droputils.allDropContents(ipt)
         data = []
         try:
-            data = pickle.loads(contents)
+            data = dill.loads(contents)
         except EOFError:
             # No data stored in drop
             logger.error("There was no data in the Memory drop %s", ipt.oid)
-        # data = droputils.allDropContents(input)
-        # data = dill.loads(base64.b64decode(data))
-        logger.warning("Data type is: %s", type(data))
+        logger.debug("Data type is: %s", str(type(data)))
 
         # make sure we always have a ndarray with at least 1dim.
         if type(data) not in (list, tuple) and not isinstance(data, (np.ndarray)):
