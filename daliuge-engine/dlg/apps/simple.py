@@ -444,11 +444,14 @@ class GenericGatherApp(BarrierAppDROP):
     n_effective_inputs = dlg_int_param("n_effective_inputs", -1)
 
     def readWriteData(self):
-        inputs = self._completedInputs
+        inputs = []
+        inputs = {inp.uid:inp for inp in self.inputs}
+        cinputs = self._completedInputs
         outputs = self.outputs
+        logger.debug("Inputs: %s",inputs)
         for output in outputs:
-            for ipt in inputs:
-                value = droputils.allDropContents(ipt)
+            for cipt in cinputs:
+                value = droputils.allDropContents(inputs[cipt])
                 output.write(value)
 
     @track_current_drop
