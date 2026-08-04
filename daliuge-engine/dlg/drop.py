@@ -452,6 +452,7 @@ class AbstractDROP(EventFirer, EventHandler):
         self.block_skip = self._popArg(kwargs, "block_skip", False)
 
         ports = self._popArg(kwargs, "ports", {})
+        logger.debug("Found ports: %s", ports)
         self._port_ids, self._port_names = self._construct_port_lookup(ports)
 
         # Useful to have access to all EAGLE parameters without a prior knowledge

@@ -93,6 +93,8 @@ class Branch(PyFuncApp):
         #     raise Exception
         go_drop_oid = next(iter(self._port_names['output'].get(go_result,[])), None)
         nogo_drop_oid = next(iter(self._port_names['output'].get(nogo_result,[])), None)
+        logger.debug("go/nogo result: %s/%s", go_drop_oid, nogo_drop_oid)
+        logger.debug("port names: %s", self._port_names)
 
         go_drop = next(o for o in self.outputs if o.oid == go_drop_oid)
         nogo_drop = next(o for o in self.outputs if o.oid == nogo_drop_oid)
