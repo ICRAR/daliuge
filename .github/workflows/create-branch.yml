@@ -7,6 +7,10 @@ on:
 jobs:
   create_issue_branch_job:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - name: Create Issue Branch
         uses: robvanderleek/create-issue-branch@main
