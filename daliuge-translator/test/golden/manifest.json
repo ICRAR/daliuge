@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "legacy_daliuge": {
+    "repository": "https://github.com/SachaPoulet/daliuge.git",
+    "upstream_repository": "https://github.com/ICRAR/daliuge.git",
+    "commit": "c96d83fb56d523bfcf43e061a822e960dc48a2f6"
+  },
+  "graph_source": {
+    "repository": "https://github.com/ICRAR/EAGLE_test_repo.git",
+    "commit": "2f1db6c99898c43a25d9a7d3a07acf8cfb7becff",
+    "path": "eagle_test_graphs/daliuge_tests/translator/logical_graphs/ArrayLoop.graph",
+    "sha256": "b1f65f1819d7e8f25c99be7aca2e4efde49780769b0bd1f04fb0aa85c48490cf",
+    "license": "GPL-3.0"
+  },
+  "generated_environment": {
+    "generated_at": "2026-08-25T11:23:36Z",
+    "python": "3.12.3",
+    "platform": "Ubuntu 24.04 on WSL2 x86_64",
+    "metis": "0.2a5",
+    "numpy": "2.5.1",
+    "networkx": "3.6.1"
+  },
+  "cases": [
+    {
+      "name": "ArrayLoop-metis",
+      "input": "inputs/ArrayLoop.graph",
+      "expected_dir": "expected/ArrayLoop/metis",
+      "pipeline": {
+        "reproducibility": 0,
+        "oid_prefix": "issue5",
+        "fill": {
+          "parameters": [
+            "param1=hello",
+            "param2=1",
+            "param1.param2=hi",
+            "param4.what=False"
+          ]
+        },
+        "unroll": {
+          "zerorun": true,
+          "app": 1
+        },
+        "partition": {
+          "algorithm": "metis",
+          "partitions": 2,
+          "islands": 1
+        },
+        "map": {
+          "nodes": [
+            "island0",
+            "node0",
+            "node1"
+          ],
+          "islands": 1
+        }
+      },
+      "expected": {
+        "PGT": {
+          "file": "pgt.json",
+          "sha256": "816e8f34689eea3cf6173c50a8509932f142d89d691844d89787daae7e1409bb"
+        },
+        "PGT-P": {
+          "file": "pgtp.json",
+          "sha256": "175e49b12ded4af0d1e72321ed391926ab811178fa76320ee5f80b21e3156805"
+        },
+        "PG": {
+          "file": "pg.json",
+          "sha256": "c27f0c1af7fe5cdd3577bbf656df938fed1bbac60973d1622d4af77745f3cc68"
+        }
+      }
+    }
+  ]
+}
