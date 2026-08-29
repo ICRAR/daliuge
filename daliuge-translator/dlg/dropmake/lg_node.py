@@ -622,11 +622,14 @@ class LGNode:
                         "num_of_splits",
                         "Number of copies",
                     ]:
-                        if kw in self.jd:
+                        if kw in self.jd and self.jd[kw]:
                             self._dop = int(self.jd[kw])
                             break
                     if self._dop is None:
-                        self._dop = 4  # dummy impl. TODO: Why is this here?
+                        raise GInvalidNode(
+                            f"Scatter '{self.name}' ({self.id}) has no degree of parallelism. "
+                            "One of 'num_of_copies', 'num_of_splits', 'Number of copies' is required."
+                        )
                 elif self.is_gather:
                     try:
                         tlgn = self.inputs[0]
