@@ -45,13 +45,13 @@ function graphInit(graphType) {
             //reset graph divs
             $("#main").empty()
             //initiate the correct function
-            if (graphType === "sankey") {
+            if (graphType === "partition" || graphType === "default") {
+                partitionGraphInit(data)
+            } else if (graphType === "sankey") {
                 echartsGraphInit("sankey", data)
             } else if (graphType === "dag") {
                 dagGraphInit(data)
-            } else if (graphType === "partition") {
-                partitionGraphInit(data)
-            }
+            } 
 
             //set correct graph button to active
             $(".graphChanger").removeClass("active")
