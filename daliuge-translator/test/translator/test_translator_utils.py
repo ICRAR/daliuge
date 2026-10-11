@@ -196,6 +196,24 @@ class TestCompatibilityHelpers(unittest.TestCase):
 
         self.assertEqual(str(ctx.exception), "bad graph")
 
+    def test_unroll_and_partition_accepts_a_graph_path(self):
+        # the legacy helper went through load_lg, so a path still works
+        result = unroll_and_partition_with_params(
+            lgt=path_utils.get_lg_fpath(
+                "logical_graphs",
+                "testLoop.graph",
+            ),
+            test=False,
+            algorithm="metis",
+            num_partitions=1,
+            num_islands=1,
+        )
+
+        self.assertIsInstance(
+            result,
+            MetisPGTP,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

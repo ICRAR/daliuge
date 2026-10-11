@@ -252,7 +252,8 @@ def unroll_and_partition_with_params(
         ]
     )
     try:
-        pgt = pipeline.run(LogicalGraphTemplate.from_wire(lgt))
+        # load_lg keeps the legacy inputs working: a dict, a path or a file
+        pgt = pipeline.run(LogicalGraphTemplate.from_wire(load_lg(lgt)))
     except StageException as e:
         # callers (REST, daliuge-engine) catch GraphException and friends,
         # so hand them the original error rather than the stage wrapper
