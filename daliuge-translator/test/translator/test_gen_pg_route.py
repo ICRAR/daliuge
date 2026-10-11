@@ -118,7 +118,7 @@ class TestGenPgReprodata(unittest.TestCase):
         """
         client = client_cls.return_value
         client.nodes.return_value = ["node1"]
-ok
+
         _gen_pg(dlg_mgr_host="mgr", dlg_mgr_port=8001, dlg_mgr_deploy="deploy")
 
         ssid, graph = client.append_graph.call_args.args
