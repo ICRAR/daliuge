@@ -34,6 +34,7 @@ from dlg.translator.errors import GraphException
 from dlg.translator.stages.partition.scheduler import DAGUtil
 from dlg.translator.stages.partition.projections.gojs import project_gojs
 from dlg.translator.stages.partition.placeholders import placeholder_list, prepare_node_list
+from dlg.translator.stages.partition.islands import merge_for_islands, split_island_resources
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -280,15 +281,18 @@ class PGT(object):
                 raise GPGTException(
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
-            is_list = node_list[0:num_islands]
-            nm_list = node_list[num_islands:]
         else:
             if form_island and num_islands + self._num_parts_done > nodes_len:
                 raise GPGTException(
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
-            is_list = node_list[0:num_islands]
-            nm_list = node_list[num_islands:]
+
+        is_list, nm_list, form_island = split_island_resources(
+            node_list,
+            num_islands,
+        )
+
+        if co_host_dim:
             logger.debug("NM list: %s", nm_list)
         logger.info(
             "Drops count: %d, partitions count: %d, NM count: %d, island count: %d %s",
@@ -299,12 +303,12 @@ class PGT(object):
             form_island,
         )
 
-        if form_island:
-            self.merge_partitions(num_islands, form_island=True)
-            # from Eq.1 we know that num_parts <= nm_len
-            # so no need to update its value
-        elif len(nm_list) < self._num_parts_done:
-            self.merge_partitions(len(nm_list), form_island=False)
+        merge_for_islands(
+            num_islands,
+            self._num_parts_done,
+            nm_list,
+            self.merge_partitions,
+        )
 
         # when #partitions < #nodes the lm values are spread around range(#nodes)
         # which leads to index out of range errors (TODO: find how _oid_gid_map is
