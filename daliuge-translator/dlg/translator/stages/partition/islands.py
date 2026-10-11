@@ -13,18 +13,18 @@ def split_island_resources(node_list, num_islands):
     return (
         node_list[0:num_islands],
         node_list[num_islands:],
-        num_islands > 1,
     )
 
 
 def merge_for_islands(
     num_islands,
+    form_island,
     num_parts_done,
     node_managers,
     merge_partitions,
 ):
     """Apply the legacy partition merging required for resource mapping."""
-    if num_islands > 1:
+    if form_island:
         merge_partitions(
             num_islands,
             form_island=True,

@@ -339,7 +339,7 @@ class PGT(object):
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
 
-        is_list, nm_list, form_island = split_island_resources(
+        is_list, nm_list = split_island_resources(
             node_list,
             num_islands,
         )
@@ -357,6 +357,7 @@ class PGT(object):
 
         merge_for_islands(
             num_islands,
+            form_island,
             self._num_parts_done,
             nm_list,
             self.merge_partitions,

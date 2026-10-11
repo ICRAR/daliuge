@@ -33,7 +33,7 @@ from dlg.translator.stages.partition.islands import (
 
 class TestPartitionIslands(unittest.TestCase):
     def test_resources_are_split_between_islands_and_nodes(self):
-        island_managers, node_managers, form_island = (
+        island_managers, node_managers = (
             split_island_resources(
                 [
                     "island-a",
@@ -59,10 +59,9 @@ class TestPartitionIslands(unittest.TestCase):
                 "node-b",
             ],
         )
-        self.assertTrue(form_island)
 
-    def test_single_island_does_not_form_island_partitions(self):
-        island_managers, node_managers, form_island = (
+    def test_single_island_gets_one_island_manager(self):
+        island_managers, node_managers = (
             split_island_resources(
                 [
                     "island",
@@ -84,13 +83,13 @@ class TestPartitionIslands(unittest.TestCase):
                 "node-b",
             ],
         )
-        self.assertFalse(form_island)
 
     def test_multiple_islands_merge_partitions_by_island_count(self):
         merge_partitions = Mock()
 
         merge_for_islands(
             num_islands=2,
+            form_island=True,
             num_parts_done=4,
             node_managers=[
                 "node-a",
@@ -111,6 +110,7 @@ class TestPartitionIslands(unittest.TestCase):
 
         merge_for_islands(
             num_islands=1,
+            form_island=False,
             num_parts_done=3,
             node_managers=[
                 "node-a",
@@ -129,6 +129,7 @@ class TestPartitionIslands(unittest.TestCase):
 
         merge_for_islands(
             num_islands=1,
+            form_island=False,
             num_parts_done=2,
             node_managers=[
                 "node-a",
