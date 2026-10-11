@@ -252,6 +252,50 @@ class PGT(object):
             The pg_spec template is what needs to be send to a deferred deployemnt
             where the daliuge system is started up afer submission (e.g. SLURM)
         """
+        drops, num_islands = self._form_islands_and_stamp(
+            node_list,
+            num_islands,
+            tpl_nodes_len,
+            co_host_dim,
+        )
+
+        # a template keeps its placeholders for deferred mapping (SLURM, Helm);
+        # resource_map reads drops[0], so an empty graph skips it
+        if drops and node_list:
+            resource_map(drops, node_list, num_islands, co_host_dim)
+
+        if ret_str:
+            return json.dumps(self.drops, indent=2)
+        else:
+            return self.drops
+
+    def to_pg_template(self, tpl_nodes_len, num_islands=1, co_host_dim=True):
+        """
+        PGT -> PGT-P: merge partitions into islands and stamp ``#<index>``
+        node/island placeholders, without mapping to any hosts.
+
+        tpl_nodes_len: number of worker nodes the template is laid out for
+        """
+        drops, _ = self._form_islands_and_stamp(
+            [],
+            num_islands,
+            tpl_nodes_len,
+            co_host_dim,
+        )
+        return drops
+
+    def _form_islands_and_stamp(
+        self,
+        node_list,
+        num_islands,
+        tpl_nodes_len,
+        co_host_dim,
+    ):
+        """
+        Validate the resources, merge partitions for them and stamp placeholders.
+
+        Returns the stamped DROPs and the normalised island count.
+        """
         if num_islands < 1:
             num_islands = 1  # need at least one island manager
         node_list, tpl_fl = prepare_node_list(
@@ -344,15 +388,7 @@ class PGT(object):
                     f"{self._gojs_key_dict[drop['oid']]}_{drop['iid']}"
                 )
 
-        # a template keeps its placeholders for deferred mapping (SLURM, Helm);
-        # resource_map reads drops[0], so an empty graph skips it
-        if drops and not tpl_fl:
-            resource_map(drops, node_list, num_islands, co_host_dim)
-
-        if ret_str:
-            return json.dumps(self.drops, indent=2)
-        else:
-            return self.drops
+        return drops, num_islands
 
     def to_gojs_json(self, string_rep=True, visual=False):
         """

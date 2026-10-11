@@ -223,6 +223,22 @@ class TestPGSpecContract(unittest.TestCase):
             ],
         )
 
+    def test_template_matches_facade_without_mapping(self):
+        expected = _pgt().to_pg_spec(
+            [],
+            ret_str=False,
+            num_islands=1,
+            tpl_nodes_len=2,
+        )
+
+        with patch(
+            "dlg.translator.stages.partition.pgt.resource_map",
+        ) as mock_resource_map:
+            result = _pgt().to_pg_template(2, num_islands=1)
+
+        mock_resource_map.assert_not_called()
+        self.assertEqual(result, expected)
+
     def test_string_output_matches_drop_payload(self):
         pgt = _pgt()
 
