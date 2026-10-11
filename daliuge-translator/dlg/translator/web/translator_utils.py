@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 from dataclasses import fields
 import logging
 import importlib.resources
@@ -9,12 +10,23 @@ from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.reproducibility import (
     init_lg_repro_data,
     init_lgt_repro_data,
-    init_pgt_unroll_repro_data,
     init_pgt_partition_repro_data,
 )
 from dlg.translator.stages.prepare.loader import load_lg
-from dlg.translator.stages.unroll.stage import unroll
-from dlg.translator.stages.partition.stage import partition
+from dlg.translator.artefacts import (
+    LogicalGraphTemplate,
+    PhysicalGraphTemplatePartitioned,
+)
+from dlg.translator.errors import StageException
+from dlg.translator.pipeline import Pipeline
+from dlg.translator.stages.unroll.stage import (
+    UnrollOptions,
+    UnrollStage,
+)
+from dlg.translator.stages.partition.stage import (
+    PartitionOptions,
+    partition,
+)
 from dlg.translator.stages.partition.algorithms.registry import get_algorithm
 from dlg.restutils import RestClientException
 
@@ -162,6 +174,47 @@ def make_algo_param_dict(
     }
 
 
+
+class _LegacyPartitionStage:
+    """Partition through Pipeline while preserving the legacy PGT object."""
+
+    name = "partition"
+
+    def __init__(self, opts: PartitionOptions):
+        self._opts = opts
+
+    def run(self, pgt):
+        legacy_pgt = partition(
+            deepcopy(pgt.drops),
+            algo=self._opts.algo,
+            num_partitions=self._opts.num_partitions,
+            num_islands=self._opts.num_islands,
+            partition_label=self._opts.partition_label,
+            show_gojs=True,
+            **self._opts.algo_params,
+        )
+        legacy_pgt.reprodata = deepcopy(pgt.reprodata)
+        return legacy_pgt
+
+    def stamp(self, pgt):
+        pgt_spec = pgt.to_pg_template(
+            self._opts.num_partitions + self._opts.num_islands,
+            num_islands=self._opts.num_islands,
+        )
+
+        stamped = PhysicalGraphTemplatePartitioned.from_wire(
+            init_pgt_partition_repro_data(
+                PhysicalGraphTemplatePartitioned(
+                    drops=pgt_spec,
+                    reprodata=deepcopy(pgt.reprodata),
+                ).to_wire()
+            )
+        )
+
+        pgt.reprodata = stamped.reprodata
+        return pgt
+
+
 def unroll_and_partition_with_params(
     lgt: dict,
     test: bool,
@@ -173,33 +226,40 @@ def unroll_and_partition_with_params(
 ):
     if algorithm_parameters is None:
         algorithm_parameters = {}
+
     app = "dlg.apps.simple.SleepApp" if test else None
-    pgt = init_pgt_unroll_repro_data(unroll(lgt, app=app))
     algo_params = filter_dict_to_algo_params(
         algorithm_parameters,
         algorithm,
     )
-    reprodata = pgt.pop()
-    # Partition the PGT
-    pgt = partition(
-        pgt,
-        algo=algorithm,
-        num_partitions=num_partitions,
-        num_islands=num_islands,
-        partition_label=par_label,
-        show_gojs=True,
-        **algo_params,
-    )
 
-    pgt_spec = pgt.to_pg_spec(
-        [],
-        ret_str=False,
-        num_islands=num_islands,
-        tpl_nodes_len=num_partitions + num_islands,
+    pipeline = Pipeline(
+        [
+            UnrollStage(
+                UnrollOptions(
+                    app=app,
+                )
+            ),
+            _LegacyPartitionStage(
+                PartitionOptions(
+                    algo=algorithm,
+                    num_partitions=num_partitions,
+                    num_islands=num_islands,
+                    partition_label=par_label,
+                    algo_params=algo_params,
+                )
+            ),
+        ]
     )
-    pgt_spec.append(reprodata)
-    init_pgt_partition_repro_data(pgt_spec)
-    reprodata = pgt_spec.pop()
-    pgt.reprodata = reprodata
-    logger.info(reprodata)
+    try:
+        # load_lg keeps the legacy inputs working: a dict, a path or a file
+        pgt = pipeline.run(LogicalGraphTemplate.from_wire(load_lg(lgt)))
+    except StageException as e:
+        # callers (REST, daliuge-engine) catch GraphException and friends,
+        # so hand them the original error rather than the stage wrapper
+        if e.__cause__ is None:
+            raise
+        raise e.__cause__ from None
+
+    logger.info(pgt.reprodata)
     return pgt
