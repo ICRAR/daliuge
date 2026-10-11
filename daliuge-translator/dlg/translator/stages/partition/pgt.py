@@ -35,6 +35,7 @@ from dlg.translator.stages.partition.scheduler import DAGUtil
 from dlg.translator.stages.partition.projections.gojs import project_gojs
 from dlg.translator.stages.partition.placeholders import placeholder_list, prepare_node_list
 from dlg.translator.stages.partition.islands import merge_for_islands, split_island_resources
+from dlg.translator.stages.map.stage import assign_partition_resources
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -323,17 +324,16 @@ class PGT(object):
             nm_list = placeholder_list(len(nm_list))
             is_list = placeholder_list(len(is_list))
 
-        for drop in self.drops:
-            oid = drop["oid"]
-            # For now, simply round robin, but need to consider
-            # nodes cross COMPUTE islands which has
-            # TODO consider distance between a pair of nodes
-            gid = self._oid_gid_map[oid]
-            drop["node"] = nm_list[gid]
-            isid = self._gid_island_id_map[gid] % num_islands if form_island else 0
-            drop["island"] = is_list[isid]
-            if self._gojs_key_dict:
-                drop["humanReadableKey"] = f"{self._gojs_key_dict[oid]}_{drop['iid']}"
+        assign_partition_resources(
+            self.drops,
+            nm_list,
+            is_list,
+            self._oid_gid_map,
+            self._gid_island_id_map,
+            num_islands,
+            form_island,
+            self._gojs_key_dict,
+        )
 
         if ret_str:
             return json.dumps(self.drops, indent=2)

@@ -35,7 +35,11 @@ import unittest
 from unittest.mock import patch
 
 from dlg.translator.artefacts import PhysicalGraphTemplatePartitioned, PhysicalGraph
-from dlg.translator.stages.map.stage import MapStage, MapOptions
+from dlg.translator.stages.map.stage import (
+    MapStage,
+    MapOptions,
+    assign_partition_resources,
+)
 from dlg.common import path_utils
 from dlg.translator.stages.unroll.lg import LG
 from dlg.translator.stages.partition.pgt import GPGTNoNeedMergeException
@@ -61,6 +65,109 @@ def pg_drops():
     # bare drop list as returned by pg_generator.resource_map() -- no
     # reprodata trailer, that's added back by MapStage.run() itself.
     return [{"oid": "a", "node": "10.0.0.1"}, {"oid": "b", "node": "10.0.0.2"}]
+
+
+class TestPartitionResourceAssignment(unittest.TestCase):
+    def test_assigns_nodes_and_islands_from_partition_maps(self):
+        drops = [
+            {"oid": "a", "iid": 0},
+            {"oid": "b", "iid": 1},
+        ]
+
+        result = assign_partition_resources(
+            drops,
+            node_managers=[
+                "node-a.example",
+                "node-b.example",
+            ],
+            island_managers=[
+                "island-a.example",
+                "island-b.example",
+            ],
+            oid_gid_map={
+                "a": 0,
+                "b": 1,
+            },
+            gid_island_id_map={
+                0: 0,
+                1: 3,
+            },
+            num_islands=2,
+            form_island=True,
+        )
+
+        self.assertIs(result, drops)
+        self.assertEqual(
+            [drop["node"] for drop in result],
+            [
+                "node-a.example",
+                "node-b.example",
+            ],
+        )
+        self.assertEqual(
+            [drop["island"] for drop in result],
+            [
+                "island-a.example",
+                "island-b.example",
+            ],
+        )
+
+    def test_single_island_uses_first_island_manager(self):
+        drops = [
+            {"oid": "a", "iid": 0},
+            {"oid": "b", "iid": 0},
+        ]
+
+        assign_partition_resources(
+            drops,
+            node_managers=[
+                "node-a.example",
+                "node-b.example",
+            ],
+            island_managers=["island.example"],
+            oid_gid_map={
+                "a": 0,
+                "b": 1,
+            },
+            gid_island_id_map={
+                0: 4,
+                1: 9,
+            },
+            num_islands=1,
+            form_island=False,
+        )
+
+        self.assertEqual(
+            [drop["island"] for drop in drops],
+            [
+                "island.example",
+                "island.example",
+            ],
+        )
+
+    def test_preserves_human_readable_key_stamping(self):
+        drops = [
+            {
+                "oid": "a",
+                "iid": 7,
+            },
+        ]
+
+        assign_partition_resources(
+            drops,
+            node_managers=["node.example"],
+            island_managers=["island.example"],
+            oid_gid_map={"a": 0},
+            gid_island_id_map={0: 0},
+            num_islands=1,
+            form_island=False,
+            gojs_key_dict={"a": 12},
+        )
+
+        self.assertEqual(
+            drops[0]["humanReadableKey"],
+            "12_7",
+        )
 
 
 class TestMapStageRun(unittest.TestCase):
