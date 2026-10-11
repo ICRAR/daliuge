@@ -109,7 +109,7 @@ Translation
 While a |lg| provides a compact way to express complex processing logic,
 the complex components or constructs are not directly usable
 by the underlying graph execution engine and Drop managers. To achieve that,
-|lgs| are translated into |pgs|. The translation process makes the parallelism explicit and unrolls loops and creates all Drop descriptions. Drops are essentially instances of the components. It is implemented in the :doc:`../api/dropmake` module.
+|lgs| are translated into |pgs|. The translation process makes the parallelism explicit and unrolls loops and creates all Drop descriptions. Drops are essentially instances of the components. It is implemented by the :doc:`../api/translator` modules.
 
 Basic steps
 """""""""""
