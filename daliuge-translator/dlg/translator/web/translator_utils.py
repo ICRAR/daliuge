@@ -197,14 +197,9 @@ class _LegacyPartitionStage:
         return legacy_pgt
 
     def stamp(self, pgt):
-        pgt_spec = pgt.to_pg_spec(
-            [],
-            ret_str=False,
+        pgt_spec = pgt.to_pg_template(
+            self._opts.num_partitions + self._opts.num_islands,
             num_islands=self._opts.num_islands,
-            tpl_nodes_len=(
-                self._opts.num_partitions
-                + self._opts.num_islands
-            ),
         )
 
         stamped = PhysicalGraphTemplatePartitioned.from_wire(
