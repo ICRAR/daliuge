@@ -17,6 +17,7 @@ from dlg.translator.artefacts import (
     LogicalGraphTemplate,
     PhysicalGraphTemplatePartitioned,
 )
+from dlg.translator.errors import StageException
 from dlg.translator.pipeline import Pipeline
 from dlg.translator.stages.unroll.stage import (
     UnrollOptions,
@@ -237,7 +238,7 @@ def unroll_and_partition_with_params(
         algorithm,
     )
 
-    pgt = Pipeline(
+    pipeline = Pipeline(
         [
             UnrollStage(
                 UnrollOptions(
@@ -254,9 +255,15 @@ def unroll_and_partition_with_params(
                 )
             ),
         ]
-    ).run(
-        LogicalGraphTemplate.from_wire(lgt)
     )
+    try:
+        pgt = pipeline.run(LogicalGraphTemplate.from_wire(lgt))
+    except StageException as e:
+        # callers (REST, daliuge-engine) catch GraphException and friends,
+        # so hand them the original error rather than the stage wrapper
+        if e.__cause__ is None:
+            raise
+        raise e.__cause__ from None
 
     logger.info(pgt.reprodata)
     return pgt

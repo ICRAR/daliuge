@@ -7,8 +7,10 @@
 
 import inspect
 import unittest
+from unittest.mock import patch
 
 from dlg.common import path_utils
+from dlg.translator.errors import GraphException
 from dlg.translator.stages.partition.pgtp import MetisPGTP
 from dlg.translator.web.translator_utils import (
     filter_dict_to_algo_params,
@@ -155,6 +157,29 @@ class TestCompatibilityHelpers(unittest.TestCase):
             result.reprodata,
             dict,
         )
+
+    def test_unroll_and_partition_raises_the_original_error(self):
+        # REST catches GraphException and daliuge-engine calls this helper,
+        # so the Pipeline's StageException wrapper must not leak out
+        lgt = prepare_lgt(
+            path_utils.get_lg_fpath(
+                "logical_graphs",
+                "testLoop.graph",
+            ),
+            0,
+        )
+
+        with patch(
+            "dlg.translator.stages.unroll.stage.unroll",
+            side_effect=GraphException("bad graph"),
+        ):
+            with self.assertRaises(GraphException) as ctx:
+                unroll_and_partition_with_params(
+                    lgt=lgt,
+                    test=False,
+                )
+
+        self.assertEqual(str(ctx.exception), "bad graph")
 
 
 if __name__ == "__main__":
