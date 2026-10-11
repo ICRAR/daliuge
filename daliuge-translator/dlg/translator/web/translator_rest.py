@@ -55,9 +55,25 @@ from pydantic import BaseModel
 import dlg.constants as constants
 import dlg
 from dlg.translator.stages.prepare.params import fill
-from dlg.translator.stages.unroll.stage import unroll
-from dlg.translator.stages.partition.stage import partition
-from dlg.translator.stages.map.stage import resource_map
+from dlg.translator.artefacts import (
+    LogicalGraphTemplate,
+    PhysicalGraphTemplate,
+    PhysicalGraphTemplatePartitioned,
+)
+from dlg.translator.pipeline import Pipeline
+from dlg.translator.stages.unroll.stage import (
+    unroll,
+    UnrollOptions,
+    UnrollStage,
+)
+from dlg.translator.stages.partition.stage import (
+    PartitionOptions,
+    PartitionStage,
+)
+from dlg.translator.stages.map.stage import (
+    MapOptions,
+    MapStage,
+)
 from dlg import restutils, common
 from dlg.clients import CompositeManagerClient
 from dlg.common.reproducibility.constants import (
@@ -68,9 +84,7 @@ from dlg.common.reproducibility.constants import (
 from dlg.common.reproducibility.reproducibility import (
     init_lgt_repro_data,
     init_lg_repro_data,
-    init_pgt_partition_repro_data,
     init_pgt_unroll_repro_data,
-    init_pg_repro_data,
 )
 
 from dlg import utils
@@ -954,16 +968,22 @@ def pgt_partition(
 
     One of pgt_name or pgt_content, but not both, must be specified.
     """
-    graph = load_graph(pgt_content, pgt_name)
-    reprodata = {}
-    if not graph[-1].get("oid"):
-        reprodata = graph.pop()
-    pgt = partition(
-        graph, algorithm, num_partitions, num_islands, algo_params.dict()
+    graph = PhysicalGraphTemplate.from_wire(
+        load_graph(pgt_content, pgt_name)
     )
-    pgt.append(reprodata)
-    pgt = init_pgt_partition_repro_data(pgt)
-    return JSONResponse(pgt)
+    pgt = Pipeline(
+        [
+            PartitionStage(
+                PartitionOptions(
+                    algo=algorithm,
+                    num_partitions=num_partitions,
+                    num_islands=num_islands,
+                    partition_label=algo_params.dict(),
+                )
+            )
+        ]
+    ).run(graph)
+    return JSONResponse(pgt.to_wire())
 
 
 @app.post("/unroll_and_partition", response_class=JSONResponse, tags=["Updated"])
@@ -1007,16 +1027,29 @@ def lg_unroll_and_partition(
 
     One of lg_name and lg_content, but not both, must be specified.
     """
-    lg_graph = load_graph(lg_content, lg_name)
-    pgt = unroll(lg_graph, oid_prefix, zero_run, default_app)
-    pgt = init_pgt_unroll_repro_data(pgt)
-    reprodata = pgt.pop()
-    pgt = partition(
-        pgt, algorithm, num_partitions, num_islands, algo_params.dict()
+    lg_graph = LogicalGraphTemplate.from_wire(
+        load_graph(lg_content, lg_name)
     )
-    pgt.append(reprodata)
-    pgt = init_pgt_partition_repro_data(pgt)
-    return JSONResponse(pgt)
+    pgt = Pipeline(
+        [
+            UnrollStage(
+                UnrollOptions(
+                    oid_prefix=oid_prefix,
+                    zerorun=zero_run,
+                    app=default_app,
+                )
+            ),
+            PartitionStage(
+                PartitionOptions(
+                    algo=algorithm,
+                    num_partitions=num_partitions,
+                    num_islands=num_islands,
+                    partition_label=algo_params.dict(),
+                )
+            ),
+        ]
+    ).run(lg_graph)
+    return JSONResponse(pgt.to_wire())
 
 
 @app.post("/map", response_class=JSONResponse, tags=["Updated"])
@@ -1061,15 +1094,22 @@ def pgt_map(
             detail="#nodes (%d) should be larger than the number of islands (%d)"
             % (len(nodes), num_islands),
         )
-    pgt = load_graph(pgt_content, pgt_name)
-    reprodata = {}
-    if not pgt[-1].get("oid"):
-        reprodata = pgt.pop()
+    pgt = PhysicalGraphTemplatePartitioned.from_wire(
+        load_graph(pgt_content, pgt_name)
+    )
     logger.info(nodes)
-    pg = resource_map(pgt, nodes, num_islands, co_host_dim)
-    pg.append(reprodata)
-    pg = init_pg_repro_data(pg)
-    return JSONResponse(pg)
+    pg = Pipeline(
+        [
+            MapStage(
+                MapOptions(
+                    nodes=nodes,
+                    num_islands=num_islands,
+                    co_host_dim=co_host_dim,
+                )
+            )
+        ]
+    ).run(pgt)
+    return JSONResponse(pg.to_wire())
 
 
 @app.get("/api/submission_method")
