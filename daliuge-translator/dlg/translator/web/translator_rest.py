@@ -57,6 +57,7 @@ import dlg
 from dlg.translator.stages.prepare.params import fill
 from dlg.translator.artefacts import (
     LogicalGraphTemplate,
+    PhysicalGraph,
     PhysicalGraphTemplate,
     PhysicalGraphTemplatePartitioned,
 )
@@ -656,8 +657,8 @@ def gen_pg(
             )
 
         pg_spec = pgtp.to_pg_spec([], ret_str=False, tpl_nodes_len=nnodes)
-        pg_spec.append(reprodata)
-        return JSONResponse(pg_spec)
+        pg = PhysicalGraph(drops=pg_spec, reprodata=reprodata)
+        return JSONResponse(pg.to_wire())
     try:
         mgr_client = CompositeManagerClient(
             host=mhost, port=mport, url_prefix=mprefix, timeout=30
@@ -676,8 +677,8 @@ def gen_pg(
             mgr_client.create_session(ssid)
             # print "session created"
             completed_uids = common.get_roots(pg_spec)
-            pg_spec.append(reprodata)
-            mgr_client.append_graph(ssid, pg_spec)
+            pg = PhysicalGraph(drops=pg_spec, reprodata=reprodata)
+            mgr_client.append_graph(ssid, pg.to_wire())
             # print "graph appended"
             mgr_client.deploy_session(ssid, completed_uids=completed_uids)
             # mgr_client.deploy_session(ssid, completed_uids=[])
