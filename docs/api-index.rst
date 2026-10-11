@@ -11,4 +11,4 @@ a complete reference please go to the source code.
  api/manager
  api/apps
  api/data
- api/dropmake
+ api/translator
