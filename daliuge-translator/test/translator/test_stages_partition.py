@@ -61,6 +61,7 @@ from dlg.translator.stages.partition.pgtp import MetisPGTP, MySarkarPGTP, MinNum
 
 TEST_SSID = "test_pg_gen"
 
+
 def pgt_wire():
     # PhysicalArtefact's wire form always ends with a reprodata trailer
     # (possibly empty) -- see artefacts.py: `to_wire()` appends it
@@ -201,7 +202,7 @@ class TestPartitionPluginDispatch(unittest.TestCase):
     def test_partition_delegates_to_registered_plugin_by_name(self):
         algorithm = get_algorithm("none")
         graph = MagicMock()
-        graph.to_pg_spec.return_value = [{"oid": "result"}]
+        graph.to_pg_template.return_value = [{"oid": "result"}]
         source = [{"oid": "a"}]
 
         with patch.object(
@@ -221,12 +222,11 @@ class TestPartitionPluginDispatch(unittest.TestCase):
             string_rep=False,
             visual=False,
         )
-        graph.to_pg_spec.assert_called_once_with(
-            [],
-            ret_str=False,
+        graph.to_pg_template.assert_called_once_with(
+            2,
             num_islands=1,
-            tpl_nodes_len=2,
         )
+        graph.to_pg_spec.assert_not_called()
         self.assertEqual(result, [{"oid": "result"}])
 
     def test_partition_accepts_numeric_algorithm_code(self):
@@ -247,6 +247,7 @@ class TestPartitionPluginDispatch(unittest.TestCase):
             string_rep=False,
             visual=True,
         )
+        graph.to_pg_template.assert_not_called()
         graph.to_pg_spec.assert_not_called()
 
     def test_partition_drops_unused_params_with_warning(self):
