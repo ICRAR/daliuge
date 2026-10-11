@@ -33,6 +33,7 @@ import math
 from dlg.translator.errors import GraphException
 from dlg.translator.stages.partition.scheduler import DAGUtil
 from dlg.translator.stages.partition.projections.gojs import project_gojs
+from dlg.translator.stages.partition.placeholders import placeholder_list, prepare_node_list
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -244,12 +245,11 @@ class PGT(object):
         """
         if num_islands < 1:
             num_islands = 1  # need at least one island manager
-        if len(node_list) == 0 and tpl_nodes_len > 0:  # generate pg_spec template
-            node_list = [x for x in range(tpl_nodes_len + num_islands)]  # create a fake
-            # list for now
-            tpl_fl = True
-        else:
-            tpl_fl = False
+        node_list, tpl_fl = prepare_node_list(
+            node_list,
+            tpl_nodes_len,
+            num_islands,
+        )
         logger.debug(
             "# worker nodes: %s, node_list(incl. DIM): %s, tpl_fl: %s",
             tpl_nodes_len,
@@ -316,12 +316,8 @@ class PGT(object):
         # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
         if tpl_fl:
-            nm_list = [
-                "#%s" % x for x in range(len(nm_list))
-            ]  # so that nm_list[i] == '#i'
-            is_list = [
-                "#%s" % x for x in range(len(is_list))
-            ]  # so that is_list[i] == '#i'
+            nm_list = placeholder_list(len(nm_list))
+            is_list = placeholder_list(len(is_list))
 
         for drop in self.drops:
             oid = drop["oid"]
