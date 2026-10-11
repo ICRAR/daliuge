@@ -33,9 +33,16 @@ import math
 from dlg.translator.errors import GraphException
 from dlg.translator.stages.partition.scheduler import DAGUtil
 from dlg.translator.stages.partition.projections.gojs import project_gojs
-from dlg.translator.stages.partition.placeholders import placeholder_list, prepare_node_list
-from dlg.translator.stages.partition.islands import merge_for_islands, split_island_resources
-from dlg.translator.stages.map.stage import assign_partition_resources
+from dlg.translator.stages.partition.placeholders import (
+    prepare_node_list,
+    stamp_placeholders,
+)
+from dlg.translator.stages.partition.islands import (
+    merge_for_islands,
+    split_island_resources,
+)
+# facade only: to_pg_spec hands real hostnames to the map stage
+from dlg.translator.stages.map.stage import resource_map
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -320,20 +327,27 @@ class PGT(object):
         # values = dict(zip(values,range(len(values)))) # dict with new values
         # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
-        if tpl_fl:
-            nm_list = placeholder_list(len(nm_list))
-            is_list = placeholder_list(len(is_list))
-
-        assign_partition_resources(
-            self.drops,
-            nm_list,
-            is_list,
+        drops = self.drops
+        stamp_placeholders(
+            drops,
+            len(nm_list),
+            len(is_list),
             self._oid_gid_map,
             self._gid_island_id_map,
             num_islands,
             form_island,
-            self._gojs_key_dict,
         )
+
+        if self._gojs_key_dict:
+            for drop in drops:
+                drop["humanReadableKey"] = (
+                    f"{self._gojs_key_dict[drop['oid']]}_{drop['iid']}"
+                )
+
+        # a template keeps its placeholders for deferred mapping (SLURM, Helm);
+        # resource_map reads drops[0], so an empty graph skips it
+        if drops and not tpl_fl:
+            resource_map(drops, node_list, num_islands, co_host_dim)
 
         if ret_str:
             return json.dumps(self.drops, indent=2)

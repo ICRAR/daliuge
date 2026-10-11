@@ -173,6 +173,34 @@ class TestPGSpecContract(unittest.TestCase):
             ],
         )
 
+    def test_mapping_stamps_human_readable_key_after_projection(self):
+        pgt = _pgt()
+        pgt._gojs_key_dict = {
+            "a": 1,
+            "b": 2,
+        }
+
+        result = pgt.to_pg_spec(
+            [
+                "dim.example",
+                "node-a.example",
+                "node-b.example",
+            ],
+            ret_str=False,
+            num_islands=1,
+        )
+
+        self.assertEqual(
+            [
+                (drop["node"], drop["humanReadableKey"])
+                for drop in result
+            ],
+            [
+                ("node-a.example", "1_0"),
+                ("node-b.example", "2_0"),
+            ],
+        )
+
     def test_string_output_matches_drop_payload(self):
         pgt = _pgt()
 

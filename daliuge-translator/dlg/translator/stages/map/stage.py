@@ -61,38 +61,6 @@ class MapStage:
         return PhysicalGraph.from_wire(init_pg_repro_data(pg.to_wire()))
 
 
-
-def assign_partition_resources(
-    drops,
-    node_managers,
-    island_managers,
-    oid_gid_map,
-    gid_island_id_map,
-    num_islands,
-    form_island,
-    gojs_key_dict=None,
-):
-    """Assign node and island resources to partitioned DROPs."""
-    for drop in drops:
-        oid = drop["oid"]
-        gid = oid_gid_map[oid]
-
-        drop["node"] = node_managers[gid]
-
-        island_index = (
-            gid_island_id_map[gid] % num_islands
-            if form_island
-            else 0
-        )
-        drop["island"] = island_managers[island_index]
-
-        if gojs_key_dict:
-            drop["humanReadableKey"] = (
-                f"{gojs_key_dict[oid]}_{drop['iid']}"
-            )
-
-    return drops
-
 def resource_map(pgt, nodes, num_islands=1, co_host_dim=True):
     """Maps a Physical Graph Template `pgt` to `nodes`"""
 

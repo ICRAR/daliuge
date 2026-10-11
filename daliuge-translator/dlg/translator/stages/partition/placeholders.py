@@ -29,4 +29,32 @@ def placeholder_list(length):
     return [
         "#%s" % index
         for index in range(length)
-    ]
+    ]  # so that placeholder_list(n)[i] == '#i'
+
+
+def stamp_placeholders(
+    drops,
+    num_node_managers,
+    num_island_managers,
+    oid_gid_map,
+    gid_island_id_map,
+    num_islands,
+    form_island,
+):
+    """Stamp ``#<index>`` node/island placeholders onto partitioned DROPs."""
+    node_placeholders = placeholder_list(num_node_managers)
+    island_placeholders = placeholder_list(num_island_managers)
+
+    for drop in drops:
+        # For now, simply round robin, but need to consider
+        # nodes cross COMPUTE islands which has
+        # TODO consider distance between a pair of nodes
+        gid = oid_gid_map[drop["oid"]]
+        drop["node"] = node_placeholders[gid]
+
+        island_index = (
+            gid_island_id_map[gid] % num_islands
+            if form_island
+            else 0
+        )
+        drop["island"] = island_placeholders[island_index]
