@@ -44,6 +44,7 @@ from dlg.translator.stages.partition.pgtp import MetisPGTP, MySarkarPGTP
 
 TEST_SSID = "test_pg_gen"
 
+
 def pgtp_wire():
     # PhysicalArtefact's wire form always ends with a reprodata trailer
     # (possibly empty) -- see artefacts.py: `to_wire()` appends it
@@ -291,6 +292,7 @@ class TestPGMapRegression(unittest.TestCase):
                 self.assertEqual(self.SARKAR_PARTITION_RESULTS_GEN_ISLAND[lg_name],
                                  pgtp.result(),
                                  f"Incorrect partition results for: {lg_name}")
+
 
 if __name__ == "__main__":
     unittest.main()

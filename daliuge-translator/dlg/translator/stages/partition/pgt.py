@@ -33,6 +33,16 @@ import math
 from dlg.translator.errors import GraphException
 from dlg.translator.stages.partition.scheduler import DAGUtil
 from dlg.translator.stages.partition.projections.gojs import project_gojs
+from dlg.translator.stages.partition.placeholders import (
+    prepare_node_list,
+    stamp_placeholders,
+)
+from dlg.translator.stages.partition.islands import (
+    merge_for_islands,
+    split_island_resources,
+)
+# facade only: to_pg_spec hands real hostnames to the map stage
+from dlg.translator.stages.map.stage import resource_map
 
 logger = logging.getLogger(f"dlg.{__name__}")
 
@@ -242,14 +252,57 @@ class PGT(object):
             The pg_spec template is what needs to be send to a deferred deployemnt
             where the daliuge system is started up afer submission (e.g. SLURM)
         """
+        drops, num_islands = self._form_islands_and_stamp(
+            node_list,
+            num_islands,
+            tpl_nodes_len,
+            co_host_dim,
+        )
+
+        # a template keeps its placeholders for deferred mapping (SLURM, Helm);
+        # resource_map reads drops[0], so an empty graph skips it
+        if drops and node_list:
+            resource_map(drops, node_list, num_islands, co_host_dim)
+
+        if ret_str:
+            return json.dumps(self.drops, indent=2)
+        else:
+            return self.drops
+
+    def to_pg_template(self, tpl_nodes_len, num_islands=1, co_host_dim=True):
+        """
+        PGT -> PGT-P: merge partitions into islands and stamp ``#<index>``
+        node/island placeholders, without mapping to any hosts.
+
+        tpl_nodes_len: number of worker nodes the template is laid out for
+        """
+        drops, _ = self._form_islands_and_stamp(
+            [],
+            num_islands,
+            tpl_nodes_len,
+            co_host_dim,
+        )
+        return drops
+
+    def _form_islands_and_stamp(
+        self,
+        node_list,
+        num_islands,
+        tpl_nodes_len,
+        co_host_dim,
+    ):
+        """
+        Validate the resources, merge partitions for them and stamp placeholders.
+
+        Returns the stamped DROPs and the normalised island count.
+        """
         if num_islands < 1:
             num_islands = 1  # need at least one island manager
-        if len(node_list) == 0 and tpl_nodes_len > 0:  # generate pg_spec template
-            node_list = [x for x in range(tpl_nodes_len + num_islands)]  # create a fake
-            # list for now
-            tpl_fl = True
-        else:
-            tpl_fl = False
+        node_list, tpl_fl = prepare_node_list(
+            node_list,
+            tpl_nodes_len,
+            num_islands,
+        )
         logger.debug(
             "# worker nodes: %s, node_list(incl. DIM): %s, tpl_fl: %s",
             tpl_nodes_len,
@@ -280,15 +333,18 @@ class PGT(object):
                 raise GPGTException(
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
-            is_list = node_list[0:num_islands]
-            nm_list = node_list[num_islands:]
         else:
             if form_island and num_islands + self._num_parts_done > nodes_len:
                 raise GPGTException(
                     "Insufficient number of nodes: {0}".format(nodes_len)
                 )
-            is_list = node_list[0:num_islands]
-            nm_list = node_list[num_islands:]
+
+        is_list, nm_list = split_island_resources(
+            node_list,
+            num_islands,
+        )
+
+        if co_host_dim:
             logger.debug("NM list: %s", nm_list)
         logger.info(
             "Drops count: %d, partitions count: %d, NM count: %d, island count: %d %s",
@@ -299,12 +355,13 @@ class PGT(object):
             form_island,
         )
 
-        if form_island:
-            self.merge_partitions(num_islands, form_island=True)
-            # from Eq.1 we know that num_parts <= nm_len
-            # so no need to update its value
-        elif len(nm_list) < self._num_parts_done:
-            self.merge_partitions(len(nm_list), form_island=False)
+        merge_for_islands(
+            num_islands,
+            form_island,
+            self._num_parts_done,
+            nm_list,
+            self.merge_partitions,
+        )
 
         # when #partitions < #nodes the lm values are spread around range(#nodes)
         # which leads to index out of range errors (TODO: find how _oid_gid_map is
@@ -315,30 +372,24 @@ class PGT(object):
         # values = dict(zip(values,range(len(values)))) # dict with new values
         # lm = {k:values[v] for (k, v) in lm.items()} # replace old values with new
 
-        if tpl_fl:
-            nm_list = [
-                "#%s" % x for x in range(len(nm_list))
-            ]  # so that nm_list[i] == '#i'
-            is_list = [
-                "#%s" % x for x in range(len(is_list))
-            ]  # so that is_list[i] == '#i'
+        drops = self.drops
+        stamp_placeholders(
+            drops,
+            len(nm_list),
+            len(is_list),
+            self._oid_gid_map,
+            self._gid_island_id_map,
+            num_islands,
+            form_island,
+        )
 
-        for drop in self.drops:
-            oid = drop["oid"]
-            # For now, simply round robin, but need to consider
-            # nodes cross COMPUTE islands which has
-            # TODO consider distance between a pair of nodes
-            gid = self._oid_gid_map[oid]
-            drop["node"] = nm_list[gid]
-            isid = self._gid_island_id_map[gid] % num_islands if form_island else 0
-            drop["island"] = is_list[isid]
-            if self._gojs_key_dict:
-                drop["humanReadableKey"] = f"{self._gojs_key_dict[oid]}_{drop['iid']}"
+        if self._gojs_key_dict:
+            for drop in drops:
+                drop["humanReadableKey"] = (
+                    f"{self._gojs_key_dict[drop['oid']]}_{drop['iid']}"
+                )
 
-        if ret_str:
-            return json.dumps(self.drops, indent=2)
-        else:
-            return self.drops
+        return drops, num_islands
 
     def to_gojs_json(self, string_rep=True, visual=False):
         """

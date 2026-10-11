@@ -135,11 +135,9 @@ def partition(
 
     pgt.to_gojs_json(string_rep=False, visual=show_gojs)
     if not show_gojs:
-        pgt = pgt.to_pg_spec(
-            [],
-            ret_str=False,
+        pgt = pgt.to_pg_template(
+            num_partitions + num_islands,
             num_islands=num_islands,
-            tpl_nodes_len=num_partitions + num_islands,
         )
     return pgt
 
